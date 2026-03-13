@@ -1,0 +1,256 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Usuario {
+  id           String    @id @default(uuid())
+  nombre       String
+  email        String    @unique
+  password     String
+  unidadId     String?
+  activo       Boolean   @default(true)
+  tokenVersion Int       @default(0)  // Incrementado al revocar/asignar roles → invalida JWTs viejos
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  deletedAt    DateTime?
+  createdBy    String?
+  updatedBy    String?
+
+  Unidad       Unidad?   @relation(fields: [unidadId], references: [id])
+  AuditLogs    BitacoraAuditoria[]
+  AuditLogEntries AuditLog[] @relation("AuditLogActor")
+  UsuarioRoles UsuarioRol[]          // RBAC: roles asignados al usuario
+}
+
+model Unidad {
+  id          String    @id @default(uuid())
+  nombre      String    // Manada, Tropa, Clan
+  tipo        String?
+  descripcion String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  deletedAt   DateTime?
+  createdBy   String?
+  updatedBy   String?
+
+  Usuarios    Usuario[]
+  Jovenes     Joven[]
+  Progresiones Progresion[]
+}
+
+model Joven {
+  id              String    @id @default(uuid())
+  nombres         String
+  apellidos       String
+  fechaNacimiento DateTime
+  unidadId        String
+  representanteId String
+  estado          String    @default("ACTIVO") // ACTIVO, INACTIVO, EGRESADO
+  historial       String?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  deletedAt       DateTime?
+  createdBy       String?
+  updatedBy       String?
+
+  Unidad          Unidad    @relation(fields: [unidadId], references: [id])
+  Representante   Representante @relation(fields: [representanteId], references: [id])
+  FichaMedica     FichaMedica?
+  Condecoraciones JovenCondecoracion[]
+  Progresiones    Progresion[]
+}
+
+model Representante {
+  id          String    @id @default(uuid())
+  nombre      String
+  cedula      String    @unique
+  telefono    String?
+  direccion   String?
+  parentesco  String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  deletedAt   DateTime?
+  createdBy   String?
+  updatedBy   String?
+
+  Jovenes     Joven[]
+}
+
+model FichaMedica {
+  id                String    @id @default(uuid())
+  alergias          String?
+  medicamentos      String?
+  condiciones       String?
+  seguro            String?
+  contactoEmergencia String?
+  jovenId           String    @unique
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+  deletedAt         DateTime?
+  createdBy         String?
+  updatedBy         String?
+
+  Joven             Joven     @relation(fields: [jovenId], references: [id])
+}
+
+model Condecoracion {
+  id          String    @id @default(uuid())
+  nombre      String
+  tipo        String
+  descripcion String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  deletedAt   DateTime?
+  createdBy   String?
+  updatedBy   String?
+
+  Jovenes     JovenCondecoracion[]
+}
+
+model JovenCondecoracion {
+  id              String    @id @default(uuid())
+  jovenId         String
+  condecoracionId String
+  fechaOtorgada   DateTime  @default(now())
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  deletedAt       DateTime?
+  createdBy       String?
+  updatedBy       String?
+
+  Joven           Joven         @relation(fields: [jovenId], references: [id])
+  Condecoracion   Condecoracion @relation(fields: [condecoracionId], references: [id])
+
+  @@unique([jovenId, condecoracionId])
+}
+
+model Progresion {
+  id              String    @id @default(uuid())
+  etapa           String
+  fechaInicio     DateTime  @default(now())
+  fechaCulminacion DateTime?
+  unidadId        String
+  jovenId         String
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  deletedAt       DateTime?
+  createdBy       String?
+  updatedBy       String?
+
+  Unidad          Unidad    @relation(fields: [unidadId], references: [id])
+  Joven           Joven     @relation(fields: [jovenId], references: [id])
+}
+
+model BitacoraAuditoria {
+  id            String    @id @default(uuid())
+  usuarioId     String?
+  accion        String
+  tabla         String
+  registroId    String
+  datosAntes    Json?
+  datosDespues  Json?
+  ip            String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  deletedAt     DateTime?
+  createdBy     String?
+  updatedBy     String?
+
+  Usuario       Usuario?  @relation(fields: [usuarioId], references: [id])
+}
+
+// ─────────────────────────────────────────────
+// RBAC — Role-Based Access Control
+// ─────────────────────────────────────────────
+
+/// Catálogo de roles del sistema (ej: SYSTEM_ADMIN, GROUP_LEADER)
+model Rol {
+  id          String    @id @default(uuid())
+  nombre      String    @unique  // SYSTEM_ADMIN, GROUP_LEADER, etc.
+  descripcion String?
+  activo      Boolean   @default(true)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  deletedAt   DateTime?
+  createdBy   String?
+
+  UsuarioRoles UsuarioRol[]
+  RolPermisos  RolPermiso[]
+}
+
+/// Catálogo de permisos atómicos (ej: user:create, joven:view)
+model Permiso {
+  id          String    @id @default(uuid())
+  accion      String    @unique  // "user:create", "joven:view", "rbac:manage"
+  modulo      String             // "users", "jovenes", "rbac"
+  descripcion String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  RolPermisos RolPermiso[]
+}
+
+/// Asignación de roles a usuarios (tabla pivote con soft delete)
+model UsuarioRol {
+  id          String    @id @default(uuid())
+  usuarioId   String
+  rolId       String
+  asignadoPor String?             // ID del usuario que asignó el rol
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  deletedAt   DateTime?           // Soft delete = rol revocado
+
+  Usuario     Usuario   @relation(fields: [usuarioId], references: [id])
+  Rol         Rol       @relation(fields: [rolId], references: [id])
+
+  @@unique([usuarioId, rolId])     // Evita asignaciones duplicadas
+  @@index([usuarioId])             // Velocidad en lookup de permisos por usuario
+}
+
+/// Asignación de permisos a roles (tabla pivote)
+model RolPermiso {
+  id          String    @id @default(uuid())
+  rolId       String
+  permisoId   String
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  deletedAt   DateTime?           // Soft delete = permiso revocado del rol
+
+  Rol         Rol       @relation(fields: [rolId], references: [id])
+  Permiso     Permiso   @relation(fields: [permisoId], references: [id])
+
+  @@unique([rolId, permisoId])     // Evita permisos duplicados por rol
+  @@index([rolId])                 // Velocidad en JOIN de permisos por rol
+}
+
+/// Auditoría de cambios de roles y permisos (trazabilidad RBAC)
+model AuditRBAC {
+  id              String    @id @default(uuid())
+  accion          String             // "ROLE_ASSIGNED", "ROLE_REVOKED", "PERMISSION_GRANTED"
+  entidad         String             // "UsuarioRol", "RolPermiso"
+  entidadId       String             // ID del registro afectado
+  realizadoPorId  String?            // ID del usuario actor
+  datosCambio     Json?              // { rolId, usuarioId, permisoId, etc. }
+  ip              String?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+}
+
+/// Registro global de auditoría para trazabilidad de operaciones
+model AuditLog {
+  id          String   @id @default(uuid())
+  actorId     String?
+  action      String
+  module      String
+  targetId    String?
+  description String?
+  ipAddress   String?
+  userAgent   String?
+  createdAt   DateTime @default(now())
+
+  actor       Usuario? @relation("AuditLogActor", fields: [actorId], references: [id])
+}
