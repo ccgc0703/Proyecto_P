@@ -13,10 +13,10 @@ export declare class ScoutController {
             deletedAt: Date | null;
             createdBy: string | null;
             updatedBy: string | null;
-            jovenId: string;
-            etapa: string;
             fechaInicio: Date;
+            etapa: string;
             fechaCulminacion: Date | null;
+            jovenId: string;
         };
     }>;
     findAllProgresiones(): Promise<{
@@ -25,28 +25,19 @@ export declare class ScoutController {
         data: ({
             Unidad: {
                 id: string;
-                nombre: string;
+                tipo: string | null;
                 createdAt: Date;
                 updatedAt: Date;
                 deletedAt: Date | null;
                 createdBy: string | null;
                 updatedBy: string | null;
+                nombre: string;
                 descripcion: string | null;
-                tipo: string | null;
             };
             Joven: {
                 id: string;
-                unidadId: string;
-                createdAt: Date;
-                updatedAt: Date;
-                deletedAt: Date | null;
-                createdBy: string | null;
-                updatedBy: string | null;
-                nombres: string;
-                apellidos: string;
-                fechaNacimiento: Date;
+                miembroId: string;
                 representanteId: string;
-                estado: string;
                 historial: string | null;
             };
         } & {
@@ -57,10 +48,10 @@ export declare class ScoutController {
             deletedAt: Date | null;
             createdBy: string | null;
             updatedBy: string | null;
-            jovenId: string;
-            etapa: string;
             fechaInicio: Date;
+            etapa: string;
             fechaCulminacion: Date | null;
+            jovenId: string;
         })[];
     }>;
     findProgresion(id: string): Promise<{
@@ -69,28 +60,19 @@ export declare class ScoutController {
         data: {
             Unidad: {
                 id: string;
-                nombre: string;
+                tipo: string | null;
                 createdAt: Date;
                 updatedAt: Date;
                 deletedAt: Date | null;
                 createdBy: string | null;
                 updatedBy: string | null;
+                nombre: string;
                 descripcion: string | null;
-                tipo: string | null;
             };
             Joven: {
                 id: string;
-                unidadId: string;
-                createdAt: Date;
-                updatedAt: Date;
-                deletedAt: Date | null;
-                createdBy: string | null;
-                updatedBy: string | null;
-                nombres: string;
-                apellidos: string;
-                fechaNacimiento: Date;
+                miembroId: string;
                 representanteId: string;
-                estado: string;
                 historial: string | null;
             };
         } & {
@@ -101,10 +83,10 @@ export declare class ScoutController {
             deletedAt: Date | null;
             createdBy: string | null;
             updatedBy: string | null;
-            jovenId: string;
-            etapa: string;
             fechaInicio: Date;
+            etapa: string;
             fechaCulminacion: Date | null;
+            jovenId: string;
         };
     }>;
     updateProgresion(id: string, data: any, req: any): Promise<{
@@ -118,10 +100,10 @@ export declare class ScoutController {
             deletedAt: Date | null;
             createdBy: string | null;
             updatedBy: string | null;
-            jovenId: string;
-            etapa: string;
             fechaInicio: Date;
+            etapa: string;
             fechaCulminacion: Date | null;
+            jovenId: string;
         };
     }>;
     removeProgresion(id: string, req: any): Promise<{
@@ -134,14 +116,14 @@ export declare class ScoutController {
         message: string;
         data: {
             id: string;
-            nombre: string;
+            tipo: string;
             createdAt: Date;
             updatedAt: Date;
             deletedAt: Date | null;
             createdBy: string | null;
             updatedBy: string | null;
+            nombre: string;
             descripcion: string | null;
-            tipo: string;
         };
     }>;
     findAllCondecoraciones(): Promise<{
@@ -149,14 +131,14 @@ export declare class ScoutController {
         message: string;
         data: {
             id: string;
-            nombre: string;
+            tipo: string;
             createdAt: Date;
             updatedAt: Date;
             deletedAt: Date | null;
             createdBy: string | null;
             updatedBy: string | null;
+            nombre: string;
             descripcion: string | null;
-            tipo: string;
         }[];
     }>;
     removeCondecoracion(id: string, req: any): Promise<{
@@ -178,14 +160,14 @@ export declare class ScoutController {
         data: ({
             Condecoracion: {
                 id: string;
-                nombre: string;
+                tipo: string;
                 createdAt: Date;
                 updatedAt: Date;
                 deletedAt: Date | null;
                 createdBy: string | null;
                 updatedBy: string | null;
+                nombre: string;
                 descripcion: string | null;
-                tipo: string;
             };
         } & {
             id: string;
@@ -194,7 +176,7 @@ export declare class ScoutController {
             deletedAt: Date | null;
             createdBy: string | null;
             updatedBy: string | null;
-            jovenId: string;
+            miembroId: string;
             condecoracionId: string;
             fechaOtorgada: Date;
         })[];

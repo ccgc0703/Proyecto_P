@@ -93,14 +93,17 @@ const ROL_PERMISOS_SEED: Record<string, string[]> = {
     'ADULTO_MANADA': [
         'joven:create', 'joven:view', 'joven:update',
         'progresion:create', 'progresion:view',
+        'unidad:view',
     ],
     'ADULTO_TROPA': [
         'joven:create', 'joven:view', 'joven:update',
         'progresion:create', 'progresion:view',
+        'unidad:view',
     ],
     'ADULTO_CLAN': [
         'joven:create', 'joven:view', 'joven:update',
         'progresion:create', 'progresion:view',
+        'unidad:view',
     ],
     'SECRETARIO': [
         'representante:create', 'representante:view', 'representante:update',

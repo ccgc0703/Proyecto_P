@@ -8,11 +8,21 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
+var __rest = (this && this.__rest) || function (s, e) {
+    var t = {};
+    for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p) && e.indexOf(p) < 0)
+        t[p] = s[p];
+    if (s != null && typeof Object.getOwnPropertySymbols === "function")
+        for (var i = 0, p = Object.getOwnPropertySymbols(s); i < p.length; i++) {
+            if (e.indexOf(p[i]) < 0 && Object.prototype.propertyIsEnumerable.call(s, p[i]))
+                t[p[i]] = s[p[i]];
+        }
+    return t;
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.JovenesService = void 0;
 const common_1 = require("@nestjs/common");
 const prisma_service_1 = require("../prisma/prisma.service");
-const base_service_1 = require("../../common/base.service");
 const audit_service_1 = require("../audit/audit.service");
 const ADULT_UNIT_MAP = {
     ADULTO_MANADA: 'Manada',
@@ -20,9 +30,9 @@ const ADULT_UNIT_MAP = {
     ADULTO_CLAN: 'Clan',
 };
 const UNIT_BYPASS_ROLES = ['SYSTEM_ADMIN', 'GROUP_LEADER'];
-let JovenesService = class JovenesService extends base_service_1.BaseService {
+let JovenesService = class JovenesService {
     constructor(prisma, auditService) {
-        super(prisma, 'joven');
+        this.prisma = prisma;
         this.auditService = auditService;
     }
     async validateUnitAccess(actorId, unidadId) {
@@ -50,48 +60,143 @@ let JovenesService = class JovenesService extends base_service_1.BaseService {
         }
     }
     async findAllByUnit(unidadId) {
-        return this.prisma.joven.findMany({
+        const miembros = await this.prisma.miembro.findMany({
             where: {
+                tipo: 'JOVEN',
                 unidadId,
                 deletedAt: null,
             },
             include: {
                 Unidad: true,
-                Representante: true,
+                Joven: {
+                    include: { Representante: true }
+                },
+                FichaMedica: {
+                    where: { deletedAt: null }
+                },
             },
         });
+        return miembros.map(m => {
+            const { Joven } = m, rest = __rest(m, ["Joven"]);
+            return Object.assign(Object.assign(Object.assign({}, rest), Joven), { id: m.id });
+        });
+    }
+    async findAll() {
+        const miembros = await this.prisma.miembro.findMany({
+            where: {
+                tipo: 'JOVEN',
+                deletedAt: null,
+            },
+            include: {
+                Unidad: true,
+                Joven: {
+                    include: { Representante: true }
+                },
+                FichaMedica: {
+                    where: { deletedAt: null }
+                },
+            },
+        });
+        return miembros.map(m => {
+            const { Joven } = m, rest = __rest(m, ["Joven"]);
+            return Object.assign(Object.assign(Object.assign({}, rest), Joven), { id: m.id });
+        });
+    }
+    async findOne(id) {
+        const miembro = await this.prisma.miembro.findFirst({
+            where: { id, deletedAt: null, tipo: 'JOVEN' },
+            include: {
+                Unidad: true,
+                FichaMedica: {
+                    where: { deletedAt: null }
+                },
+                Condecoraciones: {
+                    where: { deletedAt: null },
+                    include: { Condecoracion: true },
+                },
+                Joven: {
+                    include: {
+                        Representante: true,
+                        Progresiones: {
+                            where: { deletedAt: null },
+                            orderBy: { fechaInicio: 'desc' },
+                        }
+                    }
+                }
+            },
+        });
+        if (!miembro) {
+            throw new common_1.NotFoundException(`Joven con ID ${id} no encontrado`);
+        }
+        const { Joven } = miembro, rest = __rest(miembro, ["Joven"]);
+        return Object.assign(Object.assign(Object.assign({}, rest), Joven), { id: miembro.id, Progresiones: Joven ? Joven.Progresiones : [], Representante: Joven ? Joven.Representante : null });
     }
     async createJoven(createJovenDto, userId, userRol, userUnidadId) {
         await this.validateUnitAccess(userId, createJovenDto.unidadId);
-        const joven = await super.create(Object.assign(Object.assign({}, createJovenDto), { fechaNacimiento: new Date(createJovenDto.fechaNacimiento) }), userId);
+        const miembro = await this.prisma.miembro.create({
+            data: {
+                nombres: createJovenDto.nombres,
+                apellidos: createJovenDto.apellidos,
+                cedula: createJovenDto.cedula,
+                fechaNacimiento: new Date(createJovenDto.fechaNacimiento),
+                genero: createJovenDto.genero,
+                tipo: 'JOVEN',
+                estado: createJovenDto.estado || 'ACTIVO',
+                unidadId: createJovenDto.unidadId,
+                createdBy: userId,
+                Joven: {
+                    create: {
+                        representanteId: createJovenDto.representanteId,
+                        historial: createJovenDto.historial,
+                    }
+                }
+            },
+            include: { Joven: true }
+        });
         await this.auditService.logAction({
             actorId: userId,
             action: 'JOVEN_CREATED',
             module: 'jovenes',
-            targetId: joven.id,
+            targetId: miembro.id,
             description: 'Joven registrado',
         });
-        return joven;
+        return Object.assign(Object.assign(Object.assign({}, miembro), miembro.Joven), { id: miembro.id });
     }
     async updateJoven(id, dto, actorId) {
-        const joven = await this.findOne(id);
-        await this.validateUnitAccess(actorId, joven.unidadId);
-        if (dto.unidadId && dto.unidadId !== joven.unidadId) {
+        const miembro = await this.findOne(id);
+        await this.validateUnitAccess(actorId, miembro.unidadId);
+        if (dto.unidadId && dto.unidadId !== miembro.unidadId) {
             await this.validateUnitAccess(actorId, dto.unidadId);
         }
-        const updateData = {};
+        const miembroData = {};
         if (dto.nombres !== undefined)
-            updateData.nombres = dto.nombres;
+            miembroData.nombres = dto.nombres;
         if (dto.apellidos !== undefined)
-            updateData.apellidos = dto.apellidos;
+            miembroData.apellidos = dto.apellidos;
         if (dto.fechaNacimiento !== undefined)
-            updateData.fechaNacimiento = new Date(dto.fechaNacimiento);
+            miembroData.fechaNacimiento = new Date(dto.fechaNacimiento);
         if (dto.unidadId !== undefined)
-            updateData.unidadId = dto.unidadId;
-        updateData.updatedBy = actorId;
-        const updated = await this.prisma.joven.update({
+            miembroData.unidadId = dto.unidadId;
+        if (dto.cedula !== undefined)
+            miembroData.cedula = dto.cedula;
+        if (dto.genero !== undefined)
+            miembroData.genero = dto.genero;
+        miembroData.updatedBy = actorId;
+        const jovenData = {};
+        if (dto.representanteId !== undefined)
+            jovenData.representanteId = dto.representanteId;
+        if (dto.historial !== undefined)
+            jovenData.historial = dto.historial;
+        const dataToUpdate = Object.assign({}, miembroData);
+        if (Object.keys(jovenData).length > 0) {
+            dataToUpdate.Joven = {
+                update: jovenData
+            };
+        }
+        const updated = await this.prisma.miembro.update({
             where: { id },
-            data: updateData,
+            data: dataToUpdate,
+            include: { Joven: true }
         });
         await this.auditService.logAction({
             actorId,
@@ -100,12 +205,15 @@ let JovenesService = class JovenesService extends base_service_1.BaseService {
             targetId: updated.id,
             description: 'Joven actualizado',
         });
-        return updated;
+        return Object.assign(Object.assign(Object.assign({}, updated), updated.Joven), { id: updated.id });
     }
     async removeJoven(id, actorId) {
-        const joven = await this.findOne(id);
-        await this.validateUnitAccess(actorId, joven.unidadId);
-        const result = await super.remove(id, actorId);
+        const miembro = await this.findOne(id);
+        await this.validateUnitAccess(actorId, miembro.unidadId);
+        const result = await this.prisma.miembro.update({
+            where: { id },
+            data: { deletedAt: new Date(), updatedBy: actorId }
+        });
         await this.auditService.logAction({
             actorId,
             action: 'JOVEN_DELETED',
@@ -114,6 +222,28 @@ let JovenesService = class JovenesService extends base_service_1.BaseService {
             description: 'Joven eliminado (soft delete)',
         });
         return result;
+    }
+    async getStats() {
+        const totalJovenes = await this.prisma.miembro.count({
+            where: { tipo: 'JOVEN', deletedAt: null }
+        });
+        const [manada, tropa, clan] = await Promise.all([
+            this.prisma.miembro.count({
+                where: { tipo: 'JOVEN', deletedAt: null, Unidad: { nombre: 'Manada' } }
+            }),
+            this.prisma.miembro.count({
+                where: { tipo: 'JOVEN', deletedAt: null, Unidad: { nombre: 'Tropa' } }
+            }),
+            this.prisma.miembro.count({
+                where: { tipo: 'JOVEN', deletedAt: null, Unidad: { nombre: 'Clan' } }
+            }),
+        ]);
+        return {
+            totalJovenes,
+            manada,
+            tropa,
+            clan,
+        };
     }
 };
 exports.JovenesService = JovenesService;

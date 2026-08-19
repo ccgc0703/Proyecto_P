@@ -65,6 +65,14 @@ let AdministrativoController = class AdministrativoController {
             data: null,
         };
     }
+    async createFichaMedica(data, req) {
+        const fichaMedica = await this.administrativoService.createFichaMedica(data, req.user.id);
+        return {
+            success: true,
+            message: 'Ficha médica registrada exitosamente',
+            data: fichaMedica,
+        };
+    }
 };
 exports.AdministrativoController = AdministrativoController;
 __decorate([
@@ -110,6 +118,15 @@ __decorate([
     __metadata("design:paramtypes", [String, Object]),
     __metadata("design:returntype", Promise)
 ], AdministrativoController.prototype, "removeRepresentante", null);
+__decorate([
+    (0, common_1.Post)('ficha-medica'),
+    (0, permissions_decorator_1.RequirePermission)(constantes_1.PERMISSIONS.MEDICO_EDIT),
+    __param(0, (0, common_1.Body)()),
+    __param(1, (0, common_1.Req)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object, Object]),
+    __metadata("design:returntype", Promise)
+], AdministrativoController.prototype, "createFichaMedica", null);
 exports.AdministrativoController = AdministrativoController = __decorate([
     (0, common_1.Controller)('administrativo'),
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, permissions_guard_1.PermissionsGuard),

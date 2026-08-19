@@ -9,11 +9,11 @@ export class FichaMedicaService {
 
     async create(dto: CreateFichaMedicaDto, userId: string) {
         const existing = await this.prisma.fichaMedica.findUnique({
-            where: { jovenId: dto.jovenId },
+            where: { miembroId: dto.miembroId },
         });
 
         if (existing) {
-            throw new ConflictException('El joven ya tiene una ficha médica registrada');
+            throw new ConflictException('El miembro ya tiene una ficha médica registrada');
         }
 
         return this.prisma.fichaMedica.create({
@@ -28,14 +28,14 @@ export class FichaMedicaService {
     async findAll() {
         return this.prisma.fichaMedica.findMany({
             where: { deletedAt: null },
-            include: { Joven: true },
+            include: { Miembro: true },
         });
     }
 
-    async findByJoven(jovenId: string) {
+    async findByMiembro(miembroId: string) {
         const ficha = await this.prisma.fichaMedica.findUnique({
-            where: { jovenId },
-            include: { Joven: true },
+            where: { miembroId },
+            include: { Miembro: true },
         });
         if (!ficha || ficha.deletedAt) {
             throw new NotFoundException('Ficha médica no encontrada');
@@ -46,7 +46,7 @@ export class FichaMedicaService {
     async findOne(id: string) {
         const ficha = await this.prisma.fichaMedica.findFirst({
             where: { id, deletedAt: null },
-            include: { Joven: true },
+            include: { Miembro: true },
         });
         if (!ficha) {
             throw new NotFoundException('Ficha médica no encontrada');

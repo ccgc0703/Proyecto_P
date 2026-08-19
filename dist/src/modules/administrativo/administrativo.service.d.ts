@@ -13,11 +13,12 @@ export declare class AdministrativoService extends BaseService<any> {
         deletedAt: Date | null;
         createdBy: string | null;
         updatedBy: string | null;
+        miembroId: string;
+        tipoSangre: string | null;
         alergias: string | null;
         medicamentos: string | null;
         condiciones: string | null;
         seguro: string | null;
         contactoEmergencia: string | null;
-        jovenId: string;
     }>;
 }

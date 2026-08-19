@@ -26,11 +26,11 @@ export class FichaMedicaController {
         return { success: true, message: 'Fichas médicas recuperadas', data: fichas };
     }
 
-    @Get('joven/:jovenId')
+    @Get('miembro/:miembroId')
     @RequirePermission(PERMISSIONS.MEDICO_VIEW)
-    async findByJoven(@Param('jovenId') jovenId: string) {
-        const ficha = await this.fichaMedicaService.findByJoven(jovenId);
-        return { success: true, message: 'Ficha médica del joven', data: ficha };
+    async findByMiembro(@Param('miembroId') miembroId: string) {
+        const ficha = await this.fichaMedicaService.findByMiembro(miembroId);
+        return { success: true, message: 'Ficha médica del miembro', data: ficha };
     }
 
     @Get(':id')

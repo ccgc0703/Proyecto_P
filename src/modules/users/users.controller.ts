@@ -82,5 +82,24 @@ export class UsersController {
             data: null,
         };
     }
-}
 
+    @Patch(':id/password')
+    async changePassword(
+        @Param('id') id: string,
+        @Body() body: { currentPassword: string; newPassword: string },
+        @Req() req: any,
+    ) {
+        const result = await this.usersService.changePassword(
+            id,
+            body.currentPassword,
+            body.newPassword,
+            req.user.id,
+            req.ip,
+        );
+        return {
+            success: true,
+            message: result.message,
+            data: null,
+        };
+    }
+}

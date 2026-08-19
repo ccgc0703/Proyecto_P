@@ -33,9 +33,9 @@ let FichaMedicaController = class FichaMedicaController {
         const fichas = await this.fichaMedicaService.findAll();
         return { success: true, message: 'Fichas médicas recuperadas', data: fichas };
     }
-    async findByJoven(jovenId) {
-        const ficha = await this.fichaMedicaService.findByJoven(jovenId);
-        return { success: true, message: 'Ficha médica del joven', data: ficha };
+    async findByMiembro(miembroId) {
+        const ficha = await this.fichaMedicaService.findByMiembro(miembroId);
+        return { success: true, message: 'Ficha médica del miembro', data: ficha };
     }
     async findOne(id) {
         const ficha = await this.fichaMedicaService.findOne(id);
@@ -68,13 +68,13 @@ __decorate([
     __metadata("design:returntype", Promise)
 ], FichaMedicaController.prototype, "findAll", null);
 __decorate([
-    (0, common_1.Get)('joven/:jovenId'),
+    (0, common_1.Get)('miembro/:miembroId'),
     (0, permissions_decorator_1.RequirePermission)(constantes_1.PERMISSIONS.MEDICO_VIEW),
-    __param(0, (0, common_1.Param)('jovenId')),
+    __param(0, (0, common_1.Param)('miembroId')),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [String]),
     __metadata("design:returntype", Promise)
-], FichaMedicaController.prototype, "findByJoven", null);
+], FichaMedicaController.prototype, "findByMiembro", null);
 __decorate([
     (0, common_1.Get)(':id'),
     (0, permissions_decorator_1.RequirePermission)(constantes_1.PERMISSIONS.MEDICO_VIEW),

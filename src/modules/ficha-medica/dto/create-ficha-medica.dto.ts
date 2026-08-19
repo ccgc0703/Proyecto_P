@@ -2,7 +2,7 @@ import { IsString, IsOptional } from 'class-validator';
 
 export class CreateFichaMedicaDto {
     @IsString()
-    jovenId: string;
+    miembroId: string;
 
     @IsOptional()
     @IsString()

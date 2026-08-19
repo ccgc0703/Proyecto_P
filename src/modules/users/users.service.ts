@@ -1,4 +1,4 @@
-import { Injectable, ConflictException, NotFoundException } from '@nestjs/common';
+import { Injectable, ConflictException, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { BaseService } from '../../common/base.service';
 import { CreateUserDto } from './dto/create-user.dto';
@@ -15,13 +15,55 @@ export class UsersService extends BaseService<any> {
         super(prisma, 'usuario');
     }
 
+    /**
+     * Lista todos los usuarios con sus relaciones (roles, unidad).
+     */
     async findAll(where: any = {}) {
-        const users = await super.findAll(where);
-        return users.map((user) => this.excludePassword(user));
+        const users = await this.prisma.usuario.findMany({
+            where: {
+                ...where,
+                deletedAt: null,
+            },
+            include: {
+                Unidad: true,
+                UsuarioRoles: {
+                    where: { deletedAt: null },
+                    include: { Rol: true },
+                },
+                Adulto: {
+                    include: { Miembro: true },
+                },
+            },
+        });
+        return users.map((user) => {
+            const { password, ...rest } = user;
+            return {
+                ...rest,
+                roles: user.UsuarioRoles.map((ur) => ur.Rol.nombre),
+            };
+        });
     }
 
+    /**
+     * Obtiene un usuario por ID con relaciones completas.
+     */
     async findOne(id: string) {
-        const user = await super.findOne(id);
+        const user = await this.prisma.usuario.findFirst({
+            where: { id, deletedAt: null },
+            include: {
+                Unidad: true,
+                UsuarioRoles: {
+                    where: { deletedAt: null },
+                    include: { Rol: true },
+                },
+                Adulto: {
+                    include: { Miembro: true },
+                },
+            },
+        });
+        if (!user) {
+            throw new NotFoundException(`Usuario con ID ${id} no encontrado.`);
+        }
         return this.excludePassword(user);
     }
 
@@ -79,6 +121,7 @@ export class UsersService extends BaseService<any> {
         // Solo campos permitidos
         const updateData: any = {};
         if (dto.nombre !== undefined) updateData.nombre = dto.nombre;
+        if (dto.apellido !== undefined) updateData.apellido = dto.apellido;
         if (dto.email !== undefined) updateData.email = dto.email;
         if (dto.unidadId !== undefined) updateData.unidadId = dto.unidadId;
         updateData.updatedBy = actorId;
@@ -99,6 +142,46 @@ export class UsersService extends BaseService<any> {
         });
 
         return this.excludePassword(user);
+    }
+
+    /**
+     * Cambiar contraseña de un usuario.
+     */
+    async changePassword(id: string, currentPassword: string, newPassword: string, actorId: string, ip?: string) {
+        const user = await this.prisma.usuario.findFirst({
+            where: { id, deletedAt: null },
+        });
+
+        if (!user) {
+            throw new NotFoundException('Usuario no encontrado');
+        }
+
+        const isValid = await bcrypt.compare(currentPassword, user.password);
+        if (!isValid) {
+            throw new BadRequestException('La contraseña actual es incorrecta');
+        }
+
+        const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+        await this.prisma.usuario.update({
+            where: { id },
+            data: {
+                password: hashedPassword,
+                tokenVersion: { increment: 1 }, // Invalida JWT previo
+                updatedBy: actorId,
+            },
+        });
+
+        await this.auditService.logAction({
+            actorId,
+            action: 'PASSWORD_CHANGED',
+            module: 'users',
+            targetId: id,
+            description: 'Contraseña actualizada',
+            ipAddress: ip,
+        });
+
+        return { message: 'Contraseña actualizada exitosamente' };
     }
 
     async remove(id: string, userId?: string, ip?: string, userAgent?: string) {
@@ -123,5 +206,3 @@ export class UsersService extends BaseService<any> {
         return userWithoutPassword;
     }
 }
-
-

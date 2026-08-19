@@ -34,4 +34,24 @@ __decorate([
     (0, class_validator_1.IsString)(),
     __metadata("design:type", String)
 ], UpdateJovenDto.prototype, "unidadId", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsString)(),
+    __metadata("design:type", String)
+], UpdateJovenDto.prototype, "cedula", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsEnum)(['MASCULINO', 'FEMENINO'], { message: 'Género inválido (MASCULINO o FEMENINO)' }),
+    __metadata("design:type", String)
+], UpdateJovenDto.prototype, "genero", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsString)(),
+    __metadata("design:type", String)
+], UpdateJovenDto.prototype, "representanteId", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsString)(),
+    __metadata("design:type", String)
+], UpdateJovenDto.prototype, "historial", void 0);
 //# sourceMappingURL=update-joven.dto.js.map

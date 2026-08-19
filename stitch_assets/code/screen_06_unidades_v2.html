@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+
+<html lang="es"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Gestión de Unidades | Modern Sentinel</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@200;300;400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "on-primary-container": "#95a2ff",
+              "on-secondary": "#ffffff",
+              "outline": "#767683",
+              "tertiary": "#6d5e00",
+              "background": "#faf9f9",
+              "inverse-on-surface": "#f2f0f0",
+              "on-secondary-fixed": "#002117",
+              "on-background": "#1b1c1c",
+              "surface-tint": "#4a57ae",
+              "primary-fixed-dim": "#bcc3ff",
+              "outline-variant": "#c6c5d3",
+              "primary-fixed": "#dfe0ff",
+              "secondary": "#376757",
+              "on-error": "#ffffff",
+              "tertiary-container": "#c4aa00",
+              "error": "#ba1a1a",
+              "on-primary-fixed-variant": "#313e95",
+              "surface-variant": "#e3e2e2",
+              "primary-container": "#27348b",
+              "on-secondary-container": "#3d6d5d",
+              "on-secondary-fixed-variant": "#1d4f40",
+              "on-tertiary": "#ffffff",
+              "inverse-surface": "#303031",
+              "on-tertiary-fixed-variant": "#524600",
+              "on-primary": "#ffffff",
+              "on-error-container": "#93000a",
+              "error-container": "#ffdad6",
+              "inverse-primary": "#bcc3ff",
+              "surface-container-high": "#e9e8e8",
+              "secondary-fixed-dim": "#9ed1bd",
+              "secondary-fixed": "#baeed9",
+              "on-surface-variant": "#454652",
+              "tertiary-fixed-dim": "#e3c600",
+              "on-primary-fixed": "#000d60",
+              "surface-container-lowest": "#ffffff",
+              "on-tertiary-container": "#4a3f00",
+              "surface": "#faf9f9",
+              "on-surface": "#1b1c1c",
+              "secondary-container": "#baeed9",
+              "primary": "#0a1a75",
+              "surface-container": "#efeded",
+              "surface-dim": "#dbdad9",
+              "on-tertiary-fixed": "#211b00",
+              "surface-bright": "#faf9f9",
+              "tertiary-fixed": "#ffe24a",
+              "surface-container-low": "#f5f3f3",
+              "surface-container-highest": "#e3e2e2"
+            },
+            fontFamily: {
+              "headline": ["Manrope"],
+              "body": ["Manrope"],
+              "label": ["Manrope"]
+            },
+            borderRadius: {"DEFAULT": "0.125rem", "lg": "0.25rem", "xl": "0.5rem", "full": "0.75rem"},
+          },
+        },
+      }
+    </script>
+<style>
+        body { font-family: 'Manrope', sans-serif; }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .sentinel-gradient {
+            background: linear-gradient(135deg, #0a1a75 0%, #27348b 100%);
+        }
+        .glass-sidebar {
+            backdrop-filter: blur(20px);
+        }
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #c6c5d3; border-radius: 10px; }
+    </style>
+</head>
+<body class="bg-background text-on-background antialiased">
+<!-- SideNavBar -->
+<aside class="fixed left-0 top-0 h-screen w-64 z-40 bg-white/70 dark:bg-slate-900/70 backdrop-blur-2xl shadow-[4px_0_24px_rgba(0,0,0,0.02)] border-r border-slate-100/20 dark:border-slate-800/20 hidden md:flex flex-col p-6 gap-2">
+<div class="mb-10">
+<h1 class="text-xl font-bold bg-gradient-to-r from-blue-900 to-blue-700 bg-clip-text text-transparent">Modern Sentinel</h1>
+<p class="text-[10px] uppercase tracking-widest text-outline font-extrabold opacity-60">The Precision Navigator</p>
+</div>
+<nav class="flex flex-col gap-2 flex-grow">
+<a class="text-slate-500 dark:text-slate-400 px-4 py-3 flex items-center gap-3 hover:bg-slate-100/50 dark:hover:bg-slate-800/50 rounded-xl transition-all hover:translate-x-1" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+<span class="font-semibold text-sm">Dashboard</span>
+</a>
+<a class="bg-emerald-100/50 dark:bg-emerald-900/30 text-emerald-900 dark:text-emerald-100 rounded-xl px-4 py-3 flex items-center gap-3 active:opacity-80" href="#">
+<span class="material-symbols-outlined">group_work</span>
+<span class="font-semibold text-sm">Unidades</span>
+</a>
+<a class="text-slate-500 dark:text-slate-400 px-4 py-3 flex items-center gap-3 hover:bg-slate-100/50 dark:hover:bg-slate-800/50 rounded-xl transition-all hover:translate-x-1" href="#">
+<span class="material-symbols-outlined">badge</span>
+<span class="font-semibold text-sm">Staff</span>
+</a>
+<a class="text-slate-500 dark:text-slate-400 px-4 py-3 flex items-center gap-3 hover:bg-slate-100/50 dark:hover:bg-slate-800/50 rounded-xl transition-all hover:translate-x-1" href="#">
+<span class="material-symbols-outlined">event_note</span>
+<span class="font-semibold text-sm">Planificaciones</span>
+</a>
+</nav>
+<div class="mt-auto flex flex-col gap-2 pt-6 border-t border-outline-variant/20">
+<button class="sentinel-gradient text-white rounded-xl py-3 font-bold text-sm shadow-lg shadow-primary-container/20 flex items-center justify-center gap-2 mb-4">
+<span class="material-symbols-outlined text-sm">add</span>
+                New Report
+            </button>
+<a class="text-slate-500 px-4 py-2 flex items-center gap-3 hover:text-primary transition-colors" href="#">
+<span class="material-symbols-outlined text-lg">help</span>
+<span class="text-xs font-semibold">Help</span>
+</a>
+<a class="text-slate-500 px-4 py-2 flex items-center gap-3 hover:text-error transition-colors" href="#">
+<span class="material-symbols-outlined text-lg">logout</span>
+<span class="text-xs font-semibold">Logout</span>
+</a>
+</div>
+</aside>
+<!-- TopNavBar -->
+<header class="fixed top-0 w-full z-50 bg-white/80 backdrop-blur-xl shadow-sm md:pl-64 h-16 transition-all">
+<div class="flex justify-between items-center px-8 h-full max-w-[1920px] mx-auto">
+<div class="flex items-center gap-8">
+<span class="text-2xl font-black tracking-tighter text-blue-900">Modern Sentinel</span>
+<nav class="hidden lg:flex items-center gap-6">
+<a class="text-slate-500 hover:text-blue-600 transition-colors font-manrope font-medium text-sm" href="#">Dashboard</a>
+<a class="text-blue-700 border-b-2 border-blue-700 font-bold pb-1 text-sm" href="#">Unidades</a>
+<a class="text-slate-500 hover:text-blue-600 transition-colors font-manrope font-medium text-sm" href="#">Staff</a>
+<a class="text-slate-500 hover:text-blue-600 transition-colors font-manrope font-medium text-sm" href="#">Planificaciones</a>
+</nav>
+</div>
+<div class="flex items-center gap-4">
+<div class="relative hidden sm:block">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline text-sm">search</span>
+<input class="bg-surface-container-low border-none rounded-full pl-10 pr-4 py-1.5 text-sm focus:ring-2 focus:ring-primary-container w-64" placeholder="Search resources..." type="text"/>
+</div>
+<button class="p-2 text-on-surface-variant hover:bg-slate-50/50 rounded-full transition-all active:scale-95">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<button class="p-2 text-on-surface-variant hover:bg-slate-50/50 rounded-full transition-all active:scale-95">
+<span class="material-symbols-outlined">settings</span>
+</button>
+<div class="w-8 h-8 rounded-full overflow-hidden border-2 border-primary-fixed ml-2">
+<img class="w-full h-full object-cover" data-alt="professional portrait of a senior scout leader with a confident smile, warm outdoor natural lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCPJylzpXvkwCiDGCTyI4VAuQUbZVpor1ApPBJRFFxoujoA7e50dfLJMRPW9YTMaCxZt9SHe9yWJf3duXW-YMkfKzny42QjPlPvu2WJP6282pWdRXHlM2kA417S_Rgmo07c3gd6lfrH2u17FXZooOzq5Rk1oAbU2CSFgzlHiL5N_WV65wTzmnAcbVYTNtGNexXGLPcq89i9gxMGO4Ea8dfskTpDfFpD2bjfDPOk31fe20VtW7bFvvOTXGzF2S3XbBNOYd_-ImX-Xok"/>
+</div>
+</div>
+</div>
+</header>
+<!-- Main Content Canvas -->
+<main class="md:pl-64 pt-16 min-h-screen">
+<div class="p-8 max-w-[1600px] mx-auto">
+<!-- Header Section -->
+<div class="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12">
+<div>
+<nav class="flex items-center gap-2 text-xs font-bold text-outline mb-2 tracking-widest uppercase">
+<span>Sentinel</span>
+<span class="material-symbols-outlined text-[10px]">chevron_right</span>
+<span class="text-secondary">Unidades</span>
+</nav>
+<h2 class="text-5xl font-black text-primary tracking-tight leading-none">Unidades Scout</h2>
+<p class="text-on-surface-variant mt-4 max-w-xl text-lg font-medium leading-relaxed">
+                        Administra el progreso de los jóvenes y la estructura de las secciones para este ciclo de actividades.
+                    </p>
+</div>
+<button class="sentinel-gradient text-white px-8 py-4 rounded-xl font-bold flex items-center gap-3 shadow-xl shadow-primary/20 hover:scale-[1.02] transition-transform active:scale-95">
+<span class="material-symbols-outlined">person_add</span>
+                    New Youth
+                </button>
+</div>
+<!-- Featured Banner (Asymmetric Layout) -->
+<section class="grid grid-cols-1 lg:grid-cols-12 gap-8 mb-16">
+<div class="lg:col-span-8 bg-surface-container-low rounded-[2rem] p-10 relative overflow-hidden group">
+<div class="relative z-10 flex flex-col h-full justify-between">
+<div>
+<span class="bg-tertiary-fixed text-on-tertiary-fixed px-4 py-1 rounded-full text-xs font-black uppercase tracking-widest mb-6 inline-block">Special Report</span>
+<h3 class="text-4xl font-extrabold text-primary mb-4">Quarterly Growth</h3>
+<p class="text-on-surface-variant max-w-md text-lg">La membresía ha aumentado un 14% este trimestre. La Unidad Caminantes lidera el progreso técnico con un 85% de avance.</p>
+</div>
+<div class="mt-8 flex gap-4">
+<button class="bg-secondary text-on-secondary px-6 py-3 rounded-lg font-bold text-sm">Download Analytics</button>
+<button class="text-primary font-bold text-sm flex items-center gap-1">View Heatmap <span class="material-symbols-outlined text-sm">arrow_forward</span></button>
+</div>
+</div>
+<!-- Decorative Graphic element instead of border -->
+<div class="absolute right-0 top-0 h-full w-1/3 opacity-10 pointer-events-none group-hover:opacity-20 transition-opacity">
+<svg class="h-full w-full" fill="none" viewbox="0 0 200 400" xmlns="http://www.w3.org/2000/svg">
+<circle class="text-primary" cx="200" cy="200" r="150" stroke="currentColor" stroke-width="40"></circle>
+<circle class="text-secondary" cx="200" cy="200" r="80" stroke="currentColor" stroke-width="20"></circle>
+</svg>
+</div>
+</div>
+<div class="lg:col-span-4 bg-primary text-white rounded-[2rem] p-8 flex flex-col justify-between shadow-2xl shadow-primary/30">
+<div class="flex justify-between items-start">
+<div class="p-3 bg-white/10 rounded-2xl backdrop-blur-md">
+<span class="material-symbols-outlined text-3xl">trending_up</span>
+</div>
+<span class="text-xs font-bold opacity-60 tracking-tighter uppercase">Active Members</span>
+</div>
+<div>
+<span class="text-6xl font-black">124</span>
+<div class="flex items-center gap-2 text-secondary-fixed mt-2">
+<span class="material-symbols-outlined text-sm">north_east</span>
+<span class="text-sm font-bold">+12 this month</span>
+</div>
+</div>
+<div class="pt-6 border-t border-white/10">
+<p class="text-xs opacity-70 leading-relaxed">System status: All units reporting active and synchronized with central server.</p>
+</div>
+</div>
+</section>
+<!-- Unit Filters & Search -->
+<div class="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8">
+<div class="flex flex-wrap items-center gap-2">
+<button class="bg-secondary-container text-on-secondary-container px-5 py-2 rounded-full font-bold text-sm transition-all">All</button>
+<button class="hover:bg-surface-container-high text-on-surface-variant px-5 py-2 rounded-full font-bold text-sm transition-all">Manada</button>
+<button class="hover:bg-surface-container-high text-on-surface-variant px-5 py-2 rounded-full font-bold text-sm transition-all">Unidad</button>
+<button class="hover:bg-surface-container-high text-on-surface-variant px-5 py-2 rounded-full font-bold text-sm transition-all">Caminantes</button>
+<button class="hover:bg-surface-container-high text-on-surface-variant px-5 py-2 rounded-full font-bold text-sm transition-all">Rovers</button>
+</div>
+<div class="flex items-center gap-4">
+<button class="p-3 bg-surface-container-high rounded-xl text-on-surface-variant hover:bg-slate-200 transition-colors">
+<span class="material-symbols-outlined">filter_list</span>
+</button>
+<div class="relative w-full md:w-64">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline text-sm">search</span>
+<input class="w-full bg-surface-container-low border-none rounded-xl pl-10 pr-4 py-3 text-sm focus:ring-2 focus:ring-secondary" placeholder="Filter by name..." type="text"/>
+</div>
+</div>
+</div>
+<!-- Members Table Section (Modern List Pattern) -->
+<div class="bg-surface-container-lowest rounded-3xl overflow-hidden shadow-sm">
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="bg-surface-container-low/50">
+<th class="px-8 py-6 text-xs font-black text-outline uppercase tracking-widest">Member name</th>
+<th class="px-6 py-6 text-xs font-black text-outline uppercase tracking-widest">Unit/Patrol</th>
+<th class="px-6 py-6 text-xs font-black text-outline uppercase tracking-widest">Age</th>
+<th class="px-6 py-6 text-xs font-black text-outline uppercase tracking-widest">Progress Step</th>
+<th class="px-6 py-6 text-xs font-black text-outline uppercase tracking-widest">Last Activity</th>
+<th class="px-6 py-6 text-xs font-black text-outline uppercase tracking-widest"></th>
+</tr>
+</thead>
+<tbody class="divide-y divide-surface-variant/30">
+<!-- Member Row 1 -->
+<tr class="group hover:bg-surface-container-low transition-colors">
+<td class="px-8 py-6">
+<div class="flex items-center gap-4">
+<div class="w-10 h-10 rounded-full bg-slate-100 overflow-hidden">
+<img class="w-full h-full object-cover" data-alt="close-up portrait of a young male scout smiling, natural outdoor lighting, shallow depth of field" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAeyZ4hI_LJYQYSigB8bV_B-dR7XeKjoBcGAKRpqgBpB23WTzmD0MPGr9_Ln6XUQjgZEiLuZ5IPLOfUB3QiqwdINhI_YUhjo8iDnKyXP6_m7eNwoB_NRp5BUrg7xUOYUrqWUXowpEywC1tyfwa-xSG5yC7fueU-pu_OoAnkUnRCNLrbzb7Xnpq3FWHDPV1zJOB2KJmAKH2kk-6caSpOrywwMkFUEbzLaPV859RYPGvwxjZnjKtaMe_kXUG7_y6pevj5ZaAInSyd5wY"/>
+</div>
+<div>
+<div class="font-bold text-on-surface">Mateo Fernández</div>
+<div class="text-xs text-outline font-medium">ID: 4529-SC</div>
+</div>
+</div>
+</td>
+<td class="px-6 py-6">
+<span class="px-3 py-1 bg-secondary-fixed text-on-secondary-fixed-variant rounded-full text-[10px] font-black uppercase tracking-tight">Unidad / Puma</span>
+</td>
+<td class="px-6 py-6 text-sm font-semibold text-on-surface-variant">12 years</td>
+<td class="px-6 py-6">
+<div class="flex flex-col gap-1.5 w-32">
+<div class="flex justify-between text-[10px] font-bold text-outline uppercase">
+<span>Second Class</span>
+<span>75%</span>
+</div>
+<div class="h-1.5 w-full bg-surface-container-high rounded-full overflow-hidden">
+<div class="h-full bg-secondary w-3/4"></div>
+</div>
+</div>
+</td>
+<td class="px-6 py-6">
+<div class="text-sm font-medium text-on-surface">2 hours ago</div>
+<div class="text-[10px] text-outline">Meeting: Camp Prep</div>
+</td>
+<td class="px-6 py-6 text-right">
+<button class="p-2 hover:bg-white rounded-lg transition-all opacity-0 group-hover:opacity-100">
+<span class="material-symbols-outlined text-outline">more_horiz</span>
+</button>
+</td>
+</tr>
+<!-- Member Row 2 -->
+<tr class="group hover:bg-surface-container-low transition-colors">
+<td class="px-8 py-6">
+<div class="flex items-center gap-4">
+<div class="w-10 h-10 rounded-full bg-slate-100 overflow-hidden">
+<img class="w-full h-full object-cover" data-alt="vibrant portrait of a young girl scout in a green scarf, outdoors in a sunlit park with autumn leaves" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBVNc-HUaqogJKCR7Efp9cUvP0Kn-NLaJhabKW4x1h26VEjHm023lFe1DaoZCWi7a1PAIT435QuFQ7WUyjLkViK2ee76LJdGzrGWG0-SOHxUX6amlWgcTNOKhMHnyrSI-7PRGn-NtEw-KojRZqBjp4urFGPLgaOkJmIt60hzuvHZKIp0sO9gQEF-EWhvTP4f-GgQfPT3t7Y-9lkt96AFuIusSwyD2GKVv5RokF0B4JWFCaWGX0tIxIjyVv1bw9O-tFL1bThwHFKwA4"/>
+</div>
+<div>
+<div class="font-bold text-on-surface">Sofía Ramírez</div>
+<div class="text-xs text-outline font-medium">ID: 1288-SC</div>
+</div>
+</div>
+</td>
+<td class="px-6 py-6">
+<span class="px-3 py-1 bg-tertiary-fixed text-on-tertiary-fixed-variant rounded-full text-[10px] font-black uppercase tracking-tight">Manada / Lobo Gris</span>
+</td>
+<td class="px-6 py-6 text-sm font-semibold text-on-surface-variant">9 years</td>
+<td class="px-6 py-6">
+<div class="flex flex-col gap-1.5 w-32">
+<div class="flex justify-between text-[10px] font-bold text-outline uppercase">
+<span>Akela's Paw</span>
+<span>40%</span>
+</div>
+<div class="h-1.5 w-full bg-surface-container-high rounded-full overflow-hidden">
+<div class="h-full bg-tertiary-container w-2/5"></div>
+</div>
+</div>
+</td>
+<td class="px-6 py-6">
+<div class="text-sm font-medium text-on-surface">Yesterday</div>
+<div class="text-[10px] text-outline">Badges: First Aid</div>
+</td>
+<td class="px-6 py-6 text-right">
+<button class="p-2 hover:bg-white rounded-lg transition-all opacity-0 group-hover:opacity-100">
+<span class="material-symbols-outlined text-outline">more_horiz</span>
+</button>
+</td>
+</tr>
+<!-- Member Row 3 -->
+<tr class="group hover:bg-surface-container-low transition-colors">
+<td class="px-8 py-6">
+<div class="flex items-center gap-4">
+<div class="w-10 h-10 rounded-full bg-slate-100 overflow-hidden">
+<img class="w-full h-full object-cover" data-alt="headshot of a young adult scout leader wearing a blue hat, serious but friendly expression, soft studio lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAaFQtiLIRKZcMs6wV--tjNjJYyegG3dg8gmfcf58jnnVMxPz7Nxc5P4hpqcdzorF_pS3UN6s8MQTDpjfCfl_43gktoe4SCfN_jlgGxU-285vx2eEE0I9di4A3u8NQIiXPukphH3w5Kb0TUdhooN3ZdZ75rx3b6iWrO9zE0JKx-sRlrjJ7vhoyWegX1zfJXHQnmC0nqSAZj_m-bCbiCvTcWxDqwnVAd44hK3HrYp1n2E4vW6v9QCgUG1BGvotsfegHNsmvI4Vqhjmg"/>
+</div>
+<div>
+<div class="font-bold text-on-surface">Julián Costa</div>
+<div class="text-xs text-outline font-medium">ID: 8831-SC</div>
+</div>
+</div>
+</td>
+<td class="px-6 py-6">
+<span class="px-3 py-1 bg-primary-fixed text-on-primary-fixed-variant rounded-full text-[10px] font-black uppercase tracking-tight">Rovers / Clan A.</span>
+</td>
+<td class="px-6 py-6 text-sm font-semibold text-on-surface-variant">19 years</td>
+<td class="px-6 py-6">
+<div class="flex flex-col gap-1.5 w-32">
+<div class="flex justify-between text-[10px] font-bold text-outline uppercase">
+<span>Rover Scout</span>
+<span>92%</span>
+</div>
+<div class="h-1.5 w-full bg-surface-container-high rounded-full overflow-hidden">
+<div class="h-full bg-primary w-[92%]"></div>
+</div>
+</div>
+</td>
+<td class="px-6 py-6">
+<div class="text-sm font-medium text-on-surface">3 days ago</div>
+<div class="text-[10px] text-outline">Log: Service Project</div>
+</td>
+<td class="px-6 py-6 text-right">
+<button class="p-2 hover:bg-white rounded-lg transition-all opacity-0 group-hover:opacity-100">
+<span class="material-symbols-outlined text-outline">more_horiz</span>
+</button>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<!-- Table Footer/Pagination -->
+<div class="px-8 py-6 bg-surface-container-low/30 flex items-center justify-between">
+<span class="text-xs font-bold text-outline tracking-tight">Showing 3 of 124 members</span>
+<div class="flex items-center gap-2">
+<button class="w-10 h-10 flex items-center justify-center rounded-xl bg-white border border-outline-variant/20 text-on-surface-variant disabled:opacity-30" disabled="">
+<span class="material-symbols-outlined text-sm">chevron_left</span>
+</button>
+<button class="w-10 h-10 flex items-center justify-center rounded-xl bg-secondary text-on-secondary font-bold text-xs">1</button>
+<button class="w-10 h-10 flex items-center justify-center rounded-xl bg-white border border-outline-variant/20 text-on-surface-variant text-xs hover:bg-slate-50 transition-colors">2</button>
+<button class="w-10 h-10 flex items-center justify-center rounded-xl bg-white border border-outline-variant/20 text-on-surface-variant text-xs hover:bg-slate-50 transition-colors">3</button>
+<button class="w-10 h-10 flex items-center justify-center rounded-xl bg-white border border-outline-variant/20 text-on-surface-variant">
+<span class="material-symbols-outlined text-sm">chevron_right</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Contextual Insight (Bento Bottom) -->
+<div class="mt-16 grid grid-cols-1 md:grid-cols-3 gap-8 pb-20">
+<div class="bg-surface-container-low p-8 rounded-[2rem] border-b-4 border-secondary transition-transform hover:-translate-y-1">
+<div class="flex items-center gap-4 mb-6">
+<div class="p-3 bg-secondary-fixed rounded-2xl text-secondary">
+<span class="material-symbols-outlined">psychology</span>
+</div>
+<h4 class="font-black text-primary uppercase text-xs tracking-widest">Leadership View</h4>
+</div>
+<p class="text-on-surface-variant text-sm font-medium leading-relaxed">
+                        80% de los líderes de patrulla han completado su capacitación básica. Se recomienda programar taller de pionerismo.
+                    </p>
+</div>
+<div class="bg-surface-container-low p-8 rounded-[2rem] border-b-4 border-tertiary transition-transform hover:-translate-y-1">
+<div class="flex items-center gap-4 mb-6">
+<div class="p-3 bg-tertiary-fixed rounded-2xl text-tertiary">
+<span class="material-symbols-outlined">warning</span>
+</div>
+<h4 class="font-black text-primary uppercase text-xs tracking-widest">Active Alerts</h4>
+</div>
+<p class="text-on-surface-variant text-sm font-medium leading-relaxed">
+                        Existen 12 fichas médicas por actualizar en la Unidad Scout. Se requiere acción antes del campamento de verano.
+                    </p>
+</div>
+<div class="bg-surface-container-low p-8 rounded-[2rem] border-b-4 border-primary-container transition-transform hover:-translate-y-1">
+<div class="flex items-center gap-4 mb-6">
+<div class="p-3 bg-primary-fixed rounded-2xl text-primary">
+<span class="material-symbols-outlined">auto_graph</span>
+</div>
+<h4 class="font-black text-primary uppercase text-xs tracking-widest">Progress Speed</h4>
+</div>
+<p class="text-on-surface-variant text-sm font-medium leading-relaxed">
+                        El ritmo de avance en adelanto técnico es un 22% superior al mismo periodo del año anterior.
+                    </p>
+</div>
+</div>
+</div>
+</main>
+</body></html>

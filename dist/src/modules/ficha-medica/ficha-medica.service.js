@@ -18,10 +18,10 @@ let FichaMedicaService = class FichaMedicaService {
     }
     async create(dto, userId) {
         const existing = await this.prisma.fichaMedica.findUnique({
-            where: { jovenId: dto.jovenId },
+            where: { miembroId: dto.miembroId },
         });
         if (existing) {
-            throw new common_1.ConflictException('El joven ya tiene una ficha médica registrada');
+            throw new common_1.ConflictException('El miembro ya tiene una ficha médica registrada');
         }
         return this.prisma.fichaMedica.create({
             data: Object.assign(Object.assign({}, dto), { createdAt: new Date(), createdBy: userId }),
@@ -30,13 +30,13 @@ let FichaMedicaService = class FichaMedicaService {
     async findAll() {
         return this.prisma.fichaMedica.findMany({
             where: { deletedAt: null },
-            include: { Joven: true },
+            include: { Miembro: true },
         });
     }
-    async findByJoven(jovenId) {
+    async findByMiembro(miembroId) {
         const ficha = await this.prisma.fichaMedica.findUnique({
-            where: { jovenId },
-            include: { Joven: true },
+            where: { miembroId },
+            include: { Miembro: true },
         });
         if (!ficha || ficha.deletedAt) {
             throw new common_1.NotFoundException('Ficha médica no encontrada');
@@ -46,7 +46,7 @@ let FichaMedicaService = class FichaMedicaService {
     async findOne(id) {
         const ficha = await this.prisma.fichaMedica.findFirst({
             where: { id, deletedAt: null },
-            include: { Joven: true },
+            include: { Miembro: true },
         });
         if (!ficha) {
             throw new common_1.NotFoundException('Ficha médica no encontrada');

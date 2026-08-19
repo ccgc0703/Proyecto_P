@@ -27,6 +27,13 @@ let JovenesController = class JovenesController {
         this.jovenesService = jovenesService;
         this.unitPolicy = unitPolicy;
     }
+    async getStats() {
+        const stats = await this.jovenesService.getStats();
+        return {
+            success: true,
+            data: stats,
+        };
+    }
     async create(createJovenDto, req) {
         this.unitPolicy.assertCanManageUnit(req.user, createJovenDto.unidadId);
         const joven = await this.jovenesService.createJoven(createJovenDto, req.user.id, req.user.rol, req.user.unidadId);
@@ -81,6 +88,13 @@ let JovenesController = class JovenesController {
     }
 };
 exports.JovenesController = JovenesController;
+__decorate([
+    (0, common_1.Get)('stats'),
+    (0, permissions_decorator_1.RequirePermission)(constantes_1.PERMISSIONS.JOVEN_VIEW),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", []),
+    __metadata("design:returntype", Promise)
+], JovenesController.prototype, "getStats", null);
 __decorate([
     (0, common_1.Post)(),
     (0, permissions_decorator_1.RequirePermission)(constantes_1.PERMISSIONS.JOVEN_CREATE),

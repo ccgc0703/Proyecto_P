@@ -19,6 +19,10 @@ const scout_module_1 = require("./modules/scout/scout.module");
 const rbac_module_1 = require("./modules/rbac/rbac.module");
 const audit_module_1 = require("./modules/audit/audit.module");
 const ficha_medica_module_1 = require("./modules/ficha-medica/ficha-medica.module");
+const adultos_module_1 = require("./modules/adultos/adultos.module");
+const datos_scout_module_1 = require("./modules/datos-scout/datos-scout.module");
+const formacion_module_1 = require("./modules/formacion/formacion.module");
+const programas_mundiales_module_1 = require("./modules/programas-mundiales/programas-mundiales.module");
 let AppModule = class AppModule {
 };
 exports.AppModule = AppModule;
@@ -36,6 +40,10 @@ exports.AppModule = AppModule = __decorate([
             scout_module_1.ScoutModule,
             rbac_module_1.RbacModule,
             ficha_medica_module_1.FichaMedicaModule,
+            adultos_module_1.AdultosModule,
+            datos_scout_module_1.DatosScoutModule,
+            formacion_module_1.FormacionModule,
+            programas_mundiales_module_1.ProgramasMundialesModule,
         ],
         controllers: [],
         providers: [],

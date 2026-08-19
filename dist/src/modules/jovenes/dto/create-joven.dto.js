@@ -35,6 +35,16 @@ __decorate([
     __metadata("design:type", String)
 ], CreateJovenDto.prototype, "representanteId", void 0);
 __decorate([
+    (0, class_validator_1.IsNotEmpty)({ message: 'La cédula es requerida' }),
+    (0, class_validator_1.IsString)({ message: 'La cédula debe ser un texto' }),
+    __metadata("design:type", String)
+], CreateJovenDto.prototype, "cedula", void 0);
+__decorate([
+    (0, class_validator_1.IsNotEmpty)({ message: 'El género es requerido' }),
+    (0, class_validator_1.IsEnum)(['MASCULINO', 'FEMENINO'], { message: 'Género inválido (MASCULINO o FEMENINO)' }),
+    __metadata("design:type", String)
+], CreateJovenDto.prototype, "genero", void 0);
+__decorate([
     (0, class_validator_1.IsOptional)(),
     (0, class_validator_1.IsString)(),
     __metadata("design:type", String)

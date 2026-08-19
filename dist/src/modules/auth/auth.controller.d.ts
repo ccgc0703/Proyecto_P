@@ -7,12 +7,13 @@ export declare class AuthController {
         success: boolean;
         message: string;
         data: {
-            accessToken: string;
-            usuario: {
+            access_token: string;
+            user: {
                 id: string;
                 nombre: string;
                 email: string;
                 unidadId: string;
+                roles: string[];
                 permissions: string[];
             };
         };
@@ -36,12 +37,8 @@ export declare class AuthController {
             nombre: string;
             email: string;
             unidadId: string;
-            roles: {
-                id: string;
-                nombre: string;
-                descripcion: string;
-            }[];
-            permisos: string[];
+            roles: string[];
+            permissions: string[];
         };
     }>;
 }

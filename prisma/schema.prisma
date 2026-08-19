@@ -6,24 +6,89 @@ datasource db {
   provider = "postgresql"
 }
 
+// ─────────────────────────────────────────────
+// Enums
+// ─────────────────────────────────────────────
+
+enum Genero {
+  MASCULINO
+  FEMENINO
+}
+
+enum TipoMiembro {
+  JOVEN
+  ADULTO
+}
+
+enum EstadoMiembro {
+  ACTIVO
+  INACTIVO
+  EGRESADO
+}
+
+enum TipoProgramaMundial {
+  PROGRAMA_MUNDIAL
+  DESAFIO
+  INICIATIVA
+}
+
+enum EstadoProgramaMundial {
+  PENDIENTE
+  EN_CURSO
+  COMPLETADO
+}
+
+enum EstadoPlanificacion {
+  BORRADOR
+  APROBADO
+  EN_CURSO
+  COMPLETADO
+  CANCELADO
+}
+
+enum TipoActividad {
+  REUNION
+  CAMPAMENTO
+  EXCURSION
+  SERVICIO_COMUNITARIO
+  TALLER
+  CEREMONIA
+  COMPETENCIA
+  OTRO
+}
+
+enum EstadoActividad {
+  PENDIENTE
+  EN_CURSO
+  COMPLETADA
+  CANCELADA
+}
+
+// ─────────────────────────────────────────────
+// Modelos Base: Usuario y Unidad
+// ─────────────────────────────────────────────
+
 model Usuario {
   id           String    @id @default(uuid())
   nombre       String
+  apellido     String?
   email        String    @unique
   password     String
+  fotoUrl      String?
   unidadId     String?
   activo       Boolean   @default(true)
-  tokenVersion Int       @default(0)  // Incrementado al revocar/asignar roles → invalida JWTs viejos
+  tokenVersion Int       @default(0)
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
   deletedAt    DateTime?
   createdBy    String?
   updatedBy    String?
 
-  Unidad       Unidad?   @relation(fields: [unidadId], references: [id])
-  AuditLogs    BitacoraAuditoria[]
-  AuditLogEntries AuditLog[] @relation("AuditLogActor")
-  UsuarioRoles UsuarioRol[]          // RBAC: roles asignados al usuario
+  Unidad          Unidad?              @relation(fields: [unidadId], references: [id])
+  AuditLogs       BitacoraAuditoria[]
+  AuditLogEntries AuditLog[]           @relation("AuditLogActor")
+  UsuarioRoles    UsuarioRol[]
+  Adulto          Adulto?
 }
 
 model Unidad {
@@ -37,31 +102,64 @@ model Unidad {
   createdBy   String?
   updatedBy   String?
 
-  Usuarios    Usuario[]
-  Jovenes     Joven[]
-  Progresiones Progresion[]
+  Usuarios        Usuario[]
+  Miembros        Miembro[]
+  Progresiones    Progresion[]
+  Patrullas       Patrulla[]
+  Planificaciones Planificacion[]
 }
 
-model Joven {
-  id              String    @id @default(uuid())
+// ─────────────────────────────────────────────
+// Core Scout: Miembro, Joven, Adulto
+// ─────────────────────────────────────────────
+
+model Miembro {
+  id              String         @id @default(uuid())
   nombres         String
   apellidos       String
+  cedula          String         @unique
   fechaNacimiento DateTime
+  genero          Genero
+  tipo            TipoMiembro
+  estado          EstadoMiembro  @default(ACTIVO)
   unidadId        String
-  representanteId String
-  estado          String    @default("ACTIVO") // ACTIVO, INACTIVO, EGRESADO
-  historial       String?
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
   deletedAt       DateTime?
   createdBy       String?
   updatedBy       String?
 
-  Unidad          Unidad    @relation(fields: [unidadId], references: [id])
-  Representante   Representante @relation(fields: [representanteId], references: [id])
-  FichaMedica     FichaMedica?
-  Condecoraciones JovenCondecoracion[]
-  Progresiones    Progresion[]
+  Unidad              Unidad                   @relation(fields: [unidadId], references: [id])
+  Joven               Joven?
+  Adulto              Adulto?
+  DatosScout          DatosScout?
+  FichaMedica         FichaMedica?
+  Condecoraciones     MiembroCondecoracion[]
+  ProgramasMundiales  MiembroProgramaMundial[]
+}
+
+model Joven {
+  id              String    @id @default(uuid())
+  miembroId       String    @unique
+  representanteId String
+  historial       String?
+
+  Miembro       Miembro       @relation(fields: [miembroId], references: [id])
+  Representante Representante @relation(fields: [representanteId], references: [id])
+  Progresiones  Progresion[]
+}
+
+model Adulto {
+  id        String  @id @default(uuid())
+  miembroId String  @unique
+  usuarioId String? @unique
+  ocupacion String?
+  telefono  String?
+  direccion String?
+
+  Miembro     Miembro     @relation(fields: [miembroId], references: [id])
+  Usuario     Usuario?    @relation(fields: [usuarioId], references: [id])
+  Formaciones Formacion[]
 }
 
 model Representante {
@@ -80,21 +178,53 @@ model Representante {
   Jovenes     Joven[]
 }
 
-model FichaMedica {
-  id                String    @id @default(uuid())
-  alergias          String?
-  medicamentos      String?
-  condiciones       String?
-  seguro            String?
-  contactoEmergencia String?
-  jovenId           String    @unique
-  createdAt         DateTime  @default(now())
-  updatedAt         DateTime  @updatedAt
-  deletedAt         DateTime?
-  createdBy         String?
-  updatedBy         String?
+// ─────────────────────────────────────────────
+// Extensiones de Miembro
+// ─────────────────────────────────────────────
 
-  Joven             Joven     @relation(fields: [jovenId], references: [id])
+model DatosScout {
+  id             String    @id @default(uuid())
+  miembroId      String    @unique
+  fechaRegistro  DateTime?
+  fechaIngreso   DateTime?
+  fechaPromesa   DateTime?
+  cargoActual    String?
+  observaciones  String?
+  patrullaId     String?
+
+  Miembro  Miembro   @relation(fields: [miembroId], references: [id])
+  Patrulla Patrulla? @relation(fields: [patrullaId], references: [id])
+}
+
+model FichaMedica {
+  id                 String    @id @default(uuid())
+  tipoSangre         String?
+  alergias           String?
+  medicamentos       String?
+  condiciones        String?
+  seguro             String?
+  contactoEmergencia String?
+  miembroId          String    @unique
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+  deletedAt          DateTime?
+  createdBy          String?
+  updatedBy          String?
+
+  Miembro            Miembro   @relation(fields: [miembroId], references: [id])
+}
+
+model Formacion {
+  id        String   @id @default(uuid())
+  nombre    String   
+  fecha     DateTime 
+  director  String   
+  adultoId  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  deletedAt DateTime?
+
+  Adulto    Adulto   @relation(fields: [adultoId], references: [id])
 }
 
 model Condecoracion {
@@ -108,12 +238,12 @@ model Condecoracion {
   createdBy   String?
   updatedBy   String?
 
-  Jovenes     JovenCondecoracion[]
+  Miembros    MiembroCondecoracion[]
 }
 
-model JovenCondecoracion {
+model MiembroCondecoracion {
   id              String    @id @default(uuid())
-  jovenId         String
+  miembroId       String
   condecoracionId String
   fechaOtorgada   DateTime  @default(now())
   createdAt       DateTime  @default(now())
@@ -122,28 +252,62 @@ model JovenCondecoracion {
   createdBy       String?
   updatedBy       String?
 
-  Joven           Joven         @relation(fields: [jovenId], references: [id])
+  Miembro         Miembro       @relation(fields: [miembroId], references: [id])
   Condecoracion   Condecoracion @relation(fields: [condecoracionId], references: [id])
 
-  @@unique([jovenId, condecoracionId])
+  @@unique([miembroId, condecoracionId])
 }
 
 model Progresion {
-  id              String    @id @default(uuid())
-  etapa           String
-  fechaInicio     DateTime  @default(now())
+  id               String    @id @default(uuid())
+  etapa            String
+  fechaInicio      DateTime  @default(now())
   fechaCulminacion DateTime?
-  unidadId        String
-  jovenId         String
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
-  deletedAt       DateTime?
-  createdBy       String?
-  updatedBy       String?
+  unidadId         String
+  jovenId          String
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+  deletedAt        DateTime?
+  createdBy        String?
+  updatedBy        String?
 
-  Unidad          Unidad    @relation(fields: [unidadId], references: [id])
-  Joven           Joven     @relation(fields: [jovenId], references: [id])
+  Unidad           Unidad    @relation(fields: [unidadId], references: [id])
+  Joven            Joven     @relation(fields: [jovenId], references: [id])
 }
+
+model ProgramaMundial {
+  id          String              @id @default(uuid())
+  nombre      String
+  tipo        TipoProgramaMundial
+  descripcion String?
+  activo      Boolean             @default(true)
+  createdAt   DateTime            @default(now())
+  updatedAt   DateTime            @updatedAt
+  deletedAt   DateTime?
+
+  Miembros    MiembroProgramaMundial[]
+}
+
+model MiembroProgramaMundial {
+  id                String                @id @default(uuid())
+  miembroId         String
+  programaMundialId String
+  fechaInicio       DateTime
+  fechaCompletado   DateTime?
+  estado            EstadoProgramaMundial @default(PENDIENTE)
+  createdAt         DateTime              @default(now())
+  updatedAt         DateTime              @updatedAt
+  deletedAt         DateTime?
+
+  Miembro         Miembro         @relation(fields: [miembroId], references: [id])
+  ProgramaMundial ProgramaMundial @relation(fields: [programaMundialId], references: [id])
+
+  @@unique([miembroId, programaMundialId])
+}
+
+// ─────────────────────────────────────────────
+// Auditoría
+// ─────────────────────────────────────────────
 
 model BitacoraAuditoria {
   id            String    @id @default(uuid())
@@ -163,11 +327,24 @@ model BitacoraAuditoria {
   Usuario       Usuario?  @relation(fields: [usuarioId], references: [id])
 }
 
+model AuditLog {
+  id          String   @id @default(uuid())
+  actorId     String?
+  action      String
+  module      String
+  targetId    String?
+  description String?
+  ipAddress   String?
+  userAgent   String?
+  createdAt   DateTime @default(now())
+
+  actor       Usuario? @relation("AuditLogActor", fields: [actorId], references: [id])
+}
+
 // ─────────────────────────────────────────────
 // RBAC — Role-Based Access Control
 // ─────────────────────────────────────────────
 
-/// Catálogo de roles del sistema (ej: SYSTEM_ADMIN, GROUP_LEADER)
 model Rol {
   id          String    @id @default(uuid())
   nombre      String    @unique  // SYSTEM_ADMIN, GROUP_LEADER, etc.
@@ -182,7 +359,6 @@ model Rol {
   RolPermisos  RolPermiso[]
 }
 
-/// Catálogo de permisos atómicos (ej: user:create, joven:view)
 model Permiso {
   id          String    @id @default(uuid())
   accion      String    @unique  // "user:create", "joven:view", "rbac:manage"
@@ -194,63 +370,111 @@ model Permiso {
   RolPermisos RolPermiso[]
 }
 
-/// Asignación de roles a usuarios (tabla pivote con soft delete)
 model UsuarioRol {
   id          String    @id @default(uuid())
   usuarioId   String
   rolId       String
-  asignadoPor String?             // ID del usuario que asignó el rol
+  asignadoPor String?
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
-  deletedAt   DateTime?           // Soft delete = rol revocado
+  deletedAt   DateTime?
 
   Usuario     Usuario   @relation(fields: [usuarioId], references: [id])
   Rol         Rol       @relation(fields: [rolId], references: [id])
 
-  @@unique([usuarioId, rolId])     // Evita asignaciones duplicadas
-  @@index([usuarioId])             // Velocidad en lookup de permisos por usuario
+  @@unique([usuarioId, rolId])
+  @@index([usuarioId])
 }
 
-/// Asignación de permisos a roles (tabla pivote)
 model RolPermiso {
   id          String    @id @default(uuid())
   rolId       String
   permisoId   String
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
-  deletedAt   DateTime?           // Soft delete = permiso revocado del rol
+  deletedAt   DateTime?
 
   Rol         Rol       @relation(fields: [rolId], references: [id])
   Permiso     Permiso   @relation(fields: [permisoId], references: [id])
 
-  @@unique([rolId, permisoId])     // Evita permisos duplicados por rol
-  @@index([rolId])                 // Velocidad en JOIN de permisos por rol
+  @@unique([rolId, permisoId])
+  @@index([rolId])
 }
 
-/// Auditoría de cambios de roles y permisos (trazabilidad RBAC)
 model AuditRBAC {
   id              String    @id @default(uuid())
-  accion          String             // "ROLE_ASSIGNED", "ROLE_REVOKED", "PERMISSION_GRANTED"
-  entidad         String             // "UsuarioRol", "RolPermiso"
-  entidadId       String             // ID del registro afectado
-  realizadoPorId  String?            // ID del usuario actor
-  datosCambio     Json?              // { rolId, usuarioId, permisoId, etc. }
+  accion          String
+  entidad         String
+  entidadId       String
+  realizadoPorId  String?
+  datosCambio     Json?
   ip              String?
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
 }
 
-/// Registro global de auditoría para trazabilidad de operaciones
-model AuditLog {
-  id          String   @id @default(uuid())
-  actorId     String?
-  action      String
-  module      String
-  targetId    String?
-  description String?
-  ipAddress   String?
-  userAgent   String?
-  createdAt   DateTime @default(now())
+// ─────────────────────────────────────────────
+// Patrullas / Seisenas
+// ─────────────────────────────────────────────
 
-  actor       Usuario? @relation("AuditLogActor", fields: [actorId], references: [id])
+model Patrulla {
+  id          String    @id @default(uuid())
+  nombre      String
+  unidadId    String
+  color       String?
+  activa      Boolean   @default(true)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  deletedAt   DateTime?
+  createdBy   String?
+
+  Unidad      Unidad    @relation(fields: [unidadId], references: [id])
+  Miembros    DatosScout[]
+
+  @@index([unidadId])
+}
+
+// ─────────────────────────────────────────────
+// Planificación y Actividades
+// ─────────────────────────────────────────────
+
+model Planificacion {
+  id          String    @id @default(uuid())
+  titulo      String
+  descripcion String?
+  fechaInicio DateTime
+  fechaFin    DateTime
+  unidadId    String?
+  estado      EstadoPlanificacion @default(BORRADOR)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  deletedAt   DateTime?
+  createdBy   String?
+  updatedBy   String?
+
+  Unidad      Unidad?   @relation(fields: [unidadId], references: [id])
+  Actividades Actividad[]
+}
+
+model Actividad {
+  id              String    @id @default(uuid())
+  titulo          String
+  descripcion     String?
+  tipo            TipoActividad @default(REUNION)
+  fecha           DateTime
+  horaInicio      String?
+  horaFin         String?
+  lugar           String?
+  responsable     String?
+  planificacionId String
+  estado          EstadoActividad @default(PENDIENTE)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  deletedAt       DateTime?
+  createdBy       String?
+
+  Planificacion   Planificacion @relation(fields: [planificacionId], references: [id])
+
+  @@index([planificacionId])
+  @@index([fecha])
 }

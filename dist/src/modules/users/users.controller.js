@@ -68,6 +68,14 @@ let UsersController = class UsersController {
             data: null,
         };
     }
+    async changePassword(id, body, req) {
+        const result = await this.usersService.changePassword(id, body.currentPassword, body.newPassword, req.user.id, req.ip);
+        return {
+            success: true,
+            message: result.message,
+            data: null,
+        };
+    }
 };
 exports.UsersController = UsersController;
 __decorate([
@@ -113,6 +121,15 @@ __decorate([
     __metadata("design:paramtypes", [String, Object]),
     __metadata("design:returntype", Promise)
 ], UsersController.prototype, "remove", null);
+__decorate([
+    (0, common_1.Patch)(':id/password'),
+    __param(0, (0, common_1.Param)('id')),
+    __param(1, (0, common_1.Body)()),
+    __param(2, (0, common_1.Req)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, Object, Object]),
+    __metadata("design:returntype", Promise)
+], UsersController.prototype, "changePassword", null);
 exports.UsersController = UsersController = __decorate([
     (0, common_1.Controller)('users'),
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, permissions_guard_1.PermissionsGuard),

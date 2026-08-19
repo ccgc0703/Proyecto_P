@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+
+<html class="light" lang="es"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Modern Sentinel - Módulo de Tropa</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@200;300;400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "secondary-fixed": "#baeed9",
+              "on-primary-fixed-variant": "#313e95",
+              "inverse-surface": "#303031",
+              "tertiary": "#6d5e00",
+              "primary-fixed-dim": "#bcc3ff",
+              "on-secondary-fixed": "#002117",
+              "tertiary-fixed-dim": "#e3c600",
+              "surface-variant": "#e3e2e2",
+              "outline": "#767683",
+              "error-container": "#ffdad6",
+              "on-primary": "#ffffff",
+              "surface-container-highest": "#e3e2e2",
+              "inverse-on-surface": "#f2f0f0",
+              "on-secondary-fixed-variant": "#1d4f40",
+              "background": "#faf9f9",
+              "outline-variant": "#c6c5d3",
+              "primary-container": "#27348b",
+              "on-surface-variant": "#454652",
+              "on-secondary-container": "#3d6d5d",
+              "on-secondary": "#ffffff",
+              "on-primary-fixed": "#000d60",
+              "surface-dim": "#dbdad9",
+              "on-tertiary-fixed-variant": "#524600",
+              "primary": "#0a1a75",
+              "on-primary-container": "#95a2ff",
+              "surface-container-high": "#e9e8e8",
+              "secondary-container": "#baeed9",
+              "surface": "#faf9f9",
+              "secondary": "#376757",
+              "tertiary-container": "#c4aa00",
+              "on-tertiary-container": "#4a3f00",
+              "on-surface": "#1b1c1c",
+              "surface-tint": "#4a57ae",
+              "tertiary-fixed": "#ffe24a",
+              "on-error": "#ffffff",
+              "primary-fixed": "#dfe0ff",
+              "on-error-container": "#93000a",
+              "surface-bright": "#faf9f9",
+              "secondary-fixed-dim": "#9ed1bd",
+              "on-tertiary-fixed": "#211b00",
+              "surface-container-low": "#f5f3f3",
+              "error": "#ba1a1a",
+              "surface-container-lowest": "#ffffff",
+              "on-background": "#1b1c1c",
+              "on-tertiary": "#ffffff",
+              "inverse-primary": "#bcc3ff",
+              "surface-container": "#efeded"
+            },
+            fontFamily: {
+              "headline": ["Manrope"],
+              "body": ["Manrope"],
+              "label": ["Manrope"]
+            },
+            borderRadius: {"DEFAULT": "0.125rem", "lg": "0.25rem", "xl": "0.5rem", "full": "0.75rem"},
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .sentinel-gradient {
+            background: linear-gradient(135deg, #0a1a75 0%, #27348b 100%);
+        }
+        .glass-sidebar {
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+        }
+        body {
+            font-family: 'Manrope', sans-serif;
+            background-color: #faf9f9;
+        }
+    </style>
+</head>
+<body class="text-on-background">
+<!-- TopNavBar (Responsive Pivot: Hidden on Desktop) -->
+<nav class="md:hidden fixed top-0 w-full z-50 bg-white/80 backdrop-blur-xl shadow-sm px-6 py-3 flex justify-between items-center">
+<span class="text-xl font-black tracking-tight text-blue-900">Modern Sentinel</span>
+<div class="flex items-center gap-4">
+<span class="material-symbols-outlined text-primary">search</span>
+<div class="w-8 h-8 rounded-full bg-primary-fixed flex items-center justify-center">
+<span class="material-symbols-outlined text-xs text-primary">person</span>
+</div>
+</div>
+</nav>
+<!-- SideNavBar (Authority Source: JSON) -->
+<aside class="h-screen w-64 fixed left-0 top-0 z-40 bg-white/90 glass-sidebar shadow-xl shadow-blue-900/5 hidden md:flex flex-col p-4 space-y-2">
+<div class="mb-8 px-4 pt-4">
+<div class="flex items-center gap-3 mb-2">
+<div class="w-10 h-10 sentinel-gradient rounded-xl flex items-center justify-center text-white">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">shield</span>
+</div>
+<div>
+<h1 class="text-lg font-bold text-blue-900 leading-none">Modern Sentinel</h1>
+<p class="text-[10px] uppercase tracking-widest text-slate-400 font-bold">Precision Navigator</p>
+</div>
+</div>
+</div>
+<nav class="flex-1 space-y-1">
+<!-- Dashboard (Inactive) -->
+<a class="flex items-center gap-3 text-slate-500 px-4 py-3 hover:bg-slate-100 transition-transform duration-200 hover:translate-x-1 rounded-lg" href="#">
+<span class="material-symbols-outlined" data-icon="dashboard">dashboard</span>
+<span class="font-semibold text-sm">Dashboard</span>
+</a>
+<!-- Manada (Inactive) -->
+<a class="flex items-center gap-3 text-slate-500 px-4 py-3 hover:bg-slate-100 transition-transform duration-200 hover:translate-x-1 rounded-lg" href="#">
+<span class="material-symbols-outlined" data-icon="pets">pets</span>
+<span class="font-semibold text-sm">Manada</span>
+</a>
+<!-- Tropa (ACTIVE MAP) -->
+<a class="flex items-center gap-3 bg-blue-50 text-blue-800 rounded-lg px-4 py-3 transition-transform duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="groups" style="font-variation-settings: 'FILL' 1;">groups</span>
+<span class="font-bold text-sm">Tropa</span>
+</a>
+<!-- Clan (Inactive) -->
+<a class="flex items-center gap-3 text-slate-500 px-4 py-3 hover:bg-slate-100 transition-transform duration-200 hover:translate-x-1 rounded-lg" href="#">
+<span class="material-symbols-outlined" data-icon="castle">castle</span>
+<span class="font-semibold text-sm">Clan</span>
+</a>
+<!-- Staff (Inactive) -->
+<a class="flex items-center gap-3 text-slate-500 px-4 py-3 hover:bg-slate-100 transition-transform duration-200 hover:translate-x-1 rounded-lg" href="#">
+<span class="material-symbols-outlined" data-icon="badge">badge</span>
+<span class="font-semibold text-sm">Staff</span>
+</a>
+<!-- Planificaciones (Inactive) -->
+<a class="flex items-center gap-3 text-slate-500 px-4 py-3 hover:bg-slate-100 transition-transform duration-200 hover:translate-x-1 rounded-lg" href="#">
+<span class="material-symbols-outlined" data-icon="event_note">event_note</span>
+<span class="font-semibold text-sm">Planificaciones</span>
+</a>
+</nav>
+<div class="mt-auto p-4 bg-surface-container-low rounded-xl">
+<button class="w-full sentinel-gradient text-white py-2.5 rounded-lg text-sm font-bold active:scale-95 transition-transform flex items-center justify-center gap-2">
+<span class="material-symbols-outlined text-sm">bolt</span>
+                Quick Action
+            </button>
+</div>
+</aside>
+<!-- Main Content Canvas -->
+<main class="md:ml-64 pt-20 md:pt-0 min-h-screen">
+<div class="max-w-7xl mx-auto p-6 md:p-12">
+<!-- Header Section (Asymmetric Editorial Style) -->
+<header class="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-16">
+<div class="max-w-xl">
+<span class="inline-block px-3 py-1 bg-tertiary-fixed text-on-tertiary-fixed text-[10px] font-black uppercase tracking-[0.2em] rounded mb-4">Módulo de Tropa</span>
+<h2 class="text-5xl font-black text-primary tracking-tight leading-[1.1] mb-6">Listado Maestro de Miembros</h2>
+<p class="text-on-surface-variant text-lg leading-relaxed">Gestión operativa de la Unidad Scout. Supervise el progreso de adelanto y la distribución de patrullas.</p>
+</div>
+<div class="flex gap-4">
+<button class="flex items-center gap-2 px-6 py-4 sentinel-gradient text-white rounded-xl shadow-lg shadow-primary/20 hover:opacity-90 transition-all font-bold">
+<span class="material-symbols-outlined">person_add</span>
+                        New Member
+                    </button>
+</div>
+</header>
+<!-- Grid Layout for Patrols and Table -->
+<div class="grid grid-cols-1 xl:grid-cols-12 gap-8">
+<!-- Left Column: Patrols (Secondary Color Focus) -->
+<section class="xl:col-span-3 space-y-6">
+<h3 class="text-sm font-black uppercase tracking-widest text-secondary flex items-center gap-2 mb-8">
+<span class="material-symbols-outlined text-sm">shield_person</span>
+                        Patrullas Activas
+                    </h3>
+<div class="space-y-4">
+<!-- Patrol Card -->
+<div class="bg-surface-container-low p-5 rounded-2xl hover:translate-y-[-2px] transition-transform cursor-pointer">
+<div class="flex items-center justify-between mb-4">
+<div class="w-12 h-12 rounded-full bg-secondary-container flex items-center justify-center text-secondary">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">pets</span>
+</div>
+<span class="text-[10px] font-bold text-on-secondary-container bg-secondary-fixed px-2 py-0.5 rounded">6 Guías</span>
+</div>
+<h4 class="font-bold text-primary text-lg">Lobos</h4>
+<p class="text-xs text-on-surface-variant mt-1">Guía: Carlos Méndez</p>
+</div>
+<div class="bg-surface-container-low p-5 rounded-2xl hover:translate-y-[-2px] transition-transform cursor-pointer">
+<div class="flex items-center justify-between mb-4">
+<div class="w-12 h-12 rounded-full bg-tertiary-fixed flex items-center justify-center text-tertiary">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">flight</span>
+</div>
+<span class="text-[10px] font-bold text-on-tertiary-container bg-tertiary-container/20 px-2 py-0.5 rounded">8 Guías</span>
+</div>
+<h4 class="font-bold text-primary text-lg">Águilas</h4>
+<p class="text-xs text-on-surface-variant mt-1">Guía: Lucía Ferrán</p>
+</div>
+<div class="bg-surface-container-low p-5 rounded-2xl hover:translate-y-[-2px] transition-transform cursor-pointer border-2 border-transparent hover:border-outline-variant">
+<div class="flex items-center justify-between mb-4">
+<div class="w-12 h-12 rounded-full bg-surface-container-high flex items-center justify-center text-on-surface-variant">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">landscape</span>
+</div>
+<span class="text-[10px] font-bold text-on-surface-variant bg-surface-variant px-2 py-0.5 rounded">5 Guías</span>
+</div>
+<h4 class="font-bold text-primary text-lg">Panteras</h4>
+<p class="text-xs text-on-surface-variant mt-1">Guía: Roberto Solís</p>
+</div>
+</div>
+</section>
+<!-- Right Column: Members Table (No-Line Principle) -->
+<section class="xl:col-span-9">
+<div class="bg-surface-container-lowest rounded-3xl p-8 shadow-sm">
+<div class="flex items-center justify-between mb-8">
+<h3 class="text-xl font-bold text-primary">Miembros de la Tropa</h3>
+<div class="relative">
+<span class="absolute left-3 top-1/2 -translate-y-1/2 material-symbols-outlined text-outline text-lg">search</span>
+<input class="pl-10 pr-4 py-2 bg-surface-container-low border-none rounded-xl text-sm focus:ring-2 focus:ring-primary w-64" placeholder="Buscar scout..." type="text"/>
+</div>
+</div>
+<div class="overflow-x-auto">
+<table class="w-full text-left">
+<thead>
+<tr class="text-on-surface-variant text-[11px] font-black uppercase tracking-widest border-b border-surface-container-high">
+<th class="pb-4 px-4">C.I.</th>
+<th class="pb-4 px-4">Nombre</th>
+<th class="pb-4 px-4">Edad</th>
+<th class="pb-4 px-4">Adelanto</th>
+<th class="pb-4 px-4 text-right">Acción</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-surface-container-low">
+<tr class="group hover:bg-surface-container-low transition-colors">
+<td class="py-5 px-4 font-mono text-sm text-on-surface-variant">4.892.122-4</td>
+<td class="py-5 px-4 font-bold text-primary">Andrés Martínez</td>
+<td class="py-5 px-4 text-on-surface-variant">13 años</td>
+<td class="py-5 px-4">
+<span class="px-3 py-1 bg-secondary-fixed text-on-secondary-fixed-variant text-[10px] font-bold rounded-full">Caballero Scout</span>
+</td>
+<td class="py-5 px-4 text-right">
+<button class="px-4 py-2 bg-white text-primary border border-outline-variant rounded-lg text-xs font-bold hover:bg-primary hover:text-white transition-all">Ver Perfil</button>
+</td>
+</tr>
+<tr class="group hover:bg-surface-container-low transition-colors">
+<td class="py-5 px-4 font-mono text-sm text-on-surface-variant">5.102.334-0</td>
+<td class="py-5 px-4 font-bold text-primary">Sofía Rodríguez</td>
+<td class="py-5 px-4 text-on-surface-variant">12 años</td>
+<td class="py-5 px-4">
+<span class="px-3 py-1 bg-tertiary-fixed text-on-tertiary-fixed-variant text-[10px] font-bold rounded-full">Primera Clase</span>
+</td>
+<td class="py-5 px-4 text-right">
+<button class="px-4 py-2 bg-white text-primary border border-outline-variant rounded-lg text-xs font-bold hover:bg-primary hover:text-white transition-all">Ver Perfil</button>
+</td>
+</tr>
+<tr class="group hover:bg-surface-container-low transition-colors">
+<td class="py-5 px-4 font-mono text-sm text-on-surface-variant">4.991.002-9</td>
+<td class="py-5 px-4 font-bold text-primary">Mateo Pereyra</td>
+<td class="py-5 px-4 text-on-surface-variant">14 años</td>
+<td class="py-5 px-4">
+<span class="px-3 py-1 bg-surface-variant text-on-surface-variant text-[10px] font-bold rounded-full">Segunda Clase</span>
+</td>
+<td class="py-5 px-4 text-right">
+<button class="px-4 py-2 bg-white text-primary border border-outline-variant rounded-lg text-xs font-bold hover:bg-primary hover:text-white transition-all">Ver Perfil</button>
+</td>
+</tr>
+<tr class="group hover:bg-surface-container-low transition-colors">
+<td class="py-5 px-4 font-mono text-sm text-on-surface-variant">5.233.111-5</td>
+<td class="py-5 px-4 font-bold text-primary">Valentina Silva</td>
+<td class="py-5 px-4 text-on-surface-variant">11 años</td>
+<td class="py-5 px-4">
+<span class="px-3 py-1 bg-secondary-fixed text-on-secondary-fixed-variant text-[10px] font-bold rounded-full">Caballero Scout</span>
+</td>
+<td class="py-5 px-4 text-right">
+<button class="px-4 py-2 bg-white text-primary border border-outline-variant rounded-lg text-xs font-bold hover:bg-primary hover:text-white transition-all">Ver Perfil</button>
+</td>
+</tr>
+<tr class="group hover:bg-surface-container-low transition-colors">
+<td class="py-5 px-4 font-mono text-sm text-on-surface-variant">4.776.543-1</td>
+<td class="py-5 px-4 font-bold text-primary">Ignacio Costa</td>
+<td class="py-5 px-4 text-on-surface-variant">15 años</td>
+<td class="py-5 px-4">
+<span class="px-3 py-1 bg-tertiary-fixed text-on-tertiary-fixed-variant text-[10px] font-bold rounded-full">Guía de Patrulla</span>
+</td>
+<td class="py-5 px-4 text-right">
+<button class="px-4 py-2 bg-white text-primary border border-outline-variant rounded-lg text-xs font-bold hover:bg-primary hover:text-white transition-all">Ver Perfil</button>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="mt-8 flex items-center justify-between pt-6 border-t border-surface-container-low">
+<span class="text-xs text-on-surface-variant">Mostrando 5 de 24 miembros</span>
+<div class="flex gap-2">
+<button class="w-8 h-8 flex items-center justify-center rounded-lg border border-outline-variant hover:bg-surface-container-low text-primary">
+<span class="material-symbols-outlined text-sm">chevron_left</span>
+</button>
+<button class="w-8 h-8 flex items-center justify-center rounded-lg bg-primary text-white text-xs font-bold">1</button>
+<button class="w-8 h-8 flex items-center justify-center rounded-lg border border-outline-variant hover:bg-surface-container-low text-primary text-xs font-bold">2</button>
+<button class="w-8 h-8 flex items-center justify-center rounded-lg border border-outline-variant hover:bg-surface-container-low text-primary">
+<span class="material-symbols-outlined text-sm">chevron_right</span>
+</button>
+</div>
+</div>
+</div>
+</section>
+</div>
+<!-- Bottom Stats Bento Grid -->
+<section class="mt-16 grid grid-cols-1 md:grid-cols-4 gap-6">
+<div class="md:col-span-2 bg-primary-container text-on-primary-container p-8 rounded-3xl relative overflow-hidden group">
+<div class="relative z-10">
+<p class="text-[10px] font-black uppercase tracking-widest opacity-70 mb-2">Estado de la Tropa</p>
+<h4 class="text-3xl font-bold mb-4">Unidad Operativa</h4>
+<div class="flex items-center gap-6">
+<div>
+<p class="text-4xl font-black">94%</p>
+<p class="text-xs opacity-70">Asistencia Media</p>
+</div>
+<div class="h-10 w-[1px] bg-white/20"></div>
+<div>
+<p class="text-4xl font-black">12</p>
+<p class="text-xs opacity-70">Especialidades Activas</p>
+</div>
+</div>
+</div>
+<span class="absolute -right-4 -bottom-4 material-symbols-outlined text-9xl opacity-10 group-hover:scale-110 transition-transform">monitoring</span>
+</div>
+<div class="bg-secondary-container text-on-secondary-container p-8 rounded-3xl">
+<p class="text-[10px] font-black uppercase tracking-widest opacity-70 mb-2">Próximo Evento</p>
+<h4 class="text-xl font-bold mb-1">Acampada Regional</h4>
+<p class="text-sm opacity-80 mb-6">Cerro Arequita, 15 Oct</p>
+<div class="flex -space-x-2">
+<div class="w-8 h-8 rounded-full border-2 border-secondary-container bg-slate-300 overflow-hidden">
+<img alt="Avatar 1" data-alt="close up of a young man smiling with a blurred park background" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDXEyePbr7EBs3GFX7kC5G5hUXzWp2troFkFRzYZ5N675zjrdHaJKvfkME3pUMGrH_KqQLKKNyx2Q73mFxma6Q-WOnL1B30oQeRN0bgqXAiQ4gz9xDPgItZ3cM7ltRnZU90nY13ZYUE-l9WNuHOyDp2_0naXITD6_s-0kbOGyEO92UTYshTSo-SIuqBb6_dC40jqvdEkRgbTni9NLWnr-x8FR4NZg4KW6k8NMNVe2AOMf5ArK8oh2UxRW63nX8RDdD3rKEapzbjSz8"/>
+</div>
+<div class="w-8 h-8 rounded-full border-2 border-secondary-container bg-slate-300 overflow-hidden">
+<img alt="Avatar 2" data-alt="portrait of a young girl laughing outdoors during a sunny day" src="https://lh3.googleusercontent.com/aida-public/AB6AXuD41QpQjTCSZZn-A4GS-h-UkGcGzSzuk892erkPRfRpiApFgZkU04cyFHRKPi4fC4iOzAhEjXIxtZBj3GfKTcM6E-DVqbSfUdP4SDqWFKFES7u6BWbhsi3f1JRAMAXv5Mm4tnNB1niRdgPzt_bivd7KLxUydRZOGnG8js0Cqr-M51qk61YVBPf9TdHDwdFnxHIRQWwzCaNYmKRFx_Sw4JVdAPwxD57_S_rTc3Lt2sMQrqklQKOAdF2atDIuqBqWDbDdnPdiEZgc7aU"/>
+</div>
+<div class="w-8 h-8 rounded-full border-2 border-secondary-container bg-slate-300 overflow-hidden">
+<img alt="Avatar 3" data-alt="close up of a cheerful teenager with short hair and trees in the background" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAWdpOBUgxLz8MgwmVKjIR1OGsHeI_vMPei86mGhlh5mGhuroMmr0y0kJzVp-JTZVPVsdhRRZnmCaoia6ayc-e2vcn8avM2BjiU8PrkR8lZ-dTUHUGMJjVGxaNRcmwrUj-bGEUMYiqxeYYWS8wYXmdfP_Qv3CLMsfQXo8iNYZrwIIcb9iNys4HmZyljPBzOhiEyS13y93v4f9Mh4qH2rQ5ZkRVSMDtukoLi4iffK9ADROfMi-APFNsPDNh8uaKaxis7hCfxKMwoas4"/>
+</div>
+<div class="w-8 h-8 rounded-full border-2 border-secondary-container bg-secondary flex items-center justify-center text-[10px] font-bold text-white">+18</div>
+</div>
+</div>
+<div class="bg-white p-8 rounded-3xl border border-outline-variant/10 shadow-sm flex flex-col justify-between">
+<div>
+<span class="material-symbols-outlined text-tertiary mb-4 text-3xl">emoji_events</span>
+<h4 class="text-xl font-bold text-primary">Insignia de Oro</h4>
+</div>
+<p class="text-xs text-on-surface-variant">3 miembros califican este mes para el máximo galardón de la unidad.</p>
+</div>
+</section>
+</div>
+</main>
+<!-- BottomNavBar (Mobile Only) -->
+<nav class="md:hidden fixed bottom-0 w-full bg-white/80 backdrop-blur-xl border-t border-slate-100 px-2 py-2 flex justify-around items-center z-50">
+<a class="flex flex-col items-center p-2 text-slate-400" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+<span class="text-[10px] mt-1">Dash</span>
+</a>
+<a class="flex flex-col items-center p-2 text-blue-800" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">groups</span>
+<span class="text-[10px] font-bold mt-1">Tropa</span>
+</a>
+<div class="p-3 bg-primary rounded-full -mt-8 shadow-lg shadow-primary/40 border-4 border-white">
+<span class="material-symbols-outlined text-white">add</span>
+</div>
+<a class="flex flex-col items-center p-2 text-slate-400" href="#">
+<span class="material-symbols-outlined">event_note</span>
+<span class="text-[10px] mt-1">Plan</span>
+</a>
+<a class="flex flex-col items-center p-2 text-slate-400" href="#">
+<span class="material-symbols-outlined">badge</span>
+<span class="text-[10px] mt-1">Staff</span>
+</a>
+</nav>
+</body></html>

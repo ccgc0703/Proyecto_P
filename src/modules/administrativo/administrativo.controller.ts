@@ -70,4 +70,15 @@ export class AdministrativoController {
             data: null,
         };
     }
+
+    @Post('ficha-medica')
+    @RequirePermission(PERMISSIONS.MEDICO_EDIT)
+    async createFichaMedica(@Body() data: any, @Req() req: any) {
+        const fichaMedica = await this.administrativoService.createFichaMedica(data, req.user.id);
+        return {
+            success: true,
+            message: 'Ficha médica registrada exitosamente',
+            data: fichaMedica,
+        };
+    }
 }
