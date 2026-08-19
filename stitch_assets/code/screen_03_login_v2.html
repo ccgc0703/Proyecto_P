@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+
+<html class="light" lang="es"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Modern Sentinel - Inicio de Sesión</title>
+<!-- Google Fonts: Manrope -->
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@200;300;400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<!-- Material Symbols -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "on-primary-container": "#95a2ff",
+              "on-secondary": "#ffffff",
+              "outline": "#767683",
+              "tertiary": "#6d5e00",
+              "background": "#faf9f9",
+              "inverse-on-surface": "#f2f0f0",
+              "on-secondary-fixed": "#002117",
+              "on-background": "#1b1c1c",
+              "surface-tint": "#4a57ae",
+              "primary-fixed-dim": "#bcc3ff",
+              "outline-variant": "#c6c5d3",
+              "primary-fixed": "#dfe0ff",
+              "secondary": "#376757",
+              "on-error": "#ffffff",
+              "tertiary-container": "#c4aa00",
+              "error": "#ba1a1a",
+              "on-primary-fixed-variant": "#313e95",
+              "surface-variant": "#e3e2e2",
+              "primary-container": "#27348b",
+              "on-secondary-container": "#3d6d5d",
+              "on-secondary-fixed-variant": "#1d4f40",
+              "on-tertiary": "#ffffff",
+              "inverse-surface": "#303031",
+              "on-tertiary-fixed-variant": "#524600",
+              "on-primary": "#ffffff",
+              "on-error-container": "#93000a",
+              "error-container": "#ffdad6",
+              "inverse-primary": "#bcc3ff",
+              "surface-container-high": "#e9e8e8",
+              "secondary-fixed-dim": "#9ed1bd",
+              "secondary-fixed": "#baeed9",
+              "on-surface-variant": "#454652",
+              "tertiary-fixed-dim": "#e3c600",
+              "on-primary-fixed": "#000d60",
+              "surface-container-lowest": "#ffffff",
+              "on-tertiary-container": "#4a3f00",
+              "surface": "#faf9f9",
+              "on-surface": "#1b1c1c",
+              "secondary-container": "#baeed9",
+              "primary": "#0a1a75",
+              "surface-container": "#efeded",
+              "surface-dim": "#dbdad9",
+              "on-tertiary-fixed": "#211b00",
+              "surface-bright": "#faf9f9",
+              "tertiary-fixed": "#ffe24a",
+              "surface-container-low": "#f5f3f3",
+              "surface-container-highest": "#e3e2e2"
+            },
+            fontFamily: {
+              "headline": ["Manrope"],
+              "body": ["Manrope"],
+              "label": ["Manrope"]
+            },
+            borderRadius: {"DEFAULT": "0.125rem", "lg": "0.25rem", "xl": "0.5rem", "full": "0.75rem"},
+          },
+        },
+      }
+    </script>
+<style>
+        body { font-family: 'Manrope', sans-serif; }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .sentinel-gradient {
+            background: linear-gradient(135deg, #0a1a75 0%, #27348b 100%);
+        }
+        .glass-panel {
+            backdrop-filter: blur(20px);
+            background-color: rgba(250, 249, 249, 0.7);
+        }
+    </style>
+</head>
+<body class="bg-surface text-on-surface min-h-screen flex items-center justify-center p-6 selection:bg-tertiary-fixed">
+<!-- Background Decoration (The Sentinel Field) -->
+<div class="fixed inset-0 z-0 overflow-hidden pointer-events-none">
+<div class="absolute top-[-10%] right-[-10%] w-[500px] h-[500px] rounded-full bg-primary/5 blur-[120px]"></div>
+<div class="absolute bottom-[-10%] left-[-10%] w-[600px] h-[600px] rounded-full bg-secondary/5 blur-[120px]"></div>
+<div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 opacity-[0.03]">
+<span class="material-symbols-outlined text-[600px]" data-icon="explore">explore</span>
+</div>
+</div>
+<!-- Main Content Shell -->
+<main class="relative z-10 w-full max-w-[1100px] grid md:grid-cols-2 bg-surface-container-lowest shadow-[0_32px_64px_-16px_rgba(0,0,0,0.06)] rounded-xl overflow-hidden border border-outline-variant/10">
+<!-- Branding & Visual Column -->
+<div class="sentinel-gradient p-12 flex flex-col justify-between text-on-primary min-h-[400px]">
+<div>
+<div class="flex items-center gap-3 mb-12">
+<div class="w-12 h-12 bg-tertiary-fixed rounded-xl flex items-center justify-center shadow-lg">
+<span class="material-symbols-outlined text-on-tertiary-fixed text-3xl" data-icon="shield">shield</span>
+</div>
+<div>
+<h2 class="text-xl font-black tracking-tighter leading-none">Modern Sentinel</h2>
+<p class="text-[10px] uppercase tracking-[0.2em] opacity-70">The Precision Navigator</p>
+</div>
+</div>
+<div class="space-y-6">
+<h1 class="text-4xl lg:text-5xl font-extrabold tracking-tight leading-[1.1]">
+                        Navigate your mission with <span class="text-tertiary-fixed">authority.</span>
+</h1>
+<p class="text-lg text-primary-fixed-dim leading-relaxed max-w-sm">
+                        Access the command center for units, staff scheduling, and tactical planning.
+                    </p>
+</div>
+</div>
+<div class="flex items-center gap-4 py-4 px-6 bg-white/10 backdrop-blur-md rounded-xl border border-white/10 w-fit">
+<span class="material-symbols-outlined text-tertiary-fixed" data-icon="verified_user">verified_user</span>
+<span class="text-sm font-medium">Encrypted Sentinel Protocol Active</span>
+</div>
+</div>
+<!-- Login Form Column -->
+<div class="p-8 md:p-16 flex flex-col justify-center bg-surface-container-lowest">
+<div class="mb-10">
+<h2 class="text-3xl font-bold text-primary mb-2">Inicio de Sesión</h2>
+<p class="text-on-surface-variant font-medium">Enter your credentials to continue the watch.</p>
+</div>
+<form class="space-y-6">
+<!-- Username Field -->
+<div class="group">
+<label class="block text-xs font-bold uppercase tracking-widest text-on-surface-variant mb-2 ml-1" for="identity">Username or Email</label>
+<div class="relative">
+<div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+<span class="material-symbols-outlined text-outline text-lg" data-icon="person">person</span>
+</div>
+<input class="w-full pl-12 pr-4 py-4 bg-surface-container-high border-none rounded-lg text-on-surface placeholder:text-outline focus:ring-2 focus:ring-primary-container transition-all" id="identity" name="identity" placeholder="e.g. sentinel_01" type="text"/>
+<div class="absolute bottom-0 left-1/2 -translate-x-1/2 w-0 h-0.5 bg-primary transition-all duration-300 group-focus-within:w-full"></div>
+</div>
+</div>
+<!-- Password Field -->
+<div class="group">
+<div class="flex justify-between items-center mb-2 mx-1">
+<label class="text-xs font-bold uppercase tracking-widest text-on-surface-variant" for="password">Password</label>
+<a class="text-xs font-bold text-secondary hover:text-primary transition-colors" href="#">Forgot Password?</a>
+</div>
+<div class="relative">
+<div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+<span class="material-symbols-outlined text-outline text-lg" data-icon="lock">lock</span>
+</div>
+<input class="w-full pl-12 pr-12 py-4 bg-surface-container-high border-none rounded-lg text-on-surface placeholder:text-outline focus:ring-2 focus:ring-primary-container transition-all" id="password" name="password" placeholder="••••••••" type="password"/>
+<button class="absolute inset-y-0 right-0 pr-4 flex items-center text-outline hover:text-on-surface transition-colors" type="button">
+<span class="material-symbols-outlined text-lg" data-icon="visibility">visibility</span>
+</button>
+<div class="absolute bottom-0 left-1/2 -translate-x-1/2 w-0 h-0.5 bg-primary transition-all duration-300 group-focus-within:w-full"></div>
+</div>
+</div>
+<!-- Remember Me -->
+<div class="flex items-center gap-3 py-2">
+<input class="w-5 h-5 rounded border-outline-variant text-secondary focus:ring-secondary transition-all" id="remember" type="checkbox"/>
+<label class="text-sm font-semibold text-on-surface-variant cursor-pointer" for="remember">Stay signed in for this patrol</label>
+</div>
+<!-- Action Button -->
+<div class="pt-4">
+<button class="sentinel-gradient w-full py-4 rounded-xl text-on-primary font-bold tracking-tight shadow-[0_8px_24px_-8px_rgba(10,26,117,0.4)] hover:shadow-[0_12px_32px_-8px_rgba(10,26,117,0.6)] active:scale-[0.98] transition-all flex items-center justify-center gap-3 group" type="submit">
+<span>Authenticate Access</span>
+<span class="material-symbols-outlined text-xl group-hover:translate-x-1 transition-transform" data-icon="arrow_forward">arrow_forward</span>
+</button>
+</div>
+</form>
+<!-- Secondary Actions -->
+<div class="mt-12 text-center border-t border-surface-container-high pt-8">
+<p class="text-sm text-outline font-medium">
+                    New tactical recruit? 
+                    <a class="text-secondary font-bold hover:underline ml-1" href="#">Request Authorization</a>
+</p>
+</div>
+</div>
+</main>
+<!-- Footer Meta -->
+<footer class="fixed bottom-8 w-full flex justify-center px-6 pointer-events-none">
+<div class="flex items-center gap-8 text-[10px] font-bold uppercase tracking-[0.2em] text-outline">
+<span class="flex items-center gap-2">
+<span class="w-1.5 h-1.5 bg-secondary-fixed-dim rounded-full"></span>
+                System v4.2.0
+            </span>
+<span class="flex items-center gap-2">
+<span class="w-1.5 h-1.5 bg-tertiary-fixed rounded-full"></span>
+                Regional Node: LATAM-S1
+            </span>
+<span>© 2024 Modern Sentinel</span>
+</div>
+</footer>
+</body></html>

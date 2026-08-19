@@ -24,6 +24,16 @@ export class JovenesController {
         private readonly jovenesService: JovenesService,
         private readonly unitPolicy: UnitPolicy,     // ABAC centralizado
     ) { }
+    
+    @Get('stats')
+    @RequirePermission(PERMISSIONS.JOVEN_VIEW)
+    async getStats() {
+        const stats = await this.jovenesService.getStats();
+        return {
+            success: true,
+            data: stats,
+        };
+    }
 
     @Post()
     @RequirePermission(PERMISSIONS.JOVEN_CREATE)
@@ -49,25 +59,31 @@ export class JovenesController {
     async findAll(@Req() req: any, @Query('unidadId') queryUnidadId?: string) {
         const user = req.user;
 
-        // ABAC: si el usuario está restringido a su unidad, forzamos el filtro.
-        // Se pasa user.unidadId directamente (puede ser null): si es null, canManageUnit
-        // retorna true (sin restricción), evitando el bug de `?? 'any'` que bloqueaba
-        // a usuarios sin unidad asignada.
-        if (!this.unitPolicy.canManageUnit(user, user.unidadId ?? undefined)) {
+        // ABAC: Si el usuario es restringido (Adulto de Unidad), solo puede ver su unidad
+        if (this.unitPolicy.isRestricted(user)) {
             const jovenes = await this.jovenesService.findAllByUnit(user.unidadId);
-            return { success: true, message: 'Jóvenes de tu unidad recuperados', data: jovenes };
+            return {
+                success: true,
+                message: 'Miembros de tu unidad recuperados',
+                data: jovenes
+            };
         }
 
-        // Si el usuario puede ver todo y quiere filtrar por unidad
+        // Si el usuario tiene visión global (Admin/Jefe) y pide una unidad específica
         if (queryUnidadId) {
             const jovenes = await this.jovenesService.findAllByUnit(queryUnidadId);
-            return { success: true, message: `Jóvenes de la unidad ${queryUnidadId} recuperados`, data: jovenes };
+            return {
+                success: true,
+                message: `Miembros de la unidad recuperados`,
+                data: jovenes
+            };
         }
 
+        // Visión global: todos los miembros
         const jovenes = await this.jovenesService.findAll();
         return {
             success: true,
-            message: 'Todos los jóvenes recuperados',
+            message: 'Todos los miembros recuperados',
             data: jovenes,
         };
     }
@@ -77,12 +93,12 @@ export class JovenesController {
     async findOne(@Param('id') id: string, @Req() req: any) {
         const joven = await this.jovenesService.findOne(id);
 
-        // ABAC: el adulto solo puede ver jóvenes de su propia unidad
+        // ABAC: Validar que el usuario pueda ver esta unidad específica
         this.unitPolicy.assertCanManageUnit(req.user, joven?.unidadId);
 
         return {
             success: true,
-            message: 'Joven recuperado exitosamente',
+            message: 'Miembro recuperado exitosamente',
             data: joven,
         };
     }
@@ -90,10 +106,21 @@ export class JovenesController {
     @Patch(':id')
     @RequirePermission(PERMISSIONS.JOVEN_UPDATE)
     async update(@Param('id') id: string, @Body() updateJovenDto: UpdateJovenDto, @Req() req: any) {
+        // Primero obtenemos el joven para saber a qué unidad pertenece actualmente
+        const jovenActual = await this.jovenesService.findOne(id);
+        
+        // ABAC: ¿Puede gestionar la unidad actual?
+        this.unitPolicy.assertCanManageUnit(req.user, jovenActual.unidadId);
+
+        // ABAC: Si intenta cambiarlo de unidad, ¿puede gestionar la nueva unidad?
+        if (updateJovenDto.unidadId && updateJovenDto.unidadId !== jovenActual.unidadId) {
+            this.unitPolicy.assertCanManageUnit(req.user, updateJovenDto.unidadId);
+        }
+
         const joven = await this.jovenesService.updateJoven(id, updateJovenDto, req.user.id);
         return {
             success: true,
-            message: 'Joven actualizado exitosamente',
+            message: 'Miembro actualizado exitosamente',
             data: joven,
         };
     }
@@ -101,10 +128,15 @@ export class JovenesController {
     @Delete(':id')
     @RequirePermission(PERMISSIONS.JOVEN_DELETE)
     async remove(@Param('id') id: string, @Req() req: any) {
+        const joven = await this.jovenesService.findOne(id);
+        
+        // ABAC: ¿Puede eliminar en esta unidad?
+        this.unitPolicy.assertCanManageUnit(req.user, joven.unidadId);
+
         await this.jovenesService.removeJoven(id, req.user.id);
         return {
             success: true,
-            message: 'Joven eliminado exitosamente',
+            message: 'Miembro eliminado exitosamente',
             data: null,
         };
     }

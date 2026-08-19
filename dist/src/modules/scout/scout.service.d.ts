@@ -10,36 +10,27 @@ export declare class ScoutService extends BaseService<any> {
         deletedAt: Date | null;
         createdBy: string | null;
         updatedBy: string | null;
-        jovenId: string;
-        etapa: string;
         fechaInicio: Date;
+        etapa: string;
         fechaCulminacion: Date | null;
+        jovenId: string;
     }>;
     findAllProgresiones(): Promise<({
         Unidad: {
             id: string;
-            nombre: string;
+            tipo: string | null;
             createdAt: Date;
             updatedAt: Date;
             deletedAt: Date | null;
             createdBy: string | null;
             updatedBy: string | null;
+            nombre: string;
             descripcion: string | null;
-            tipo: string | null;
         };
         Joven: {
             id: string;
-            unidadId: string;
-            createdAt: Date;
-            updatedAt: Date;
-            deletedAt: Date | null;
-            createdBy: string | null;
-            updatedBy: string | null;
-            nombres: string;
-            apellidos: string;
-            fechaNacimiento: Date;
+            miembroId: string;
             representanteId: string;
-            estado: string;
             historial: string | null;
         };
     } & {
@@ -50,36 +41,27 @@ export declare class ScoutService extends BaseService<any> {
         deletedAt: Date | null;
         createdBy: string | null;
         updatedBy: string | null;
-        jovenId: string;
-        etapa: string;
         fechaInicio: Date;
+        etapa: string;
         fechaCulminacion: Date | null;
+        jovenId: string;
     })[]>;
     findProgresionById(id: string): Promise<{
         Unidad: {
             id: string;
-            nombre: string;
+            tipo: string | null;
             createdAt: Date;
             updatedAt: Date;
             deletedAt: Date | null;
             createdBy: string | null;
             updatedBy: string | null;
+            nombre: string;
             descripcion: string | null;
-            tipo: string | null;
         };
         Joven: {
             id: string;
-            unidadId: string;
-            createdAt: Date;
-            updatedAt: Date;
-            deletedAt: Date | null;
-            createdBy: string | null;
-            updatedBy: string | null;
-            nombres: string;
-            apellidos: string;
-            fechaNacimiento: Date;
+            miembroId: string;
             representanteId: string;
-            estado: string;
             historial: string | null;
         };
     } & {
@@ -90,10 +72,10 @@ export declare class ScoutService extends BaseService<any> {
         deletedAt: Date | null;
         createdBy: string | null;
         updatedBy: string | null;
-        jovenId: string;
-        etapa: string;
         fechaInicio: Date;
+        etapa: string;
         fechaCulminacion: Date | null;
+        jovenId: string;
     }>;
     updateProgresion(id: string, data: any, userId: string): Promise<{
         id: string;
@@ -103,10 +85,10 @@ export declare class ScoutService extends BaseService<any> {
         deletedAt: Date | null;
         createdBy: string | null;
         updatedBy: string | null;
-        jovenId: string;
-        etapa: string;
         fechaInicio: Date;
+        etapa: string;
         fechaCulminacion: Date | null;
+        jovenId: string;
     }>;
     removeProgresion(id: string, userId: string): Promise<{
         id: string;
@@ -116,66 +98,66 @@ export declare class ScoutService extends BaseService<any> {
         deletedAt: Date | null;
         createdBy: string | null;
         updatedBy: string | null;
-        jovenId: string;
-        etapa: string;
         fechaInicio: Date;
+        etapa: string;
         fechaCulminacion: Date | null;
+        jovenId: string;
     }>;
     createCondecoracion(data: any, userId: string): Promise<{
         id: string;
-        nombre: string;
+        tipo: string;
         createdAt: Date;
         updatedAt: Date;
         deletedAt: Date | null;
         createdBy: string | null;
         updatedBy: string | null;
+        nombre: string;
         descripcion: string | null;
-        tipo: string;
     }>;
     findAllCondecoraciones(): Promise<{
         id: string;
-        nombre: string;
+        tipo: string;
         createdAt: Date;
         updatedAt: Date;
         deletedAt: Date | null;
         createdBy: string | null;
         updatedBy: string | null;
+        nombre: string;
         descripcion: string | null;
-        tipo: string;
     }[]>;
     findCondecoracionById(id: string): Promise<{
         id: string;
-        nombre: string;
+        tipo: string;
         createdAt: Date;
         updatedAt: Date;
         deletedAt: Date | null;
         createdBy: string | null;
         updatedBy: string | null;
+        nombre: string;
         descripcion: string | null;
-        tipo: string;
     }>;
     removeCondecoracion(id: string, userId: string): Promise<{
         id: string;
-        nombre: string;
+        tipo: string;
         createdAt: Date;
         updatedAt: Date;
         deletedAt: Date | null;
         createdBy: string | null;
         updatedBy: string | null;
+        nombre: string;
         descripcion: string | null;
-        tipo: string;
     }>;
-    findJovenCondecoraciones(jovenId: string): Promise<({
+    findJovenCondecoraciones(miembroId: string): Promise<({
         Condecoracion: {
             id: string;
-            nombre: string;
+            tipo: string;
             createdAt: Date;
             updatedAt: Date;
             deletedAt: Date | null;
             createdBy: string | null;
             updatedBy: string | null;
+            nombre: string;
             descripcion: string | null;
-            tipo: string;
         };
     } & {
         id: string;
@@ -184,7 +166,7 @@ export declare class ScoutService extends BaseService<any> {
         deletedAt: Date | null;
         createdBy: string | null;
         updatedBy: string | null;
-        jovenId: string;
+        miembroId: string;
         condecoracionId: string;
         fechaOtorgada: Date;
     })[]>;
@@ -195,9 +177,9 @@ export declare class ScoutService extends BaseService<any> {
         deletedAt: Date | null;
         createdBy: string | null;
         updatedBy: string | null;
-        jovenId: string;
+        miembroId: string;
         condecoracionId: string;
         fechaOtorgada: Date;
     }>;
-    otorgarCondecoracion(jovenId: string, condecoracionId: string, userId: string): Promise<any>;
+    otorgarCondecoracion(miembroId: string, condecoracionId: string, userId: string): Promise<any>;
 }

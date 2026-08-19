@@ -3,4 +3,8 @@ export declare class UpdateJovenDto {
     apellidos?: string;
     fechaNacimiento?: string;
     unidadId?: string;
+    cedula?: string;
+    genero?: 'MASCULINO' | 'FEMENINO';
+    representanteId?: string;
+    historial?: string;
 }

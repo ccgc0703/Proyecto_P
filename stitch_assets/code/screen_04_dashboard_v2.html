@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+
+<html class="light" lang="es"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@200;300;400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "on-primary-container": "#95a2ff",
+              "on-secondary": "#ffffff",
+              "outline": "#767683",
+              "tertiary": "#6d5e00",
+              "background": "#faf9f9",
+              "inverse-on-surface": "#f2f0f0",
+              "on-secondary-fixed": "#002117",
+              "on-background": "#1b1c1c",
+              "surface-tint": "#4a57ae",
+              "primary-fixed-dim": "#bcc3ff",
+              "outline-variant": "#c6c5d3",
+              "primary-fixed": "#dfe0ff",
+              "secondary": "#376757",
+              "on-error": "#ffffff",
+              "tertiary-container": "#c4aa00",
+              "error": "#ba1a1a",
+              "on-primary-fixed-variant": "#313e95",
+              "surface-variant": "#e3e2e2",
+              "primary-container": "#27348b",
+              "on-secondary-container": "#3d6d5d",
+              "on-secondary-fixed-variant": "#1d4f40",
+              "on-tertiary": "#ffffff",
+              "inverse-surface": "#303031",
+              "on-tertiary-fixed-variant": "#524600",
+              "on-primary": "#ffffff",
+              "on-error-container": "#93000a",
+              "error-container": "#ffdad6",
+              "inverse-primary": "#bcc3ff",
+              "surface-container-high": "#e9e8e8",
+              "secondary-fixed-dim": "#9ed1bd",
+              "secondary-fixed": "#baeed9",
+              "on-surface-variant": "#454652",
+              "tertiary-fixed-dim": "#e3c600",
+              "on-primary-fixed": "#000d60",
+              "surface-container-lowest": "#ffffff",
+              "on-tertiary-container": "#4a3f00",
+              "surface": "#faf9f9",
+              "on-surface": "#1b1c1c",
+              "secondary-container": "#baeed9",
+              "primary": "#0a1a75",
+              "surface-container": "#efeded",
+              "surface-dim": "#dbdad9",
+              "on-tertiary-fixed": "#211b00",
+              "surface-bright": "#faf9f9",
+              "tertiary-fixed": "#ffe24a",
+              "surface-container-low": "#f5f3f3",
+              "surface-container-highest": "#e3e2e2"
+            },
+            fontFamily: {
+              "headline": ["Manrope"],
+              "body": ["Manrope"],
+              "label": ["Manrope"]
+            },
+            borderRadius: {"DEFAULT": "0.125rem", "lg": "0.25rem", "xl": "0.5rem", "full": "0.75rem"},
+          },
+        },
+      }
+    </script>
+<style>
+        body { font-family: 'Manrope', sans-serif; }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .sentinel-gradient {
+            background: linear-gradient(135deg, #0a1a75 0%, #27348b 100%);
+        }
+        .glass-sidebar {
+            backdrop-filter: blur(20px);
+        }
+        .custom-pie {
+            background: conic-gradient(
+                #27348b 0% 34%, 
+                #376757 34% 73%, 
+                #ffe24a 73% 91%, 
+                #767683 91% 100%
+            );
+        }
+    </style>
+</head>
+<body class="bg-background text-on-background selection:bg-primary-fixed">
+<!-- TopNavBar -->
+<nav class="fixed top-0 w-full z-50 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl shadow-sm dark:shadow-none font-manrope antialiased tracking-tight hidden md:block">
+<div class="flex justify-between items-center px-8 h-16 w-full max-w-[1920px] mx-auto">
+<div class="text-2xl font-black tracking-tighter text-blue-900 dark:text-blue-100">Modern Sentinel</div>
+<div class="flex items-center gap-8">
+<a class="text-blue-700 dark:text-blue-300 border-b-2 border-blue-700 dark:border-blue-300 font-bold pb-1" href="#">Dashboard</a>
+<a class="text-slate-500 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-200 transition-colors" href="#">Unidades</a>
+<a class="text-slate-500 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-200 transition-colors" href="#">Staff</a>
+<a class="text-slate-500 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-200 transition-colors" href="#">Planificaciones</a>
+</div>
+<div class="flex items-center gap-4">
+<div class="flex items-center gap-2">
+<button class="p-2 hover:bg-slate-50/50 dark:hover:bg-slate-800/50 transition-all duration-300 rounded-full active:scale-95">
+<span class="material-symbols-outlined text-on-surface-variant">notifications</span>
+</button>
+<button class="p-2 hover:bg-slate-50/50 dark:hover:bg-slate-800/50 transition-all duration-300 rounded-full active:scale-95">
+<span class="material-symbols-outlined text-on-surface-variant">settings</span>
+</button>
+</div>
+<div class="w-10 h-10 rounded-full overflow-hidden border border-outline-variant">
+<img alt="User profile avatar" class="w-full h-full object-cover" data-alt="Professional headshot of a man with short hair wearing a clean white shirt in a bright office setting with soft natural light" src="https://lh3.googleusercontent.com/aida-public/AB6AXuC1I-44ELgzfdYbCjaOULepmErQorhDn5NwJTt_PR5iht2ivNZf-RAnGGLxIMjbixMMagvvkOUJRvtQXXasJRMk0uFK7z2iPdBKhUfXBFWiCDyXbEHdcHqZFKS4RFCtjV4EbVtdfnX2WYChfJUbDBTvn5WdTPaI1v3xYm3Zwju4SmV4BTL1nKzYVzVV1Qe6TpHOOQlcCOCm7JgTWb1HTQ72oJ27kCG-LLkiP1IGeUbh3WeNSEqp8_evkd09Psc1IsrBPs6zlGrmbNk"/>
+</div>
+</div>
+</div>
+</nav>
+<!-- SideNavBar (Mobile & Desktop Overlay) -->
+<aside class="fixed left-0 top-0 h-screen w-64 z-40 bg-white/70 dark:bg-slate-900/70 backdrop-blur-2xl shadow-[4px_0_24px_rgba(0,0,0,0.02)] border-r border-slate-100/20 dark:border-slate-800/20 hidden lg:flex flex-col p-6 gap-2">
+<div class="mb-8">
+<h1 class="text-xl font-bold bg-gradient-to-r from-blue-900 to-blue-700 bg-clip-text text-transparent">Modern Sentinel</h1>
+<p class="text-[10px] uppercase tracking-widest text-on-surface-variant font-bold">The Precision Navigator</p>
+</div>
+<nav class="flex-1 flex flex-col gap-2 font-manrope font-semibold text-sm">
+<a class="bg-emerald-100/50 dark:bg-emerald-900/30 text-emerald-900 dark:text-emerald-100 rounded-xl px-4 py-3 flex items-center gap-3 active:opacity-80 transition-all hover:translate-x-1" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">dashboard</span>
+<span>Dashboard</span>
+</a>
+<a class="text-slate-500 dark:text-slate-400 px-4 py-3 flex items-center gap-3 hover:bg-slate-100/50 dark:hover:bg-slate-800/50 rounded-xl transition-all hover:translate-x-1" href="#">
+<span class="material-symbols-outlined">group_work</span>
+<span>Unidades</span>
+</a>
+<a class="text-slate-500 dark:text-slate-400 px-4 py-3 flex items-center gap-3 hover:bg-slate-100/50 dark:hover:bg-slate-800/50 rounded-xl transition-all hover:translate-x-1" href="#">
+<span class="material-symbols-outlined">badge</span>
+<span>Staff</span>
+</a>
+<a class="text-slate-500 dark:text-slate-400 px-4 py-3 flex items-center gap-3 hover:bg-slate-100/50 dark:hover:bg-slate-800/50 rounded-xl transition-all hover:translate-x-1" href="#">
+<span class="material-symbols-outlined">event_note</span>
+<span>Planificaciones</span>
+</a>
+</nav>
+<div class="mt-auto flex flex-col gap-2 pt-6 border-t border-slate-100/50">
+<a class="text-slate-500 px-4 py-2 flex items-center gap-3 hover:bg-slate-100/50 rounded-xl transition-all text-xs font-medium" href="#">
+<span class="material-symbols-outlined text-lg">help</span>
+<span>Help</span>
+</a>
+<a class="text-slate-500 px-4 py-2 flex items-center gap-3 hover:bg-slate-100/50 rounded-xl transition-all text-xs font-medium" href="#">
+<span class="material-symbols-outlined text-lg">logout</span>
+<span>Logout</span>
+</a>
+</div>
+</aside>
+<!-- Main Content Canvas -->
+<main class="lg:pl-64 pt-16 min-h-screen">
+<div class="max-w-[1400px] mx-auto p-8 md:p-12">
+<!-- Header Section -->
+<header class="mb-16 flex justify-between items-end">
+<div>
+<h2 class="text-4xl font-black text-primary tracking-tighter mb-2">Dashboard de Inicio</h2>
+<p class="text-on-surface-variant font-medium">Resumen ejecutivo del grupo scout y métricas clave.</p>
+</div>
+<button class="sentinel-gradient text-on-primary px-6 py-3 rounded-xl font-bold flex items-center gap-2 shadow-lg shadow-primary-container/20 active:scale-95 transition-transform">
+<span class="material-symbols-outlined">add</span>
+<span>Generar Reporte</span>
+</button>
+</header>
+<!-- Summary Cards Bento Grid -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-8 mb-16">
+<!-- Total Members -->
+<div class="bg-surface-container-low p-8 rounded-full border-b-2 border-primary-container/10 flex flex-col justify-between group hover:bg-primary-container transition-colors duration-500">
+<div class="flex justify-between items-start mb-6">
+<div class="p-3 bg-primary-fixed rounded-xl group-hover:bg-on-primary-container transition-colors">
+<span class="material-symbols-outlined text-primary group-hover:text-primary-fixed">groups</span>
+</div>
+<span class="text-primary font-bold text-xs uppercase tracking-widest group-hover:text-primary-fixed">+12% vs last month</span>
+</div>
+<div>
+<span class="text-5xl font-black text-primary group-hover:text-white block mb-1">142</span>
+<span class="text-on-surface-variant font-semibold group-hover:text-white/70">Total Members</span>
+</div>
+</div>
+<!-- Active Adults -->
+<div class="bg-surface-container-low p-8 rounded-full border-b-2 border-secondary/10 flex flex-col justify-between group hover:bg-secondary transition-colors duration-500">
+<div class="flex justify-between items-start mb-6">
+<div class="p-3 bg-secondary-fixed rounded-xl group-hover:bg-secondary-fixed-dim transition-colors">
+<span class="material-symbols-outlined text-secondary group-hover:text-secondary-fixed-dim" style="font-variation-settings: 'FILL' 1;">shield_person</span>
+</div>
+<span class="text-secondary font-bold text-xs uppercase tracking-widest group-hover:text-white">Active Status</span>
+</div>
+<div>
+<span class="text-5xl font-black text-primary group-hover:text-white block mb-1">18</span>
+<span class="text-on-surface-variant font-semibold group-hover:text-white/70">Active Adults</span>
+</div>
+</div>
+<!-- Retention Rate -->
+<div class="bg-surface-container-low p-8 rounded-full border-b-2 border-tertiary/10 flex flex-col justify-between group hover:bg-tertiary-container transition-colors duration-500">
+<div class="flex justify-between items-start mb-6">
+<div class="p-3 bg-tertiary-fixed rounded-xl group-hover:bg-tertiary-fixed-dim transition-colors">
+<span class="material-symbols-outlined text-tertiary">trending_up</span>
+</div>
+<span class="text-tertiary font-bold text-xs uppercase tracking-widest group-hover:text-on-tertiary-container">Target 92%</span>
+</div>
+<div>
+<span class="text-5xl font-black text-primary group-hover:text-on-tertiary-container block mb-1">89%</span>
+<span class="text-on-surface-variant font-semibold group-hover:text-on-tertiary-container/70">Annual Retention</span>
+</div>
+</div>
+</div>
+<!-- Asymmetric Layout: Analytics & Activities -->
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-12">
+<!-- Breakdown by Units Card -->
+<div class="lg:col-span-7 bg-surface-container-lowest p-10 rounded-xl shadow-sm border-l-4 border-primary">
+<div class="flex justify-between items-center mb-10">
+<h3 class="text-2xl font-extrabold text-on-surface tracking-tight">Breakdown by Units</h3>
+<span class="bg-surface-container-high px-4 py-1 rounded-full text-xs font-bold text-on-surface-variant">Live Data</span>
+</div>
+<div class="flex flex-col md:flex-row items-center gap-12">
+<!-- Custom Pie Chart Representation -->
+<div class="relative w-56 h-56 rounded-full custom-pie flex items-center justify-center shadow-xl">
+<div class="w-40 h-40 bg-white rounded-full flex items-center justify-center shadow-inner">
+<div class="text-center">
+<span class="text-3xl font-black text-primary block">124</span>
+<span class="text-[10px] uppercase font-bold text-outline">Youths</span>
+</div>
+</div>
+</div>
+<!-- Legend -->
+<div class="flex-1 w-full grid grid-cols-1 gap-4">
+<div class="flex items-center justify-between p-3 bg-surface-container-low rounded-lg border-l-4 border-primary">
+<span class="font-bold text-on-surface">Manada</span>
+<span class="font-black text-primary">42</span>
+</div>
+<div class="flex items-center justify-between p-3 bg-surface-container-low rounded-lg border-l-4 border-secondary">
+<span class="font-bold text-on-surface">Scouts</span>
+<span class="font-black text-secondary">48</span>
+</div>
+<div class="flex items-center justify-between p-3 bg-surface-container-low rounded-lg border-l-4 border-tertiary-container">
+<span class="font-bold text-on-surface">Caminantes</span>
+<span class="font-black text-tertiary-container">22</span>
+</div>
+<div class="flex items-center justify-between p-3 bg-surface-container-low rounded-lg border-l-4 border-outline">
+<span class="font-bold text-on-surface">Rovers</span>
+<span class="font-black text-outline">12</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Upcoming Activities -->
+<div class="lg:col-span-5 flex flex-col gap-6">
+<div class="flex justify-between items-center">
+<h3 class="text-2xl font-extrabold text-on-surface tracking-tight">Upcoming Activities</h3>
+<a class="text-sm font-bold text-secondary-container hover:underline underline-offset-4 decoration-2" href="#">View Calendar</a>
+</div>
+<!-- Activity Item 1 -->
+<div class="relative overflow-hidden group rounded-xl">
+<div class="absolute inset-0 bg-gradient-to-t from-primary/90 to-transparent z-10"></div>
+<img class="w-full h-48 object-cover group-hover:scale-110 transition-transform duration-700" data-alt="Tents pitched in a lush forest clearing during early morning with atmospheric mist and sunbeams filtering through tall pine trees" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBi08_k-4JQlheNqGBgPxpQfsZ05wVqEa88idixTkqiM8m324HiFBEPYONJQm5FKf5L9tUoGzsqToO_noBe1CCapWEit3MxKqaKUJADamNw9P7s74Ib0GheOkyjlvwyrzpUlTnePlpvFnGdHyT1wax2XCewsUnQbBVercMIl2u_nNtC1cx5LpWKo8AW3msCnuAJ2ShfZRyv7PpKYkPI8nTdJA73RvJjXZPoCDCUA1ysXwkIDVScwA6ANsuqT5Rfw1hXxBWIMJe-uL0"/>
+<div class="absolute bottom-0 left-0 p-6 z-20 w-full">
+<div class="flex justify-between items-end">
+<div>
+<span class="bg-tertiary-fixed text-on-tertiary-fixed px-3 py-0.5 rounded-full text-[10px] font-black uppercase tracking-tighter mb-2 inline-block">Featured Activity</span>
+<h4 class="text-xl font-bold text-white">Spring Camp</h4>
+<p class="text-white/70 text-sm font-medium">Mount Sentinel Reserve • Oct 14-16</p>
+</div>
+<span class="material-symbols-outlined text-white text-3xl opacity-0 group-hover:opacity-100 transition-opacity">arrow_forward_ios</span>
+</div>
+</div>
+</div>
+<!-- Activity Item 2 -->
+<div class="bg-surface-container-lowest p-6 rounded-xl shadow-sm hover:shadow-md transition-shadow flex items-center gap-6 group">
+<div class="w-16 h-16 bg-secondary-fixed rounded-xl flex flex-col items-center justify-center text-secondary">
+<span class="text-xs font-black uppercase">Nov</span>
+<span class="text-2xl font-black">05</span>
+</div>
+<div class="flex-1">
+<h4 class="font-extrabold text-on-surface group-hover:text-secondary transition-colors">Community Service</h4>
+<p class="text-sm text-on-surface-variant font-medium">Urban Forest Cleanup Initiative</p>
+</div>
+<div class="p-2 rounded-full group-hover:bg-secondary-fixed transition-colors">
+<span class="material-symbols-outlined text-outline group-hover:text-secondary">volunteer_activism</span>
+</div>
+</div>
+<!-- Activity Item 3 -->
+<div class="bg-surface-container-lowest p-6 rounded-xl shadow-sm hover:shadow-md transition-shadow flex items-center gap-6 group">
+<div class="w-16 h-16 bg-primary-fixed rounded-xl flex flex-col items-center justify-center text-primary">
+<span class="text-xs font-black uppercase">Nov</span>
+<span class="text-2xl font-black">12</span>
+</div>
+<div class="flex-1">
+<h4 class="font-extrabold text-on-surface group-hover:text-primary transition-colors">Leadership Workshop</h4>
+<p class="text-sm text-on-surface-variant font-medium">Strategic Planning for Unit Leaders</p>
+</div>
+<div class="p-2 rounded-full group-hover:bg-primary-fixed transition-colors">
+<span class="material-symbols-outlined text-outline group-hover:text-primary">psychology</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Footer Meta Info -->
+<footer class="mt-20 pt-8 border-t border-surface-container-high flex flex-col md:flex-row justify-between items-center gap-4">
+<p class="text-xs font-bold text-outline-variant uppercase tracking-widest">Modern Sentinel System v4.2.0 • Last sync: 2 minutes ago</p>
+<div class="flex items-center gap-4">
+<span class="flex items-center gap-1 text-xs font-bold text-secondary">
+<span class="w-2 h-2 bg-secondary rounded-full"></span>
+                        Server Status: Optimal
+                    </span>
+<span class="text-outline-variant">|</span>
+<p class="text-xs font-medium text-on-surface-variant">© 2024 Precision Navigator Systems</p>
+</div>
+</footer>
+</div>
+</main>
+<!-- FAB (Suppressed on Dashboard as per rules, but included if primary action is needed. User didn't request specific FAB action, so prioritizing clean canvas) -->
+</body></html>

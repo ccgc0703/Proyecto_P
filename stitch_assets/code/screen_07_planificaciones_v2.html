@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+
+<html lang="es"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@200;300;400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "on-primary-container": "#95a2ff",
+              "on-secondary": "#ffffff",
+              "outline": "#767683",
+              "tertiary": "#6d5e00",
+              "background": "#faf9f9",
+              "inverse-on-surface": "#f2f0f0",
+              "on-secondary-fixed": "#002117",
+              "on-background": "#1b1c1c",
+              "surface-tint": "#4a57ae",
+              "primary-fixed-dim": "#bcc3ff",
+              "outline-variant": "#c6c5d3",
+              "primary-fixed": "#dfe0ff",
+              "secondary": "#376757",
+              "on-error": "#ffffff",
+              "tertiary-container": "#c4aa00",
+              "error": "#ba1a1a",
+              "on-primary-fixed-variant": "#313e95",
+              "surface-variant": "#e3e2e2",
+              "primary-container": "#27348b",
+              "on-secondary-container": "#3d6d5d",
+              "on-secondary-fixed-variant": "#1d4f40",
+              "on-tertiary": "#ffffff",
+              "inverse-surface": "#303031",
+              "on-tertiary-fixed-variant": "#524600",
+              "on-primary": "#ffffff",
+              "on-error-container": "#93000a",
+              "error-container": "#ffdad6",
+              "inverse-primary": "#bcc3ff",
+              "surface-container-high": "#e9e8e8",
+              "secondary-fixed-dim": "#9ed1bd",
+              "secondary-fixed": "#baeed9",
+              "on-surface-variant": "#454652",
+              "tertiary-fixed-dim": "#e3c600",
+              "on-primary-fixed": "#000d60",
+              "surface-container-lowest": "#ffffff",
+              "on-tertiary-container": "#4a3f00",
+              "surface": "#faf9f9",
+              "on-surface": "#1b1c1c",
+              "secondary-container": "#baeed9",
+              "primary": "#0a1a75",
+              "surface-container": "#efeded",
+              "surface-dim": "#dbdad9",
+              "on-tertiary-fixed": "#211b00",
+              "surface-bright": "#faf9f9",
+              "tertiary-fixed": "#ffe24a",
+              "surface-container-low": "#f5f3f3",
+              "surface-container-highest": "#e3e2e2"
+            },
+            fontFamily: {
+              "headline": ["Manrope"],
+              "body": ["Manrope"],
+              "label": ["Manrope"]
+            },
+            borderRadius: {"DEFAULT": "0.125rem", "lg": "0.25rem", "xl": "0.5rem", "full": "0.75rem"},
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        body { font-family: 'Manrope', sans-serif; }
+    </style>
+</head>
+<body class="bg-background text-on-background antialiased selection:bg-secondary-fixed">
+<!-- TopNavBar (Fixed) -->
+<nav class="fixed top-0 w-full z-50 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl shadow-sm dark:shadow-none h-16">
+<div class="flex justify-between items-center px-8 h-16 w-full max-w-[1920px] mx-auto font-manrope antialiased tracking-tight">
+<div class="text-2xl font-black tracking-tighter text-blue-900 dark:text-blue-100">Modern Sentinel</div>
+<div class="hidden md:flex items-center gap-8">
+<a class="text-slate-500 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-200 transition-colors" href="#">Dashboard</a>
+<a class="text-slate-500 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-200 transition-colors" href="#">Unidades</a>
+<a class="text-slate-500 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-200 transition-colors" href="#">Staff</a>
+<a class="text-blue-700 dark:text-blue-300 border-b-2 border-blue-700 dark:border-blue-300 font-bold pb-1" href="#">Planificaciones</a>
+</div>
+<div class="flex items-center gap-4">
+<div class="relative group">
+<span class="material-symbols-outlined text-on-surface-variant cursor-pointer p-2 hover:bg-slate-50/50 rounded-full transition-all">notifications</span>
+</div>
+<div class="relative group">
+<span class="material-symbols-outlined text-on-surface-variant cursor-pointer p-2 hover:bg-slate-50/50 rounded-full transition-all">settings</span>
+</div>
+<div class="h-8 w-8 rounded-full bg-primary-container overflow-hidden">
+<img alt="User profile avatar" class="w-full h-full object-cover" data-alt="professional headshot of a person with a friendly expression in clean office lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBNm63P0Ha1sCJJfrSjx2YDCOHbtbDImcUisSOATZP3TvWkRcUa7rVKmAv3mbF5HwhTYqAK3C3yZLY5EX5jtKAttDpvAAMrk04I58ec2PyHyN02ZN_I2oYe2UnLTkZBMA3flqN5C6HNj8K2KQjlaDUy2ACF-tmtl8crbOv8xwVgPATdX3XLcTAFuKnRCWZRVDEl4uSpRcLISgUMs86ug7w7do0rjUEYrm4LR4SsOLReDfO9U8a_xLCviZ7v-jpcd7Lk_PY2sYCIYSY"/>
+</div>
+</div>
+</div>
+</nav>
+<!-- SideNavBar (Fixed Left) -->
+<aside class="fixed left-0 top-0 h-screen w-64 z-40 bg-white/70 dark:bg-slate-900/70 backdrop-blur-2xl shadow-[4px_0_24px_rgba(0,0,0,0.02)] border-r border-slate-100/20 pt-20">
+<div class="flex flex-col p-6 gap-2 h-full font-manrope font-semibold text-sm">
+<div class="mb-8">
+<div class="text-xl font-bold bg-gradient-to-r from-blue-900 to-blue-700 bg-clip-text text-transparent">Modern Sentinel</div>
+<div class="text-xs text-on-surface-variant opacity-70">The Precision Navigator</div>
+</div>
+<div class="space-y-1">
+<a class="text-slate-500 dark:text-slate-400 px-4 py-3 flex items-center gap-3 hover:bg-slate-100/50 dark:hover:bg-slate-800/50 rounded-xl transition-all hover:translate-x-1" href="#">
+<span class="material-symbols-outlined">dashboard</span> Dashboard
+                </a>
+<a class="text-slate-500 dark:text-slate-400 px-4 py-3 flex items-center gap-3 hover:bg-slate-100/50 dark:hover:bg-slate-800/50 rounded-xl transition-all hover:translate-x-1" href="#">
+<span class="material-symbols-outlined">group_work</span> Unidades
+                </a>
+<a class="text-slate-500 dark:text-slate-400 px-4 py-3 flex items-center gap-3 hover:bg-slate-100/50 dark:hover:bg-slate-800/50 rounded-xl transition-all hover:translate-x-1" href="#">
+<span class="material-symbols-outlined">badge</span> Staff
+                </a>
+<a class="bg-emerald-100/50 dark:bg-emerald-900/30 text-emerald-900 dark:text-emerald-100 rounded-xl px-4 py-3 flex items-center gap-3 active:opacity-80" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">event_note</span> Planificaciones
+                </a>
+</div>
+<button class="mt-8 bg-primary-container text-white py-3 px-4 rounded-xl font-bold flex items-center justify-center gap-2 shadow-lg shadow-primary-container/20 hover:scale-[1.02] transition-transform active:scale-95">
+<span class="material-symbols-outlined text-sm">add</span> New Report
+            </button>
+<div class="mt-auto space-y-1 border-t border-slate-100/50 pt-4">
+<a class="text-slate-500 px-4 py-2 flex items-center gap-3 hover:bg-slate-100/50 rounded-xl transition-all" href="#">
+<span class="material-symbols-outlined">help</span> Help
+                </a>
+<a class="text-slate-500 px-4 py-2 flex items-center gap-3 hover:bg-slate-100/50 rounded-xl transition-all" href="#">
+<span class="material-symbols-outlined">logout</span> Logout
+                </a>
+</div>
+</div>
+</aside>
+<!-- Main Content Canvas -->
+<main class="ml-64 pt-20 px-10 pb-12 min-h-screen">
+<!-- Header Section -->
+<header class="flex justify-between items-end mb-12">
+<div>
+<nav class="flex items-center gap-2 text-on-surface-variant text-sm mb-2 opacity-60">
+<span>Admin</span>
+<span class="material-symbols-outlined text-xs">chevron_right</span>
+<span>Octubre 2024</span>
+</nav>
+<h1 class="text-5xl font-extrabold tracking-tight text-primary">Planificaciones de Grupo</h1>
+</div>
+<div class="flex gap-3">
+<button class="flex items-center gap-2 px-5 py-2.5 bg-surface-container-high text-on-surface font-semibold rounded-lg hover:bg-surface-variant transition-colors">
+<span class="material-symbols-outlined">filter_list</span> Filtrar
+                </button>
+<button class="flex items-center gap-2 px-5 py-2.5 bg-primary-container text-on-primary font-semibold rounded-lg hover:opacity-90 transition-all">
+<span class="material-symbols-outlined">calendar_today</span> Hoy
+                </button>
+</div>
+</header>
+<!-- Layout Grid -->
+<div class="grid grid-cols-12 gap-10">
+<!-- Sidebar: Filters & Objectives -->
+<div class="col-span-12 lg:col-span-3 space-y-8">
+<!-- Unit Filters (Bento Style) -->
+<section class="bg-surface-container-low p-6 rounded-2xl">
+<h3 class="text-on-surface-variant font-bold text-xs uppercase tracking-widest mb-6">Unidades Operativas</h3>
+<div class="space-y-3">
+<label class="flex items-center justify-between p-3 bg-white rounded-xl cursor-pointer hover:shadow-md transition-all group">
+<div class="flex items-center gap-3">
+<div class="w-3 h-3 rounded-full bg-primary"></div>
+<span class="text-on-surface font-medium">Manada</span>
+</div>
+<input checked="" class="rounded text-primary focus:ring-primary border-none bg-slate-100" type="checkbox"/>
+</label>
+<label class="flex items-center justify-between p-3 bg-white rounded-xl cursor-pointer hover:shadow-md transition-all group">
+<div class="flex items-center gap-3">
+<div class="w-3 h-3 rounded-full bg-secondary"></div>
+<span class="text-on-surface font-medium">Unidad Scout</span>
+</div>
+<input checked="" class="rounded text-secondary focus:ring-secondary border-none bg-slate-100" type="checkbox"/>
+</label>
+<label class="flex items-center justify-between p-3 bg-white rounded-xl cursor-pointer hover:shadow-md transition-all group">
+<div class="flex items-center gap-3">
+<div class="w-3 h-3 rounded-full bg-tertiary-container"></div>
+<span class="text-on-surface font-medium">Caminantes</span>
+</div>
+<input checked="" class="rounded text-tertiary-container focus:ring-tertiary-container border-none bg-slate-100" type="checkbox"/>
+</label>
+<label class="flex items-center justify-between p-3 bg-white rounded-xl cursor-pointer hover:shadow-md transition-all group">
+<div class="flex items-center gap-3">
+<div class="w-3 h-3 rounded-full bg-red-800"></div>
+<span class="text-on-surface font-medium">Rovers</span>
+</div>
+<input checked="" class="rounded text-red-800 focus:ring-red-800 border-none bg-slate-100" type="checkbox"/>
+</label>
+</div>
+</section>
+<!-- Cycle Objectives -->
+<section class="bg-primary text-white p-6 rounded-2xl relative overflow-hidden">
+<div class="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16 blur-3xl"></div>
+<h3 class="font-bold text-xs uppercase tracking-widest mb-6 opacity-80">Objetivos del Ciclo</h3>
+<ul class="space-y-5">
+<li class="flex gap-4">
+<span class="material-symbols-outlined text-tertiary-fixed">verified</span>
+<div>
+<p class="font-bold text-sm">Fortalecimiento Comunitario</p>
+<p class="text-xs opacity-70">Integración de nuevas familias.</p>
+</div>
+</li>
+<li class="flex gap-4">
+<span class="material-symbols-outlined text-tertiary-fixed">verified</span>
+<div>
+<p class="font-bold text-sm">Excelencia Técnica</p>
+<p class="text-xs opacity-70">Aprobación de 80% de especialidades.</p>
+</div>
+</li>
+<li class="flex gap-4 opacity-50">
+<span class="material-symbols-outlined">circle</span>
+<div>
+<p class="font-bold text-sm">Sustentabilidad</p>
+<p class="text-xs opacity-70">Reducción de residuos en campamentos.</p>
+</div>
+</li>
+</ul>
+</section>
+<!-- Special Activity Card -->
+<section class="bg-surface-container-highest p-6 rounded-2xl border-l-4 border-tertiary-fixed relative group cursor-pointer hover:translate-y-[-4px] transition-transform">
+<div class="flex justify-between items-start mb-4">
+<span class="bg-tertiary-fixed text-on-tertiary-fixed px-3 py-1 rounded-full text-[10px] font-black tracking-tighter uppercase">Destacado</span>
+<span class="material-symbols-outlined text-on-surface-variant">open_in_new</span>
+</div>
+<h4 class="text-xl font-extrabold text-primary mb-2 tracking-tight leading-tight">Winter Jamboree 2024</h4>
+<p class="text-on-surface-variant text-sm mb-4">La cumbre de invierno más esperada del cono sur.</p>
+<div class="flex items-center gap-2 text-xs font-bold text-secondary">
+<span class="material-symbols-outlined text-sm">location_on</span>
+<span>Villa La Angostura, AR</span>
+</div>
+</section>
+</div>
+<!-- Main Calendar Area -->
+<div class="col-span-12 lg:col-span-9 space-y-10">
+<!-- Calendar View -->
+<div class="bg-white rounded-3xl overflow-hidden shadow-2xl shadow-slate-200/50">
+<!-- Calendar Header -->
+<div class="bg-surface-container-low px-8 py-6 flex justify-between items-center border-b border-surface-variant/30">
+<div class="flex items-center gap-6">
+<h2 class="text-2xl font-black text-primary">Octubre 2024</h2>
+<div class="flex gap-1">
+<button class="p-2 hover:bg-white rounded-lg transition-colors"><span class="material-symbols-outlined">chevron_left</span></button>
+<button class="p-2 hover:bg-white rounded-lg transition-colors"><span class="material-symbols-outlined">chevron_right</span></button>
+</div>
+</div>
+<div class="flex bg-slate-100 p-1 rounded-xl">
+<button class="px-4 py-1.5 rounded-lg bg-white shadow-sm text-sm font-bold text-primary">Mes</button>
+<button class="px-4 py-1.5 rounded-lg text-sm font-bold text-on-surface-variant opacity-60">Semana</button>
+</div>
+</div>
+<!-- Calendar Grid -->
+<div class="grid grid-cols-7 border-collapse">
+<!-- Days Header -->
+<div class="p-4 text-center border-b border-r border-surface-variant/20 text-[10px] font-black uppercase tracking-widest text-on-surface-variant">Lun</div>
+<div class="p-4 text-center border-b border-r border-surface-variant/20 text-[10px] font-black uppercase tracking-widest text-on-surface-variant">Mar</div>
+<div class="p-4 text-center border-b border-r border-surface-variant/20 text-[10px] font-black uppercase tracking-widest text-on-surface-variant">Mié</div>
+<div class="p-4 text-center border-b border-r border-surface-variant/20 text-[10px] font-black uppercase tracking-widest text-on-surface-variant">Jue</div>
+<div class="p-4 text-center border-b border-r border-surface-variant/20 text-[10px] font-black uppercase tracking-widest text-on-surface-variant">Vie</div>
+<div class="p-4 text-center border-b border-r border-surface-variant/20 text-[10px] font-black uppercase tracking-widest text-on-surface-variant bg-slate-50/50">Sáb</div>
+<div class="p-4 text-center border-b border-surface-variant/20 text-[10px] font-black uppercase tracking-widest text-on-surface-variant bg-slate-50/50">Dom</div>
+<!-- Row 1 -->
+<div class="min-h-[140px] p-2 border-b border-r border-surface-variant/20 opacity-30 text-xs font-bold">30</div>
+<div class="min-h-[140px] p-2 border-b border-r border-surface-variant/20 text-xs font-bold">1</div>
+<div class="min-h-[140px] p-2 border-b border-r border-surface-variant/20 text-xs font-bold">2</div>
+<div class="min-h-[140px] p-2 border-b border-r border-surface-variant/20 text-xs font-bold">3</div>
+<div class="min-h-[140px] p-2 border-b border-r border-surface-variant/20 text-xs font-bold">4</div>
+<!-- Weekend Sáb 5 -->
+<div class="min-h-[140px] p-2 border-b border-r border-surface-variant/20 bg-slate-50/50">
+<span class="text-xs font-black text-primary">5</span>
+<div class="mt-2 p-2 bg-primary-container text-white text-[10px] font-bold rounded-lg shadow-sm">Reunión de Rama: Plan de Progresión</div>
+</div>
+<div class="min-h-[140px] p-2 border-b border-surface-variant/20 bg-slate-50/50">
+<span class="text-xs font-black text-primary">6</span>
+</div>
+<!-- Row 2 -->
+<div class="min-h-[140px] p-2 border-b border-r border-surface-variant/20 text-xs font-bold">7</div>
+<div class="min-h-[140px] p-2 border-b border-r border-surface-variant/20 text-xs font-bold">8</div>
+<div class="min-h-[140px] p-2 border-b border-r border-surface-variant/20 text-xs font-bold">9</div>
+<div class="min-h-[140px] p-2 border-b border-r border-surface-variant/20 text-xs font-bold">10</div>
+<div class="min-h-[140px] p-2 border-b border-r border-surface-variant/20 text-xs font-bold">
+                            11
+                            <div class="mt-2 p-2 bg-secondary text-white text-[10px] font-bold rounded-lg leading-tight">Salida: Campamento de Formación (Día 1)</div>
+</div>
+<div class="min-h-[140px] p-2 border-b border-r border-surface-variant/20 bg-slate-50/50">
+<span class="text-xs font-black text-primary">12</span>
+<div class="mt-2 p-2 bg-secondary text-white text-[10px] font-bold rounded-lg">Campamento (Día 2)</div>
+</div>
+<div class="min-h-[140px] p-2 border-b border-surface-variant/20 bg-slate-50/50">
+<span class="text-xs font-black text-primary">13</span>
+<div class="mt-2 p-2 bg-secondary text-white text-[10px] font-bold rounded-lg">Regreso de Campamento</div>
+</div>
+<!-- Row 3 (Today/Active Highlight) -->
+<div class="min-h-[140px] p-2 border-b border-r border-surface-variant/20 text-xs font-bold">14</div>
+<div class="min-h-[140px] p-2 border-b border-r border-surface-variant/20 text-xs font-bold bg-primary-container/5 relative">
+<div class="absolute top-0 right-0 p-2"><div class="w-1.5 h-1.5 rounded-full bg-primary-container ring-4 ring-primary-container/20"></div></div>
+                            15
+                            <div class="mt-2 p-2 bg-tertiary-fixed text-on-tertiary-fixed text-[10px] font-black rounded-lg border-b-2 border-on-tertiary-fixed/10 uppercase">Consejo de Grupo</div>
+</div>
+<div class="min-h-[140px] p-2 border-b border-r border-surface-variant/20 text-xs font-bold">16</div>
+<div class="min-h-[140px] p-2 border-b border-r border-surface-variant/20 text-xs font-bold">17</div>
+<div class="min-h-[140px] p-2 border-b border-r border-surface-variant/20 text-xs font-bold">18</div>
+<div class="min-h-[140px] p-2 border-b border-r border-surface-variant/20 bg-slate-50/50">
+<span class="text-xs font-black text-primary">19</span>
+<div class="mt-2 p-2 bg-primary-container text-white text-[10px] font-bold rounded-lg">Juegos de Ciudad: "El Gran Desafío"</div>
+</div>
+<div class="min-h-[140px] p-2 border-b border-surface-variant/20 bg-slate-50/50">
+<span class="text-xs font-black text-primary">20</span>
+</div>
+<!-- Row 4 -->
+<div class="min-h-[140px] p-2 border-b border-r border-surface-variant/20 text-xs font-bold">21</div>
+<div class="min-h-[140px] p-2 border-b border-r border-surface-variant/20 text-xs font-bold">22</div>
+<div class="min-h-[140px] p-2 border-b border-r border-surface-variant/20 text-xs font-bold">23</div>
+<div class="min-h-[140px] p-2 border-b border-r border-surface-variant/20 text-xs font-bold">24</div>
+<div class="min-h-[140px] p-2 border-b border-r border-surface-variant/20 text-xs font-bold">25</div>
+<div class="min-h-[140px] p-2 border-b border-r border-surface-variant/20 bg-slate-50/50">
+<span class="text-xs font-black text-primary">26</span>
+<div class="mt-2 p-2 bg-primary-container text-white text-[10px] font-bold rounded-lg">Examen de Técnica</div>
+</div>
+<div class="min-h-[140px] p-2 border-b border-surface-variant/20 bg-slate-50/50">
+<span class="text-xs font-black text-primary">27</span>
+</div>
+</div>
+</div>
+<!-- Upcoming Special Activities (Bento Grid) -->
+<div>
+<h3 class="text-on-surface-variant font-bold text-xs uppercase tracking-widest mb-6">Próximos Eventos Especiales</h3>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+<div class="bg-surface-container-low p-6 rounded-3xl flex gap-6 items-center">
+<div class="h-20 w-20 rounded-2xl bg-secondary-container flex items-center justify-center flex-shrink-0">
+<span class="material-symbols-outlined text-on-secondary-container text-3xl">nature</span>
+</div>
+<div>
+<h4 class="font-bold text-lg text-primary">Rally de Primavera</h4>
+<p class="text-sm text-on-surface-variant opacity-70 mb-2">Inter-unidades de toda la región.</p>
+<span class="text-[10px] font-black uppercase text-secondary">05 NOV 2024</span>
+</div>
+</div>
+<div class="bg-surface-container-low p-6 rounded-3xl flex gap-6 items-center">
+<div class="h-20 w-20 rounded-2xl bg-tertiary-fixed flex items-center justify-center flex-shrink-0">
+<span class="material-symbols-outlined text-on-tertiary-fixed text-3xl">ac_unit</span>
+</div>
+<div>
+<h4 class="font-bold text-lg text-primary">Winter Jamboree</h4>
+<p class="text-sm text-on-surface-variant opacity-70 mb-2">Preparativos técnicos y logísticos.</p>
+<span class="text-[10px] font-black uppercase text-tertiary-container">20 DIC 2024</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</main>
+<!-- Contextual FAB (Only for main screens) -->
+<div class="fixed bottom-8 right-8 z-50">
+<button class="w-16 h-16 rounded-full bg-primary-container text-white shadow-2xl flex items-center justify-center hover:scale-110 active:scale-95 transition-all">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">add</span>
+</button>
+</div>
+</body></html>

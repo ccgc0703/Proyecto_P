@@ -33,7 +33,10 @@ let AuthService = class AuthService {
         if (!isPasswordValid) {
             throw new common_1.UnauthorizedException('Credenciales inválidas');
         }
-        const permissions = await this.loadUserPermissions(usuario.id);
+        const [permissions, roles] = await Promise.all([
+            this.loadUserPermissions(usuario.id),
+            this.loadUserRoles(usuario.id),
+        ]);
         const payload = {
             sub: usuario.id,
             email: usuario.email,
@@ -42,12 +45,13 @@ let AuthService = class AuthService {
             tokenVersion: usuario.tokenVersion,
         };
         return {
-            accessToken: this.jwtService.sign(payload),
-            usuario: {
+            access_token: this.jwtService.sign(payload),
+            user: {
                 id: usuario.id,
                 nombre: usuario.nombre,
                 email: usuario.email,
                 unidadId: usuario.unidadId,
+                roles,
                 permissions,
             },
         };
@@ -95,8 +99,8 @@ let AuthService = class AuthService {
             nombre: usuario.nombre,
             email: usuario.email,
             unidadId: usuario.unidadId,
-            roles,
-            permisos: Array.from(permisosSet),
+            roles: roles.map(r => r.nombre),
+            permissions: Array.from(permisosSet),
         };
     }
     async logout(userId) {
@@ -149,6 +153,17 @@ let AuthService = class AuthService {
             }
         }
         return Array.from(permisosSet);
+    }
+    async loadUserRoles(usuarioId) {
+        const rows = await this.prisma.usuarioRol.findMany({
+            where: {
+                usuarioId,
+                deletedAt: null,
+                Rol: { deletedAt: null, activo: true },
+            },
+            include: { Rol: true },
+        });
+        return rows.map(ur => ur.Rol.nombre);
     }
 };
 exports.AuthService = AuthService;

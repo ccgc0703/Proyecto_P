@@ -6,10 +6,15 @@ import { PermissionsGuard } from '../../common/guards/permissions.guard';
 import { RequirePermission } from '../../common/decorators/permissions.decorator';
 import { PERMISSIONS } from '../../common/constantes';
 
+import { UnitPolicy } from '../../common/policies/unit.policy';
+
 @Controller('unidades')
 @UseGuards(JwtAuthGuard, PermissionsGuard)
 export class UnidadesController {
-    constructor(private readonly unidadesService: UnidadesService) { }
+    constructor(
+        private readonly unidadesService: UnidadesService,
+        private readonly unitPolicy: UnitPolicy,
+    ) { }
 
     @Post()
     @RequirePermission(PERMISSIONS.UNIDAD_CREATE)
@@ -24,18 +29,32 @@ export class UnidadesController {
 
     @Get()
     @RequirePermission(PERMISSIONS.UNIDAD_VIEW)
-    async findAll() {
+    async findAll(@Req() req: any) {
+        const user = req.user;
+
+        // ABAC: Si el usuario es restringido, solo puede ver SU unidad
+        if (this.unitPolicy.isRestricted(user)) {
+             if (user.unidadId) {
+                const unidad = await this.unidadesService.findOne(user.unidadId);
+                return { success: true, message: 'Tu unidad recuperada', data: [unidad] };
+             }
+             return { success: true, message: 'No tienes unidad asignada', data: [] };
+        }
+
         const unidades = await this.unidadesService.findAll();
         return {
             success: true,
-            message: 'Unidades recuperadas exitosamente',
+            message: 'Todas las unidades recuperadas',
             data: unidades,
         };
     }
 
     @Get(':id')
     @RequirePermission(PERMISSIONS.UNIDAD_VIEW)
-    async findOne(@Param('id') id: string) {
+    async findOne(@Param('id') id: string, @Req() req: any) {
+        // ABAC: Validar acceso antes de retornar
+        this.unitPolicy.assertCanManageUnit(req.user, id);
+
         const unidad = await this.unidadesService.findOne(id);
         return {
             success: true,
@@ -44,9 +63,26 @@ export class UnidadesController {
         };
     }
 
+    @Get(':id/patrullas')
+    @RequirePermission(PERMISSIONS.UNIDAD_VIEW)
+    async getPatrullas(@Param('id') id: string, @Req() req: any) {
+        // ABAC: Validar acceso
+        this.unitPolicy.assertCanManageUnit(req.user, id);
+
+        const patrullas = await this.unidadesService.getPatrullas(id);
+        return {
+            success: true,
+            message: 'Estructuras de unidad recuperadas',
+            data: patrullas,
+        };
+    }
+
     @Delete(':id')
     @RequirePermission(PERMISSIONS.UNIDAD_DELETE)
     async remove(@Param('id') id: string, @Req() req: any) {
+        // ABAC: Solo el admin puede borrar unidades, pero validamos de todos modos
+        this.unitPolicy.assertCanManageUnit(req.user, id);
+
         await this.unidadesService.remove(id, req.user.id);
         return {
             success: true,

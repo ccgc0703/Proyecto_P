@@ -14,19 +14,20 @@ export declare class FichaMedicaController {
             deletedAt: Date | null;
             createdBy: string | null;
             updatedBy: string | null;
+            miembroId: string;
+            tipoSangre: string | null;
             alergias: string | null;
             medicamentos: string | null;
             condiciones: string | null;
             seguro: string | null;
             contactoEmergencia: string | null;
-            jovenId: string;
         };
     }>;
     findAll(): Promise<{
         success: boolean;
         message: string;
         data: ({
-            Joven: {
+            Miembro: {
                 id: string;
                 unidadId: string;
                 createdAt: Date;
@@ -34,12 +35,13 @@ export declare class FichaMedicaController {
                 deletedAt: Date | null;
                 createdBy: string | null;
                 updatedBy: string | null;
+                tipo: import(".prisma/client").$Enums.TipoMiembro;
                 nombres: string;
                 apellidos: string;
+                cedula: string;
                 fechaNacimiento: Date;
-                representanteId: string;
-                estado: string;
-                historial: string | null;
+                genero: import(".prisma/client").$Enums.Genero;
+                estado: import(".prisma/client").$Enums.EstadoMiembro;
             };
         } & {
             id: string;
@@ -48,19 +50,20 @@ export declare class FichaMedicaController {
             deletedAt: Date | null;
             createdBy: string | null;
             updatedBy: string | null;
+            miembroId: string;
+            tipoSangre: string | null;
             alergias: string | null;
             medicamentos: string | null;
             condiciones: string | null;
             seguro: string | null;
             contactoEmergencia: string | null;
-            jovenId: string;
         })[];
     }>;
-    findByJoven(jovenId: string): Promise<{
+    findByMiembro(miembroId: string): Promise<{
         success: boolean;
         message: string;
         data: {
-            Joven: {
+            Miembro: {
                 id: string;
                 unidadId: string;
                 createdAt: Date;
@@ -68,12 +71,13 @@ export declare class FichaMedicaController {
                 deletedAt: Date | null;
                 createdBy: string | null;
                 updatedBy: string | null;
+                tipo: import(".prisma/client").$Enums.TipoMiembro;
                 nombres: string;
                 apellidos: string;
+                cedula: string;
                 fechaNacimiento: Date;
-                representanteId: string;
-                estado: string;
-                historial: string | null;
+                genero: import(".prisma/client").$Enums.Genero;
+                estado: import(".prisma/client").$Enums.EstadoMiembro;
             };
         } & {
             id: string;
@@ -82,19 +86,20 @@ export declare class FichaMedicaController {
             deletedAt: Date | null;
             createdBy: string | null;
             updatedBy: string | null;
+            miembroId: string;
+            tipoSangre: string | null;
             alergias: string | null;
             medicamentos: string | null;
             condiciones: string | null;
             seguro: string | null;
             contactoEmergencia: string | null;
-            jovenId: string;
         };
     }>;
     findOne(id: string): Promise<{
         success: boolean;
         message: string;
         data: {
-            Joven: {
+            Miembro: {
                 id: string;
                 unidadId: string;
                 createdAt: Date;
@@ -102,12 +107,13 @@ export declare class FichaMedicaController {
                 deletedAt: Date | null;
                 createdBy: string | null;
                 updatedBy: string | null;
+                tipo: import(".prisma/client").$Enums.TipoMiembro;
                 nombres: string;
                 apellidos: string;
+                cedula: string;
                 fechaNacimiento: Date;
-                representanteId: string;
-                estado: string;
-                historial: string | null;
+                genero: import(".prisma/client").$Enums.Genero;
+                estado: import(".prisma/client").$Enums.EstadoMiembro;
             };
         } & {
             id: string;
@@ -116,12 +122,13 @@ export declare class FichaMedicaController {
             deletedAt: Date | null;
             createdBy: string | null;
             updatedBy: string | null;
+            miembroId: string;
+            tipoSangre: string | null;
             alergias: string | null;
             medicamentos: string | null;
             condiciones: string | null;
             seguro: string | null;
             contactoEmergencia: string | null;
-            jovenId: string;
         };
     }>;
     update(id: string, dto: UpdateFichaMedicaDto, req: any): Promise<{
@@ -134,12 +141,13 @@ export declare class FichaMedicaController {
             deletedAt: Date | null;
             createdBy: string | null;
             updatedBy: string | null;
+            miembroId: string;
+            tipoSangre: string | null;
             alergias: string | null;
             medicamentos: string | null;
             condiciones: string | null;
             seguro: string | null;
             contactoEmergencia: string | null;
-            jovenId: string;
         };
     }>;
     remove(id: string, req: any): Promise<{

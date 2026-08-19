@@ -29,4 +29,23 @@ export declare class AdministrativoController {
         message: string;
         data: any;
     }>;
+    createFichaMedica(data: any, req: any): Promise<{
+        success: boolean;
+        message: string;
+        data: {
+            id: string;
+            createdAt: Date;
+            updatedAt: Date;
+            deletedAt: Date | null;
+            createdBy: string | null;
+            updatedBy: string | null;
+            miembroId: string;
+            tipoSangre: string | null;
+            alergias: string | null;
+            medicamentos: string | null;
+            condiciones: string | null;
+            seguro: string | null;
+            contactoEmergencia: string | null;
+        };
+    }>;
 }

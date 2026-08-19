@@ -99,22 +99,22 @@ export class ScoutService extends BaseService<any> {
         });
     }
 
-    async findJovenCondecoraciones(jovenId: string) {
-        return this.prisma.jovenCondecoracion.findMany({
-            where: { jovenId, deletedAt: null },
+    async findJovenCondecoraciones(miembroId: string) {
+        return this.prisma.miembroCondecoracion.findMany({
+            where: { miembroId, deletedAt: null },
             include: { Condecoracion: true },
             orderBy: { fechaOtorgada: 'desc' },
         });
     }
 
     async removeJovenCondecoracion(id: string, userId: string) {
-        const jovenCondec = await this.prisma.jovenCondecoracion.findFirst({
+        const miembroCondec = await this.prisma.miembroCondecoracion.findFirst({
             where: { id, deletedAt: null },
         });
-        if (!jovenCondec) {
-            throw new NotFoundException('Condecoración del joven no encontrada');
+        if (!miembroCondec) {
+            throw new NotFoundException('Condecoración del miembro no encontrada');
         }
-        return this.prisma.jovenCondecoracion.update({
+        return this.prisma.miembroCondecoracion.update({
             where: { id },
             data: {
                 deletedAt: new Date(),
@@ -123,10 +123,10 @@ export class ScoutService extends BaseService<any> {
         });
     }
 
-    async otorgarCondecoracion(jovenId: string, condecoracionId: string, userId: string) {
-        return (this as any).prisma.jovenCondecoracion.create({
+    async otorgarCondecoracion(miembroId: string, condecoracionId: string, userId: string) {
+        return (this as any).prisma.miembroCondecoracion.create({
             data: {
-                jovenId,
+                miembroId,
                 condecoracionId,
                 fechaOtorgada: new Date(),
                 createdAt: new Date(),

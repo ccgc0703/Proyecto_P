@@ -32,11 +32,41 @@ let UsersService = class UsersService extends base_service_1.BaseService {
         this.auditService = auditService;
     }
     async findAll(where = {}) {
-        const users = await super.findAll(where);
-        return users.map((user) => this.excludePassword(user));
+        const users = await this.prisma.usuario.findMany({
+            where: Object.assign(Object.assign({}, where), { deletedAt: null }),
+            include: {
+                Unidad: true,
+                UsuarioRoles: {
+                    where: { deletedAt: null },
+                    include: { Rol: true },
+                },
+                Adulto: {
+                    include: { Miembro: true },
+                },
+            },
+        });
+        return users.map((user) => {
+            const { password } = user, rest = __rest(user, ["password"]);
+            return Object.assign(Object.assign({}, rest), { roles: user.UsuarioRoles.map((ur) => ur.Rol.nombre) });
+        });
     }
     async findOne(id) {
-        const user = await super.findOne(id);
+        const user = await this.prisma.usuario.findFirst({
+            where: { id, deletedAt: null },
+            include: {
+                Unidad: true,
+                UsuarioRoles: {
+                    where: { deletedAt: null },
+                    include: { Rol: true },
+                },
+                Adulto: {
+                    include: { Miembro: true },
+                },
+            },
+        });
+        if (!user) {
+            throw new common_1.NotFoundException(`Usuario con ID ${id} no encontrado.`);
+        }
         return this.excludePassword(user);
     }
     async create(createUserDto, creatorId, ip, userAgent) {
@@ -77,6 +107,8 @@ let UsersService = class UsersService extends base_service_1.BaseService {
         const updateData = {};
         if (dto.nombre !== undefined)
             updateData.nombre = dto.nombre;
+        if (dto.apellido !== undefined)
+            updateData.apellido = dto.apellido;
         if (dto.email !== undefined)
             updateData.email = dto.email;
         if (dto.unidadId !== undefined)
@@ -96,6 +128,36 @@ let UsersService = class UsersService extends base_service_1.BaseService {
             userAgent,
         });
         return this.excludePassword(user);
+    }
+    async changePassword(id, currentPassword, newPassword, actorId, ip) {
+        const user = await this.prisma.usuario.findFirst({
+            where: { id, deletedAt: null },
+        });
+        if (!user) {
+            throw new common_1.NotFoundException('Usuario no encontrado');
+        }
+        const isValid = await bcrypt.compare(currentPassword, user.password);
+        if (!isValid) {
+            throw new common_1.BadRequestException('La contraseña actual es incorrecta');
+        }
+        const hashedPassword = await bcrypt.hash(newPassword, 10);
+        await this.prisma.usuario.update({
+            where: { id },
+            data: {
+                password: hashedPassword,
+                tokenVersion: { increment: 1 },
+                updatedBy: actorId,
+            },
+        });
+        await this.auditService.logAction({
+            actorId,
+            action: 'PASSWORD_CHANGED',
+            module: 'users',
+            targetId: id,
+            description: 'Contraseña actualizada',
+            ipAddress: ip,
+        });
+        return { message: 'Contraseña actualizada exitosamente' };
     }
     async remove(id, userId, ip, userAgent) {
         const result = await super.remove(id, userId);

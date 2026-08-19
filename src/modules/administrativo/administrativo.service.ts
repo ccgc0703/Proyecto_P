@@ -16,7 +16,7 @@ export class AdministrativoService extends BaseService<any> {
         });
 
         if (existing) {
-            throw new ConflictException('La cédula ya está registrada para otro representante');
+            return existing;
         }
 
         return super.create(dto, userId);

@@ -1,5 +1,5 @@
 export declare class CreateFichaMedicaDto {
-    jovenId: string;
+    miembroId: string;
     alergias?: string;
     medicamentos?: string;
     condiciones?: string;

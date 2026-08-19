@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+
+<html class="light" lang="es"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Gestión de Staff - Modern Sentinel</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@200;300;400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "brand-blue": "#27348b",
+              "brand-yellow": "#ffde00",
+              "on-primary-container": "#95a2ff",
+              "on-secondary": "#ffffff",
+              "outline": "#767683",
+              "tertiary": "#6d5e00",
+              "background": "#faf9f9",
+              "inverse-on-surface": "#f2f0f0",
+              "on-secondary-fixed": "#002117",
+              "on-background": "#1b1c1c",
+              "surface-tint": "#4a57ae",
+              "primary-fixed-dim": "#bcc3ff",
+              "outline-variant": "#c6c5d3",
+              "primary-fixed": "#dfe0ff",
+              "secondary": "#376757",
+              "on-error": "#ffffff",
+              "tertiary-container": "#c4aa00",
+              "error": "#ba1a1a",
+              "on-primary-fixed-variant": "#313e95",
+              "surface-variant": "#e3e2e2",
+              "primary-container": "#27348b",
+              "on-secondary-container": "#3d6d5d",
+              "on-secondary-fixed-variant": "#1d4f40",
+              "on-tertiary": "#ffffff",
+              "inverse-surface": "#303031",
+              "on-tertiary-fixed-variant": "#524600",
+              "on-primary": "#ffffff",
+              "on-error-container": "#93000a",
+              "error-container": "#ffdad6",
+              "inverse-primary": "#bcc3ff",
+              "surface-container-high": "#e9e8e8",
+              "secondary-fixed-dim": "#9ed1bd",
+              "secondary-fixed": "#baeed9",
+              "on-surface-variant": "#454652",
+              "tertiary-fixed-dim": "#e3c600",
+              "on-primary-fixed": "#000d60",
+              "surface-container-lowest": "#ffffff",
+              "on-tertiary-container": "#4a3f00",
+              "surface": "#faf9f9",
+              "on-surface": "#1b1c1c",
+              "secondary-container": "#baeed9",
+              "primary": "#27348b",
+              "surface-container": "#efeded",
+              "surface-dim": "#dbdad9",
+              "on-tertiary-fixed": "#211b00",
+              "surface-bright": "#faf9f9",
+              "tertiary-fixed": "#ffde00",
+              "surface-container-low": "#f5f3f3",
+              "surface-container-highest": "#e3e2e2"
+            },
+            fontFamily: {
+              "headline": ["Manrope"],
+              "body": ["Manrope"],
+              "label": ["Manrope"]
+            },
+            borderRadius: {"DEFAULT": "0.125rem", "lg": "0.25rem", "xl": "0.5rem", "full": "0.75rem"},
+          },
+        },
+      }
+    </script>
+<style>
+      .material-symbols-outlined {
+        font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+      }
+      body { font-family: 'Manrope', sans-serif; }
+    </style>
+</head>
+<body class="bg-background text-on-background antialiased selection:bg-brand-yellow/30">
+<!-- TopAppBar Shell -->
+<nav class="fixed top-0 w-full z-50 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl shadow-sm dark:shadow-none">
+<div class="flex justify-between items-center px-8 h-16 w-full max-w-[1920px] mx-auto font-manrope antialiased tracking-tight">
+<div class="text-2xl font-black tracking-tighter text-brand-blue">Modern Sentinel</div>
+<div class="hidden md:flex items-center gap-8">
+<a class="text-slate-500 hover:text-brand-blue transition-colors" href="#">Dashboard</a>
+<a class="text-slate-500 hover:text-brand-blue transition-colors" href="#">Unidades</a>
+<a class="text-brand-blue border-b-2 border-brand-blue font-bold pb-1" href="#">Staff</a>
+<a class="text-slate-500 hover:text-brand-blue transition-colors" href="#">Planificaciones</a>
+</div>
+<div class="flex items-center gap-4">
+<div class="relative hidden sm:block">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline">search</span>
+<input class="bg-slate-100 border-none rounded-full pl-10 pr-4 py-1.5 text-sm focus:ring-2 focus:ring-brand-blue w-64" placeholder="Buscar..." type="text"/>
+</div>
+<button class="material-symbols-outlined text-on-surface-variant hover:bg-slate-50/50 p-2 rounded-full transition-all">notifications</button>
+<div class="h-8 w-8 rounded-full overflow-hidden border-2 border-brand-blue/20 active:scale-95 transition-transform">
+<img alt="User profile avatar" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBcO1Zvsm8IdKHaT9bdzLi9w4fNeXIZQvk-yfZwzbQT4eyTmtCvWpedzYtsFbblFhAe_wy7w-HL8ZmR09DCRzx6OjTXTEiNi8GKnw4WI8-rR-4wHznEA4-TSDC2QdI7eJJKosqoDgJiMDjF3aQo3gbwdX8zMFmPJXqQQhlaY9gWUMGKuYEOfsE1cjVAGJ1dd-Cc6aXQjUHc9qAxJPrCLv-woRMJn5-uBlGi9X1MD2YCL28kF3s2KYxCvuxJykMq7drMrMZZG-RA9XQ"/>
+</div>
+</div>
+</div>
+</nav>
+<!-- SideNavBar Shell -->
+<aside class="fixed left-0 top-0 h-screen w-64 z-40 bg-white/70 backdrop-blur-2xl border-r border-slate-100/20 hidden lg:block">
+<div class="flex flex-col p-6 gap-2 h-full">
+<div class="mb-8 px-2">
+<div class="text-xl font-bold text-brand-blue">Modern Sentinel</div>
+<div class="text-xs text-outline font-medium tracking-widest uppercase mt-1">Gestión de Personal</div>
+</div>
+<nav class="flex-1 flex flex-col gap-1">
+<a class="text-slate-500 px-4 py-3 flex items-center gap-3 hover:bg-slate-100/50 rounded-xl transition-all hover:translate-x-1 font-manrope font-semibold text-sm" href="#">
+<span class="material-symbols-outlined">dashboard</span> Dashboard
+                </a>
+<a class="text-slate-500 px-4 py-3 flex items-center gap-3 hover:bg-slate-100/50 rounded-xl transition-all hover:translate-x-1 font-manrope font-semibold text-sm" href="#">
+<span class="material-symbols-outlined">group_work</span> Unidades
+                </a>
+<a class="bg-brand-blue/10 text-brand-blue rounded-xl px-4 py-3 flex items-center gap-3 font-manrope font-semibold text-sm" href="#">
+<span class="material-symbols-outlined">badge</span> Staff
+                </a>
+<a class="text-slate-500 px-4 py-3 flex items-center gap-3 hover:bg-slate-100/50 rounded-xl transition-all hover:translate-x-1 font-manrope font-semibold text-sm" href="#">
+<span class="material-symbols-outlined">event_note</span> Planificaciones
+                </a>
+</nav>
+<div class="mt-auto border-t border-slate-100 pt-6 flex flex-col gap-1">
+<a class="text-slate-500 px-4 py-3 flex items-center gap-3 hover:bg-slate-100/50 rounded-xl transition-all font-manrope font-semibold text-sm" href="#">
+<span class="material-symbols-outlined">help</span> Ayuda
+                </a>
+<a class="text-slate-500 px-4 py-3 flex items-center gap-3 hover:bg-slate-100/50 rounded-xl transition-all font-manrope font-semibold text-sm" href="#">
+<span class="material-symbols-outlined">logout</span> Salir
+                </a>
+</div>
+</div>
+</aside>
+<!-- Main Content Canvas -->
+<main class="lg:ml-64 pt-24 px-8 pb-12 min-h-screen">
+<div class="max-w-7xl mx-auto space-y-10">
+<!-- Header Section -->
+<header class="flex flex-col md:flex-row md:items-end justify-between gap-6">
+<div class="space-y-2">
+<h1 class="text-4xl font-extrabold tracking-tight text-brand-blue uppercase">Staff de Voluntarios</h1>
+<p class="text-on-surface-variant font-medium">Gestión integral del equipo de operaciones y soporte.</p>
+</div>
+<div class="flex items-center gap-3">
+<button class="flex items-center gap-2 px-6 py-3 rounded-xl border border-outline-variant text-on-surface-variant hover:bg-surface-container-low transition-colors font-semibold">
+<span class="material-symbols-outlined text-lg">download</span>
+                        Exportar
+                    </button>
+<button class="flex items-center gap-2 px-8 py-3 rounded-xl bg-brand-yellow text-brand-blue hover:brightness-95 transition-all font-black shadow-lg shadow-brand-yellow/20 uppercase tracking-wider text-sm">
+<span class="material-symbols-outlined text-xl">person_add</span>
+                        Registrar Adulto
+                    </button>
+</div>
+</header>
+<!-- Statistics Bento Grid -->
+<section class="grid grid-cols-1 md:grid-cols-3 gap-6">
+<div class="bg-surface-container-low rounded-2xl p-8 space-y-4 shadow-sm border-b-4 border-brand-blue">
+<div class="flex justify-between items-start">
+<span class="material-symbols-outlined text-brand-blue p-3 bg-brand-blue/10 rounded-xl" style="font-variation-settings: 'FILL' 1;">groups</span>
+<span class="text-xs font-bold px-2 py-1 rounded bg-secondary-fixed text-on-secondary-fixed">+12%</span>
+</div>
+<div>
+<div class="text-4xl font-black text-brand-blue">24</div>
+<div class="text-sm font-bold text-on-surface-variant tracking-wider uppercase">Voluntarios Activos</div>
+</div>
+</div>
+<div class="bg-surface-container-low rounded-2xl p-8 space-y-4 shadow-sm border-b-4 border-brand-yellow">
+<div class="flex justify-between items-start">
+<span class="material-symbols-outlined text-brand-blue p-3 bg-brand-yellow/30 rounded-xl" style="font-variation-settings: 'FILL' 1;">military_tech</span>
+<span class="text-xs font-bold px-2 py-1 rounded bg-surface-container-high text-on-surface-variant">Estable</span>
+</div>
+<div>
+<div class="text-4xl font-black text-brand-blue">6</div>
+<div class="text-sm font-bold text-on-surface-variant tracking-wider uppercase">Liderazgo</div>
+</div>
+</div>
+<div class="bg-brand-blue rounded-2xl p-8 space-y-4 shadow-xl text-white">
+<div class="flex justify-between items-start">
+<span class="material-symbols-outlined text-brand-yellow p-3 bg-white/10 rounded-xl" style="font-variation-settings: 'FILL' 1;">school</span>
+<span class="text-xs font-bold px-2 py-1 rounded bg-brand-yellow text-brand-blue">Peak</span>
+</div>
+<div class="space-y-2">
+<div class="flex items-baseline gap-1">
+<span class="text-4xl font-black">88%</span>
+<span class="text-brand-yellow font-bold">Capacitados</span>
+</div>
+<div class="w-full bg-white/20 h-1.5 rounded-full overflow-hidden">
+<div class="bg-brand-yellow h-full w-[88%]"></div>
+</div>
+</div>
+</div>
+</section>
+<!-- Main Data Table Container -->
+<section class="bg-white rounded-2xl overflow-hidden shadow-xl shadow-slate-200/50 border border-slate-100">
+<div class="px-8 py-6 flex justify-between items-center border-b border-surface-container-high">
+<h2 class="font-bold text-lg text-brand-blue flex items-center gap-2 uppercase tracking-tight">
+<span class="w-1.5 h-6 bg-brand-yellow rounded-full"></span>
+                        Listado de Personal
+                    </h2>
+<div class="flex gap-2">
+<button class="p-2 hover:bg-surface-container-low rounded-lg transition-colors text-outline">
+<span class="material-symbols-outlined">filter_list</span>
+</button>
+<button class="p-2 hover:bg-surface-container-low rounded-lg transition-colors text-outline">
+<span class="material-symbols-outlined">search</span>
+</button>
+</div>
+</div>
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse">
+<thead class="bg-slate-50 text-on-surface-variant text-xs font-black uppercase tracking-widest border-b border-slate-100">
+<tr>
+<th class="px-8 py-5">C.I.</th>
+<th class="px-8 py-5">Nombre</th>
+<th class="px-8 py-5">Edad</th>
+<th class="px-8 py-5">Cargo</th>
+<th class="px-8 py-5">Unidad Asignada</th>
+<th class="px-8 py-5 text-right">Acciones</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-slate-100">
+<!-- Staff Member 1 -->
+<tr class="hover:bg-slate-50/80 transition-colors group">
+<td class="px-8 py-6">
+<span class="font-mono text-xs font-bold text-brand-blue">12.345.678-9</span>
+</td>
+<td class="px-8 py-6">
+<div class="flex items-center gap-4">
+<img alt="Avatar" class="w-10 h-10 rounded-full object-cover border-2 border-brand-yellow/30" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDZaApdRgqLEnmg-0wQgsxvj5oUo19EMS8bfWVJtBxz4rHy8b3re5TVtnK9yJdCn0708vAZVAr51xkMMgbjVk7e_uwe6DiEnWhPuoorbMiWwN0HcZj_13ZP4NJ94stUh3CuW_TkYMOnjCf0n3ohwtDh9lQHCDeLaeE-dbrNlnsB_JKFuPLpi77xkBCO8hndBeMnzvYuhF6v6BbRCIQxUXpGr_fp5JNsVpxQQfmH_NcnVHFHum6VIvdLdvB1VxfgLpqr_pb7JwRl5lg"/>
+<div class="font-bold text-on-surface group-hover:text-brand-blue transition-colors">Alejandro Ruiz</div>
+</div>
+</td>
+<td class="px-8 py-6 text-sm font-medium">38 años</td>
+<td class="px-8 py-6">
+<span class="text-sm font-bold text-brand-blue">Coordinador General</span>
+</td>
+<td class="px-8 py-6">
+<span class="inline-flex items-center px-3 py-1 rounded-full bg-brand-blue/5 text-brand-blue text-[10px] font-black uppercase tracking-tighter border border-brand-blue/10">Staff Operativo</span>
+</td>
+<td class="px-8 py-6 text-right">
+<button class="text-outline hover:text-brand-blue transition-colors">
+<span class="material-symbols-outlined">edit_square</span>
+</button>
+</td>
+</tr>
+<!-- Staff Member 2 -->
+<tr class="hover:bg-slate-50/80 transition-colors group">
+<td class="px-8 py-6">
+<span class="font-mono text-xs font-bold text-brand-blue">15.987.654-3</span>
+</td>
+<td class="px-8 py-6">
+<div class="flex items-center gap-4">
+<img alt="Avatar" class="w-10 h-10 rounded-full object-cover border-2 border-brand-yellow/30" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAQG4_PJdHPm2J7sQkaVuLqBzxiIw6fnvi6vR6om1XetUnF0E_rzYCOKjGlZO-EgIqGK30wGVSzgVgCMc52Wcfzo9GG-3PGewV-SNIVwkYu69UZQIhc-5tcpw2XzfDFLyiqwq3POr8Whd_2fkONBFfM1bFhXLZmCOYvbqKISt1Kvo_Umde_--5bF4_CaA2PksVxOysREbcgcST2YvceHlYyWAs1MGPCPMesCRk1YZ6yRzRoEWMgTkARXVkM5_Grh5qN17hgipwJCZI"/>
+<div class="font-bold text-on-surface group-hover:text-brand-blue transition-colors">Marta Benítez</div>
+</div>
+</td>
+<td class="px-8 py-6 text-sm font-medium">29 años</td>
+<td class="px-8 py-6">
+<span class="text-sm font-bold text-brand-blue">Explorador de Campo</span>
+</td>
+<td class="px-8 py-6">
+<span class="inline-flex items-center px-3 py-1 rounded-full bg-emerald-50 text-emerald-800 text-[10px] font-black uppercase tracking-tighter border border-emerald-100">Vigilancia</span>
+</td>
+<td class="px-8 py-6 text-right">
+<button class="text-outline hover:text-brand-blue transition-colors">
+<span class="material-symbols-outlined">edit_square</span>
+</button>
+</td>
+</tr>
+<!-- Staff Member 3 -->
+<tr class="hover:bg-slate-50/80 transition-colors group">
+<td class="px-8 py-6">
+<span class="font-mono text-xs font-bold text-brand-blue">10.222.333-k</span>
+</td>
+<td class="px-8 py-6">
+<div class="flex items-center gap-4">
+<img alt="Avatar" class="w-10 h-10 rounded-full object-cover border-2 border-brand-yellow/30" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDV6t55qmgYSOa3lVe0kDwVgJ1Xtjc0HAuuqSJ2YTzC2BuFCZ1SSwuGw5hrIfcG7jo_xlAdWuLp0uuJD6gzjLEpg2wW9lCkixddRh1U5CDqSjR9uIk-O0HL6M7gOoqgjp3N_tfFoA3As6-nFhAlcTKyzBCjXP_Ow4Pe3MFvvG5yKPfOtmtM86_Qo8gF2nhrPIzGG_YDealiTpuYZ8mpHY9ANjAjoBteTNdvc-B2BFdGBDH6tSrf1Qz-RgTKK1ryTkjXjBXDRLmClm4"/>
+<div class="font-bold text-on-surface group-hover:text-brand-blue transition-colors">Jorge Santos</div>
+</div>
+</td>
+<td class="px-8 py-6 text-sm font-medium">42 años</td>
+<td class="px-8 py-6">
+<span class="text-sm font-bold text-brand-blue">Analista Técnico</span>
+</td>
+<td class="px-8 py-6">
+<span class="inline-flex items-center px-3 py-1 rounded-full bg-brand-yellow/10 text-brand-blue text-[10px] font-black uppercase tracking-tighter border border-brand-yellow/20">Unidad de Datos</span>
+</td>
+<td class="px-8 py-6 text-right">
+<button class="text-outline hover:text-brand-blue transition-colors">
+<span class="material-symbols-outlined">edit_square</span>
+</button>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+<!-- Training Update Banner -->
+<footer class="bg-brand-blue rounded-2xl p-1 w-full shadow-lg">
+<div class="bg-white/5 backdrop-blur-md rounded-xl p-8 flex flex-col md:flex-row items-center justify-between gap-6">
+<div class="flex items-center gap-6">
+<div class="p-4 bg-brand-yellow rounded-2xl rotate-3 shadow-lg">
+<span class="material-symbols-outlined text-brand-blue text-3xl" style="font-variation-settings: 'FILL' 1;">bolt</span>
+</div>
+<div>
+<h3 class="text-white text-xl font-extrabold uppercase tracking-tight">Capacitación Requerida</h3>
+<p class="text-white/70 text-sm max-w-md font-medium mt-1">El módulo de "Protocolos de Emergencia Nivel 2" expira pronto para varios miembros.</p>
+</div>
+</div>
+<button class="bg-brand-yellow text-brand-blue px-8 py-4 rounded-xl font-black uppercase tracking-widest text-xs hover:scale-105 transition-transform active:scale-95 shadow-xl shadow-brand-yellow/20">
+                        Programar Sesión
+                    </button>
+</div>
+</footer>
+</div>
+</main>
+</body></html>

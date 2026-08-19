@@ -15,6 +15,7 @@ export class AuthService {
     async login(loginDto: LoginDto) {
         const usuario = await this.prisma.usuario.findUnique({
             where: { email: loginDto.email },
+            include: { Unidad: true },
         });
 
         if (!usuario || usuario.deletedAt) {
@@ -30,26 +31,32 @@ export class AuthService {
             throw new UnauthorizedException('Credenciales inválidas');
         }
 
-        // ── Cargar permisos RBAC con un único JOIN (sin N+1) ──────────────────
-        const permissions = await this.loadUserPermissions(usuario.id);
+        // ── Cargar permisos y roles RBAC ──────────────────────────────────────
+        const [permissions, roles] = await Promise.all([
+            this.loadUserPermissions(usuario.id),
+            this.loadUserRoles(usuario.id),
+        ]);
 
         // ── JWT payload: mantiene rol legacy + agrega permissions[] RBAC ──────
         const payload = {
             sub: usuario.id,
             email: usuario.email,
             unidadId: usuario.unidadId,
-            permissions,                // Permisos RBAC — leídos por PermissionsGuard
-            tokenVersion: usuario.tokenVersion, // Para invalidación inmediata de JWTs
+            permissions,
+            roles,
+            tokenVersion: usuario.tokenVersion,
         };
 
         return {
-            accessToken: this.jwtService.sign(payload),
-            usuario: {
+            access_token: this.jwtService.sign(payload),
+            user: {
                 id: usuario.id,
                 nombre: usuario.nombre,
                 email: usuario.email,
                 unidadId: usuario.unidadId,
-                permissions,            // Devuelto también en respuesta para el frontend
+                unidad: usuario.Unidad?.nombre,
+                roles,
+                permissions,
             },
         };
     }
@@ -67,6 +74,7 @@ export class AuthService {
                 email: true,
                 unidadId: true,
                 activo: true,
+                Unidad: true,
                 UsuarioRoles: {
                     where: { deletedAt: null },
                     include: {
@@ -106,8 +114,9 @@ export class AuthService {
             nombre: usuario.nombre,
             email: usuario.email,
             unidadId: usuario.unidadId,
-            roles,
-            permisos: Array.from(permisosSet),
+            unidad: usuario.Unidad?.nombre,
+            roles: roles.map(r => r.nombre),
+            permissions: Array.from(permisosSet),
         };
     }
 
@@ -129,19 +138,24 @@ export class AuthService {
     async refreshToken(userId: string) {
         const usuario = await this.prisma.usuario.findFirst({
             where: { id: userId, deletedAt: null, activo: true },
+            include: { Unidad: true },
         });
 
         if (!usuario) {
             throw new NotFoundException('Usuario no encontrado');
         }
 
-        const permissions = await this.loadUserPermissions(usuario.id);
+        const [permissions, roles] = await Promise.all([
+            this.loadUserPermissions(usuario.id),
+            this.loadUserRoles(usuario.id),
+        ]);
 
         const payload = {
             sub: usuario.id,
             email: usuario.email,
             unidadId: usuario.unidadId,
             permissions,
+            roles,
             tokenVersion: usuario.tokenVersion,
         };
 
@@ -174,7 +188,6 @@ export class AuthService {
             },
         });
 
-        // Flatten: usuario puede tener múltiples roles → union de todos sus permisos
         const permisosSet = new Set<string>();
         for (const ur of rows) {
             for (const rp of ur.Rol.RolPermisos) {
@@ -182,6 +195,18 @@ export class AuthService {
             }
         }
         return Array.from(permisosSet);
+    }
+
+    async loadUserRoles(usuarioId: string): Promise<string[]> {
+        const rows = await this.prisma.usuarioRol.findMany({
+            where: {
+                usuarioId,
+                deletedAt: null,
+                Rol: { deletedAt: null, activo: true },
+            },
+            include: { Rol: true },
+        });
+        return rows.map(ur => ur.Rol.nombre);
     }
 }
 

@@ -10,6 +10,10 @@ import { ScoutModule } from './modules/scout/scout.module';
 import { RbacModule } from './modules/rbac/rbac.module';
 import { AuditModule } from './modules/audit/audit.module';
 import { FichaMedicaModule } from './modules/ficha-medica/ficha-medica.module';
+import { AdultosModule } from './modules/adultos/adultos.module';
+import { DatosScoutModule } from './modules/datos-scout/datos-scout.module';
+import { FormacionModule } from './modules/formacion/formacion.module';
+import { ProgramasMundialesModule } from './modules/programas-mundiales/programas-mundiales.module';
 
 @Module({
   imports: [
@@ -24,6 +28,10 @@ import { FichaMedicaModule } from './modules/ficha-medica/ficha-medica.module';
     ScoutModule,
     RbacModule,
     FichaMedicaModule,
+    AdultosModule,
+    DatosScoutModule,
+    FormacionModule,
+    ProgramasMundialesModule,
   ],
   controllers: [],
   providers: [],

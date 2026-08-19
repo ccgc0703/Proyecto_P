@@ -47,13 +47,14 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
             );
         }
 
-        // Retornar usuario enriquecido con permissions del JWT (sin re-consultar RBAC)
+        // Retornar usuario enriquecido con permissions y roles del JWT (sin re-consultar RBAC)
         return {
             id: usuario.id,
             nombre: usuario.nombre,
             email: usuario.email,
             unidadId: usuario.unidadId,
             permissions: payload.permissions ?? [],   // Inyectado al JWT en login
+            roles: payload.roles ?? [],               // Inyectado al JWT en login
         };
     }
 }

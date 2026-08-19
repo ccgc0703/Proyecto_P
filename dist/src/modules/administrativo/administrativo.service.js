@@ -22,7 +22,7 @@ let AdministrativoService = class AdministrativoService extends base_service_1.B
             where: { cedula: dto.cedula },
         });
         if (existing) {
-            throw new common_1.ConflictException('La cédula ya está registrada para otro representante');
+            return existing;
         }
         return super.create(dto, userId);
     }

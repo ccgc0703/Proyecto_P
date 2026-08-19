@@ -4,6 +4,8 @@ export declare class CreateJovenDto {
     fechaNacimiento: string;
     unidadId: string;
     representanteId: string;
+    cedula: string;
+    genero: 'MASCULINO' | 'FEMENINO';
     estado?: string;
     historial?: string;
 }

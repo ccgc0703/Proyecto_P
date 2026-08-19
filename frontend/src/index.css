@@ -1,0 +1,145 @@
+@import "tailwindcss";
+
+@theme {
+  /* Sentinel Palette - Deep Forest (Stitch) */
+  --color-primary: #003629;
+  --color-on-primary: #ffffff;
+  --color-primary-container: #1b4d3e;
+  --color-on-primary-container: #8abda9;
+  
+  --color-secondary: #485f84;
+  --color-on-secondary: #ffffff;
+  --color-secondary-container: #bbd3fd;
+  
+  --color-tertiary: #3d2c00;
+  --color-on-tertiary: #ffffff;
+  --color-tertiary-container: #594100;
+
+  --color-accent: #ffb800; /* Gold/Yellow for Scout accents */
+  --color-on-accent: #003629;
+
+  --color-background: #f9faf7;
+  --color-on-background: #191c1b;
+  --color-surface: #f9faf7;
+  --color-on-surface: #191c1b;
+  --color-surface-variant: #e2e3e0;
+  --color-on-surface-variant: #404945;
+  --color-outline: #707974;
+  --color-outline-variant: #c0c9c3;
+
+  --color-surface-container-lowest: #ffffff;
+  --color-surface-container-low: #f3f4f1;
+  --color-surface-container: #edeeeb;
+  --color-surface-container-high: #e7e8e6;
+  --color-surface-container-highest: #e2e3e0;
+
+  /* Typography Pairing */
+  --font-headline: "Manrope", sans-serif;
+  --font-display: "Manrope", sans-serif;
+  --font-body: "Inter", sans-serif;
+  --font-label: "Inter", sans-serif;
+
+  --radius-DEFAULT: 0.375rem; /* md roundedness from Stitch */
+  --radius-lg: 0.5rem;
+  --radius-xl: 0.75rem;
+  --radius-full: 9999px;
+}
+
+@layer base {
+  * {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+  }
+
+  html,
+  body,
+  #root {
+    height: 100%;
+    min-height: 100vh;
+  }
+
+  body {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    font-family: var(--font-body);
+    background-color: var(--color-background);
+    color: var(--color-on-background);
+  }
+
+  /* Normalización a Mayúsculas - Integridad de Datos */
+  input:not([type="password"]):not([type="email"]):not([type="url"]), 
+  textarea {
+    text-transform: uppercase;
+  }
+
+  input::placeholder, 
+  textarea::placeholder {
+    text-transform: none;
+    font-weight: 400;
+  }
+}
+
+@layer components {
+  .sentinel-gradient {
+    background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-container) 100%);
+  }
+
+  .glass-panel {
+    backdrop-filter: blur(20px);
+    background-color: color-mix(in srgb, var(--color-surface), transparent 30%);
+  }
+
+  /* MUI Container Fixes */
+  .MuiDataGrid-root {
+    border: none !important;
+    border-radius: var(--radius-xl) !important;
+    overflow: hidden !important;
+    background-color: var(--color-surface-container-lowest) !important;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.06) !important;
+  }
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(135, 135, 135, 0.2);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(135, 135, 135, 0.35);
+}
+
+/* Animations */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.fade-in-up {
+  animation: fadeInUp 0.4s ease both;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.fade-in {
+  animation: fadeIn 0.3s ease both;
+}
