@@ -39,8 +39,8 @@ export const authApi = {
 };
 
 export const miembrosApi = {
-  getAll: (unidad?: string) =>
-    api.get('/jovenes', { params: { unidad } }).then(r => r.data.data),
+  getAll: (unidadId?: string) =>
+    api.get('/jovenes', { params: { unidadId } }).then(r => r.data.data),
   getById: (id: string) => api.get(`/jovenes/${id}`).then(r => r.data.data),
   create: (data: unknown) => api.post('/jovenes', data).then(r => r.data.data),
   update: (id: string, data: unknown) => api.patch(`/jovenes/${id}`, data).then(r => r.data.data),
@@ -59,6 +59,7 @@ export const unidadesApi = {
   getAll: () => api.get('/unidades').then(r => r.data.data),
   getById: (id: string) => api.get(`/unidades/${id}`).then(r => r.data.data),
   getPatrullas: (id: string) => api.get(`/unidades/${id}/patrullas`).then(r => r.data.data),
+  createPatrulla: (unidadId: string, data: unknown) => api.post(`/unidades/${unidadId}/patrullas`, data).then(r => r.data.data),
   create: (data: unknown) => api.post('/unidades', data).then(r => r.data.data),
   update: (id: string, data: unknown) => api.patch(`/unidades/${id}`, data).then(r => r.data.data),
   delete: (id: string) => api.delete(`/unidades/${id}`).then(r => r.data.data),
@@ -80,7 +81,15 @@ export const administrativoApi = {
 export const adultosApi = {
   getAll: () => api.get('/adultos').then(r => r.data),
   getById: (id: string) => api.get(`/adultos/${id}`).then(r => r.data),
+  getMiPerfil: () => api.get('/adultos/mi-perfil').then(r => r.data),
   create: (data: unknown) => api.post('/adultos', data).then(r => r.data),
   update: (id: string, data: unknown) => api.patch(`/adultos/${id}`, data).then(r => r.data),
   createAccount: (id: string, data: unknown) => api.post(`/adultos/${id}/cuenta`, data).then(r => r.data),
+};
+
+export const fichaMedicaApi = {
+  getByMiembro: (miembroId: string) => api.get(`/ficha-medica/miembro/${miembroId}`).then(r => r.data.data),
+  getById: (id: string) => api.get(`/ficha-medica/${id}`).then(r => r.data.data),
+  create: (data: unknown) => api.post('/ficha-medica', data).then(r => r.data.data),
+  update: (id: string, data: unknown) => api.patch(`/ficha-medica/${id}`, data).then(r => r.data.data),
 };

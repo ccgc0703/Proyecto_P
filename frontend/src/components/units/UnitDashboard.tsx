@@ -12,11 +12,11 @@ import {
   Visibility,
   Edit,
   Delete,
-  FileDownload,
 } from '@mui/icons-material';
 import { Dialog } from '@mui/material';
-import { miembrosApi, usuariosApi } from '../../api';
+import { miembrosApi, unidadesApi } from '../../api';
 import { Unidad } from '../../types/auth';
+import { Member, UnidadEntity } from '../../types/member';
 import { MemberProfile } from './MemberProfile';
 
 interface UnitDashboardProps {
@@ -28,11 +28,11 @@ interface UnitDashboardProps {
 
 export const UnitDashboard = ({ unitType, label, icon, description }: UnitDashboardProps) => {
   const navigate = useNavigate();
-  const [members, setMembers] = useState<any[]>([]);
+  const [members, setMembers] = useState<Member[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [adultoDeUnidad, setAdultoDeUnidad] = useState('Cargando...');
-  const [selectedMember, setSelectedMember] = useState<any>(null);
+  const [selectedMember, setSelectedMember] = useState<Member | null>(null);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
 
@@ -40,7 +40,11 @@ export const UnitDashboard = ({ unitType, label, icon, description }: UnitDashbo
     const fetchMembers = async () => {
       try {
         setLoading(true);
-        const data = await miembrosApi.getAll(unitType);
+        const unidades = await unidadesApi.getAll();
+        const unidad = (unidades as UnidadEntity[]).find((u) =>
+          u.nombre?.toLowerCase() === unitType.toLowerCase()
+        );
+        const data = await miembrosApi.getAll(unidad?.id);
         setMembers(data);
       } catch (err) {
         console.error('Error:', err);
@@ -54,14 +58,17 @@ export const UnitDashboard = ({ unitType, label, icon, description }: UnitDashbo
   useEffect(() => {
     const fetchAdulto = async () => {
       try {
-        const users = await usuariosApi.getAll();
+        const unidades = await unidadesApi.getAll();
         const unidadLabel = label.toLowerCase();
-        const adulto = users.find((u: any) =>
-          u.Unidad?.nombre?.toLowerCase() === unidadLabel ||
-          u.roles?.some((r: string) => r.includes(label.toUpperCase()))
+        const unidad = (unidades as UnidadEntity[]).find((u) =>
+          u.nombre?.toLowerCase() === unidadLabel
         );
-        if (adulto) setAdultoDeUnidad(`${adulto.nombre}${adulto.apellido ? ' ' + adulto.apellido : ''}`);
-        else setAdultoDeUnidad('Sin asignar');
+        const adulto = unidad?.Usuarios?.[0];
+        if (adulto) {
+          setAdultoDeUnidad(`${adulto.nombre}${adulto.apellido ? ' ' + adulto.apellido : ''}`);
+        } else {
+          setAdultoDeUnidad('Sin asignar');
+        }
       } catch {
         setAdultoDeUnidad('Sin asignar');
       }
@@ -83,7 +90,8 @@ export const UnitDashboard = ({ unitType, label, icon, description }: UnitDashbo
     };
   }, [members]);
 
-  const calculateAge = useCallback((birthDate: string) => {
+  const calculateAge = useCallback((birthDate?: string) => {
+    if (!birthDate) return 0;
     const today = new Date();
     const birth = new Date(birthDate);
     let age = today.getFullYear() - birth.getFullYear();
@@ -106,12 +114,12 @@ export const UnitDashboard = ({ unitType, label, icon, description }: UnitDashbo
     }
   };
 
-  const columns: GridColDef[] = [
+  const columns: GridColDef<Member>[] = [
     {
       field: 'nombre',
       headerName: 'Miembro',
       flex: 1.5,
-      renderCell: (p: any) => (
+      renderCell: (p) => (
         <div className="flex items-center gap-3 h-full">
           <div className="w-9 h-9 rounded-xl sentinel-gradient flex items-center justify-center text-on-primary font-black text-[10px] shadow-md shrink-0">
             {p.row.nombres?.[0]}{p.row.apellidos?.[0]}
@@ -127,7 +135,7 @@ export const UnitDashboard = ({ unitType, label, icon, description }: UnitDashbo
       field: 'genero',
       headerName: 'Género',
       width: 100,
-      renderCell: (p: any) => (
+      renderCell: (p) => (
         <div className="flex items-center h-full">
           <span className={`px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest border ${
             p.row.genero === 'MASCULINO'
@@ -143,7 +151,7 @@ export const UnitDashboard = ({ unitType, label, icon, description }: UnitDashbo
       field: 'edad',
       headerName: 'Edad',
       width: 80,
-      renderCell: (p: any) => (
+      renderCell: (p) => (
         <div className="flex items-center h-full">
           <span className="text-sm font-black text-primary">{calculateAge(p.row.fechaNacimiento)} <span className="text-[10px] opacity-40">años</span></span>
         </div>
@@ -153,10 +161,10 @@ export const UnitDashboard = ({ unitType, label, icon, description }: UnitDashbo
       field: 'fechaNacimiento',
       headerName: 'Fec. Nacimiento',
       width: 130,
-      renderCell: (p: any) => (
+      renderCell: (p) => (
         <div className="flex items-center h-full">
           <span className="text-[11px] font-black text-outline uppercase tracking-widest">
-            {new Date(p.row.fechaNacimiento).toLocaleDateString('es', { day: '2-digit', month: 'short', year: 'numeric' })}
+            {p.row.fechaNacimiento ? new Date(p.row.fechaNacimiento).toLocaleDateString('es', { day: '2-digit', month: 'short', year: 'numeric' }) : '—'}
           </span>
         </div>
       )
@@ -165,7 +173,7 @@ export const UnitDashboard = ({ unitType, label, icon, description }: UnitDashbo
       field: 'ci',
       headerName: 'C.I. Joven',
       width: 120,
-      renderCell: (p: any) => (
+      renderCell: (p) => (
         <div className="flex items-center h-full">
           <span className="text-[11px] font-black text-primary/70 bg-surface-container-high px-2 py-1 rounded-lg border border-outline/5">{p.row.cedula || 'N/A'}</span>
         </div>
@@ -175,7 +183,7 @@ export const UnitDashboard = ({ unitType, label, icon, description }: UnitDashbo
       field: 'estado',
       headerName: 'Estado',
       width: 120,
-      renderCell: (p: any) => {
+      renderCell: (p) => {
         const estado = p.row.estado || 'ACTIVO';
         const colors: Record<string, string> = {
           ACTIVO: 'bg-emerald-500/5 text-emerald-600 border-emerald-500/20',
@@ -198,7 +206,7 @@ export const UnitDashboard = ({ unitType, label, icon, description }: UnitDashbo
       sortable: false,
       align: 'right',
       headerAlign: 'right',
-      renderCell: (p: any) => (
+      renderCell: (p) => (
         <div className="flex items-center justify-end gap-1 h-full">
           <button
             onClick={() => { setSelectedMember(p.row); setIsProfileOpen(true); }}

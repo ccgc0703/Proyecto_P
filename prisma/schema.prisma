@@ -64,6 +64,24 @@ enum EstadoActividad {
   CANCELADA
 }
 
+enum TipoSangre {
+  A_POSITIVO
+  A_NEGATIVO
+  B_POSITIVO
+  B_NEGATIVO
+  AB_POSITIVO
+  AB_NEGATIVO
+  O_POSITIVO
+  O_NEGATIVO
+  DESCONOCIDO
+}
+
+enum Severidad {
+  LEVE
+  MODERADA
+  SEVERA
+}
+
 // ─────────────────────────────────────────────
 // Modelos Base: Usuario y Unidad
 // ─────────────────────────────────────────────
@@ -197,21 +215,117 @@ model DatosScout {
 }
 
 model FichaMedica {
-  id                 String    @id @default(uuid())
-  tipoSangre         String?
-  alergias           String?
-  medicamentos       String?
-  condiciones        String?
-  seguro             String?
-  contactoEmergencia String?
-  miembroId          String    @unique
-  createdAt          DateTime  @default(now())
-  updatedAt          DateTime  @updatedAt
-  deletedAt          DateTime?
-  createdBy          String?
-  updatedBy          String?
+  id                               String    @id @default(uuid())
+  // Datos generales del miembro
+  tipoSangre                       TipoSangre?
+  telefono                         String?
+  email                            String?
+  // Datos médicos individuales
+  medicoTratante                   String?
+  telefonoMedico                   String?
+  // Seguro médico
+  seguroCompania                   String?
+  seguroPoliza                     String?
+  seguroVigencia                   DateTime?
+  // Contacto de emergencia (desglosado)
+  contactoEmergenciaNombre         String?
+  contactoEmergenciaTelefono       String?
+  contactoEmergenciaParentesco     String?
+  // Texto libre resumen (opcional — el detalle vive en tablas hijas)
+  alergias                         String?
+  medicamentos                     String?
+  condiciones                      String?
+  observaciones                    String?
+  // Consentimiento / autorización médica
+  consentimiento                   Boolean?  @default(false)
+  consentimientoFecha              DateTime?
+  consentimientoObservaciones      String?
 
-  Miembro            Miembro   @relation(fields: [miembroId], references: [id])
+  miembroId                        String    @unique
+  createdAt                        DateTime  @default(now())
+  updatedAt                        DateTime  @updatedAt
+  deletedAt                        DateTime?
+  createdBy                        String?
+  updatedBy                        String?
+
+  Miembro                          Miembro                 @relation(fields: [miembroId], references: [id])
+  Alergias                         AlergiaFichaMedica[]
+  Medicamentos                     MedicamentoFichaMedica[]
+  Condiciones                      CondicionFichaMedica[]
+  Vacunas                          VacunaFichaMedica[]
+}
+
+model AlergiaFichaMedica {
+  id            String    @id @default(uuid())
+  fichaMedicaId String
+  nombre        String
+  severidad     Severidad @default(LEVE)
+  reaccion      String?
+  observaciones String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  deletedAt     DateTime?
+  createdBy     String?
+  updatedBy     String?
+
+  FichaMedica   FichaMedica @relation(fields: [fichaMedicaId], references: [id])
+
+  @@index([fichaMedicaId])
+}
+
+model MedicamentoFichaMedica {
+  id            String    @id @default(uuid())
+  fichaMedicaId String
+  nombre        String
+  dosis         String?
+  frecuencia    String?
+  motivo        String?
+  prescritoPor  String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  deletedAt     DateTime?
+  createdBy     String?
+  updatedBy     String?
+
+  FichaMedica   FichaMedica @relation(fields: [fichaMedicaId], references: [id])
+
+  @@index([fichaMedicaId])
+}
+
+model CondicionFichaMedica {
+  id               String    @id @default(uuid())
+  fichaMedicaId    String
+  nombre           String
+  descripcion      String?
+  fechaDiagnostico DateTime?
+  requiereControl  Boolean   @default(false)
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+  deletedAt        DateTime?
+  createdBy        String?
+  updatedBy        String?
+
+  FichaMedica      FichaMedica @relation(fields: [fichaMedicaId], references: [id])
+
+  @@index([fichaMedicaId])
+}
+
+model VacunaFichaMedica {
+  id               String    @id @default(uuid())
+  fichaMedicaId    String
+  nombre           String
+  fechaAplicacion  DateTime?
+  lote             String?
+  observaciones    String?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+  deletedAt        DateTime?
+  createdBy        String?
+  updatedBy        String?
+
+  FichaMedica      FichaMedica @relation(fields: [fichaMedicaId], references: [id])
+
+  @@index([fichaMedicaId])
 }
 
 model Formacion {

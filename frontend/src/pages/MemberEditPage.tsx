@@ -11,8 +11,11 @@ import {
   Wc,
   CalendarMonth,
   SaveAlt,
+  Add,
 } from '@mui/icons-material';
 import { miembrosApi, unidadesApi } from '../api';
+import { Member, UnidadEntity } from '../types/member';
+import { getApiErrorMessage } from '../utils/errors';
 
 const editSchema = z.object({
   nombres: z.string().min(2, 'Mínimo 2 caracteres'),
@@ -42,35 +45,47 @@ export const MemberEditPage = ({ memberId, unitType, unitLabel }: MemberEditPage
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [memberData, setMemberData] = useState<any>(null);
-  const [subUnidades, setSubUnidades] = useState<any[]>([]);
-  const [isLoadingSub, setIsLoadingSub] = useState(false);
+  const [memberData, setMemberData] = useState<Member | null>(null);
+  const [subUnidades, setSubUnidades] = useState<UnidadEntity[]>([]);
+  const [showCreateSub, setShowCreateSub] = useState(false);
+  const [newSubNombre, setNewSubNombre] = useState('');
+  const [creatingSub, setCreatingSub] = useState(false);
 
   // Determinar nomenclatura
   const subUnitLabel = unitType.toLowerCase() === 'manada' 
     ? 'Seisena' 
-    : unitType.toLowerCase() === 'clan' 
+    : unitType.toLowerCase() === 'clan' || unitType.toLowerCase() === 'caminantes'
       ? 'Equipo de Trabajo' 
       : 'Patrulla';
 
   useEffect(() => {
     const fetchSubUnits = async () => {
       try {
-        setIsLoadingSub(true);
-        // Buscar la unidad por nombre para obtener su ID real si es necesario, 
-        // pero aquí memberData ya tiene unidadId
         if (memberData?.unidadId) {
           const list = await unidadesApi.getPatrullas(memberData.unidadId);
           setSubUnidades(list);
         }
       } catch (err) {
         console.error('Error fetching sub-units:', err);
-      } finally {
-        setIsLoadingSub(false);
       }
     };
     if (memberData) fetchSubUnits();
   }, [memberData?.unidadId, memberData]);
+
+  const handleCreateSubUnit = async () => {
+    if (!newSubNombre.trim() || !memberData?.unidadId) return;
+    try {
+      setCreatingSub(true);
+      const created = await unidadesApi.createPatrulla(memberData.unidadId, { nombre: newSubNombre.trim() });
+      setSubUnidades(prev => [...prev, created]);
+      setNewSubNombre('');
+      setShowCreateSub(false);
+    } catch (err) {
+      console.error('Error creating sub-unit:', err);
+    } finally {
+      setCreatingSub(false);
+    }
+  };
 
   const {
     register,
@@ -99,7 +114,7 @@ export const MemberEditPage = ({ memberId, unitType, unitLabel }: MemberEditPage
           cargoActual: data.cargoActual || '',
           patrullaId: data.patrullaId || '',
         });
-      } catch (err) {
+      } catch {
         setError('No se pudo cargar el miembro.');
       } finally {
         setLoading(false);
@@ -128,9 +143,9 @@ export const MemberEditPage = ({ memberId, unitType, unitLabel }: MemberEditPage
       setTimeout(() => {
         navigate({ to: `/app/${unitType.toLowerCase()}` });
       }, 1500);
-    } catch (err: any) {
+    } catch (err) {
       console.error('Error al actualizar:', err);
-      setError(err?.response?.data?.message || 'Error al actualizar el miembro.');
+      setError(getApiErrorMessage(err, 'Error al actualizar el miembro.'));
     }
   };
 
@@ -241,12 +256,42 @@ export const MemberEditPage = ({ memberId, unitType, unitLabel }: MemberEditPage
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-8 pt-6 border-t border-outline-variant/10">
             <div className="space-y-2">
               <label className={labelClasses}>{subUnitLabel}</label>
-              <select {...register('patrullaId')} className={inputClasses}>
-                <option value="">Seleccionar {subUnitLabel}...</option>
-                {subUnidades.map(su => (
-                  <option key={su.id} value={su.id}>{su.nombre}</option>
-                ))}
-              </select>
+              <div className="flex gap-2">
+                <select {...register('patrullaId')} className={`${inputClasses} flex-1`}>
+                  <option value="">Seleccionar {subUnitLabel}...</option>
+                  {subUnidades.map(su => (
+                    <option key={su.id} value={su.id}>{su.nombre}</option>
+                  ))}
+                </select>
+                <button
+                  type="button"
+                  onClick={() => setShowCreateSub(!showCreateSub)}
+                  className="h-[54px] px-3 bg-primary/10 text-primary rounded-xl hover:bg-primary/20 transition-colors flex items-center justify-center"
+                  title={`Crear nueva ${subUnitLabel}`}
+                >
+                  <Add sx={{ fontSize: 20 }} />
+                </button>
+              </div>
+              {showCreateSub && (
+                <div className="flex gap-2 mt-2">
+                  <input
+                    type="text"
+                    value={newSubNombre}
+                    onChange={(e) => setNewSubNombre(e.target.value)}
+                    placeholder={`Nombre de la ${subUnitLabel.toLowerCase()}`}
+                    className={`${inputClasses} flex-1`}
+                    onKeyDown={(e) => e.key === 'Enter' && handleCreateSubUnit()}
+                  />
+                  <button
+                    type="button"
+                    onClick={handleCreateSubUnit}
+                    disabled={creatingSub || !newSubNombre.trim()}
+                    className="h-[54px] px-4 sentinel-gradient text-on-primary rounded-xl font-black text-[10px] uppercase tracking-widest disabled:opacity-50"
+                  >
+                    {creatingSub ? '...' : 'Crear'}
+                  </button>
+                </div>
+              )}
             </div>
             <div className="space-y-2">
               <label className={labelClasses}>Fecha Ingreso Grupo</label>

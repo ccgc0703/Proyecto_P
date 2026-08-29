@@ -54,6 +54,18 @@ export class AdultosService {
         };
     }
 
+    /** Resuelve el perfil de adulto vinculado a un usuario logueado. */
+    async findByUsuarioId(usuarioId: string) {
+        const adulto = await this.prisma.adulto.findUnique({
+            where: { usuarioId },
+            include: { Miembro: { include: { Unidad: true, FichaMedica: true } } },
+        });
+        if (!adulto) {
+            throw new NotFoundException('No se encontró un perfil de staff vinculado a esta cuenta');
+        }
+        return adulto;
+    }
+
     async create(dto: CreateAdultoDto, creatorId: string) {
         const existing = await this.prisma.miembro.findUnique({ where: { cedula: dto.cedula } });
         if (existing) throw new ConflictException('Cédula ya registrada');

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import {
   Dialog, DialogTitle, DialogContent, DialogActions
 } from '@mui/material';
@@ -30,7 +30,7 @@ const jovenSchema = z.object({
   fechaNacimiento: z.string().min(1, 'Fecha requerida'),
   cedula: z.string().min(5, 'Cédula requerida'),
   genero: z.enum(['MASCULINO', 'FEMENINO']),
-  unidad: z.enum(['MANADA', 'TROPA', 'CLAN']),
+  unidad: z.enum(['MANADA', 'TROPA', 'CAMINANTES', 'CLAN']),
 });
 type JovenFormData = z.infer<typeof jovenSchema>;
 
@@ -46,13 +46,14 @@ export const MiembrosPage = () => {
   const [filtroUnidad, setFiltroUnidad] = useState<string>('');
   const [openDialog, setOpenDialog] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const { register, handleSubmit, reset, formState: { errors } } = useForm<JovenFormData>({
     resolver: zodResolver(jovenSchema),
   });
 
-  const fetchJovenes = async () => {
+  const fetchJovenes = useCallback(async () => {
     try {
       setLoading(true);
       const params = canViewAll ? undefined : (unidadAsignada || undefined);
@@ -63,11 +64,11 @@ export const MiembrosPage = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [canViewAll, unidadAsignada]);
 
   useEffect(() => {
     if (canView) fetchJovenes();
-  }, [canView, unidadAsignada]);
+  }, [canView, fetchJovenes]);
 
   const handleOpenDialog = (joven?: Joven) => {
     if (joven) {
@@ -77,7 +78,7 @@ export const MiembrosPage = () => {
         apellidos: joven.apellidos, 
         fechaNacimiento: joven.fechaNacimiento, 
         cedula: joven.cedula,
-        genero: joven.genero as any,
+        genero: joven.genero as 'MASCULINO' | 'FEMENINO',
         unidad: joven.unidad 
       });
     } else {

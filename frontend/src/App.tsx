@@ -22,6 +22,7 @@ import { PerfilPage } from './pages/PerfilPage';
 import { ManadaPage } from './pages/ManadaPage';
 import { TropaPage } from './pages/TropaPage';
 import { ClanPage } from './pages/ClanPage';
+import { CaminantesPage } from './pages/CaminantesPage';
 import { MemberRegisterPage } from './pages/MemberRegisterPage';
 import { MemberEditPage } from './pages/MemberEditPage';
 import { useAuthStore } from './stores/authStore';
@@ -140,6 +141,29 @@ const clanEditRoute = createRoute({
   component: ClanEditWrapper,
 });
 
+const caminantesRoute = createRoute({
+  getParentRoute: () => layoutRoute,
+  path: '/caminantes',
+  component: CaminantesPage,
+});
+
+const caminantesRegisterRoute = createRoute({
+  getParentRoute: () => layoutRoute,
+  path: '/caminantes/nuevo',
+  component: () => <MemberRegisterPage unitType="Caminantes" unitLabel="Caminantes" />,
+});
+
+const CaminantesEditWrapper = () => {
+  const { id } = useParams({ strict: false }) as { id: string };
+  return <MemberEditPage memberId={id} unitType="Caminantes" unitLabel="Caminantes" />;
+};
+
+const caminantesEditRoute = createRoute({
+  getParentRoute: () => layoutRoute,
+  path: '/caminantes/editar/$id',
+  component: CaminantesEditWrapper,
+});
+
 const staffRoute = createRoute({
   getParentRoute: () => layoutRoute,
   path: '/staff',
@@ -203,6 +227,9 @@ const routeTree = rootRoute.addChildren([
     clanRoute,
     clanRegisterRoute,
     clanEditRoute,
+    caminantesRoute,
+    caminantesRegisterRoute,
+    caminantesEditRoute,
     staffRoute,
     staffRegisterRoute,
     staffEditRoute,

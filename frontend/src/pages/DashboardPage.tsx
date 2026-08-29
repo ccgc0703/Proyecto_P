@@ -16,6 +16,7 @@ interface Stats {
   totalJovenes: number;
   manada: number;
   tropa: number;
+  caminantes: number;
   clan: number;
 }
 
@@ -39,7 +40,7 @@ export const DashboardPage = () => {
         const response = await api.get('/jovenes/stats');
         setStats(response.data.data);
       } catch {
-        setStats({ totalJovenes: 0, manada: 0, tropa: 0, clan: 0 });
+        setStats({ totalJovenes: 0, manada: 0, tropa: 0, caminantes: 0, clan: 0 });
       } finally {
         setLoading(false);
       }
@@ -48,7 +49,7 @@ export const DashboardPage = () => {
   }, [token]);
 
   const totalMembers = stats?.totalJovenes ?? 0;
-  const activeUnities = canViewAll ? 3 : 1; // Simplificación para demo visual
+  const activeUnities = canViewAll ? 4 : 1; // Simplificación para demo visual
   const growthRate = "+12%"; // Estático para demo visual
 
   return (
@@ -149,17 +150,17 @@ export const DashboardPage = () => {
                 </div>
                 <div className="space-y-1">
                   <div className="flex items-center gap-2">
+                    <span className="w-2 h-2 rounded-full bg-accent" />
+                    <p className="text-[10px] font-black uppercase tracking-widest text-outline">Caminantes</p>
+                  </div>
+                  <p className="text-xl font-black text-primary">{stats?.caminantes ?? 0}</p>
+                </div>
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2">
                     <span className="w-2 h-2 rounded-full bg-surface-container-highest" />
                     <p className="text-[10px] font-black uppercase tracking-widest text-outline">Clan</p>
                   </div>
                   <p className="text-xl font-black text-primary">{stats?.clan ?? 0}</p>
-                </div>
-                <div className="space-y-1">
-                  <div className="flex items-center gap-2">
-                    <span className="w-2 h-2 rounded-full bg-tertiary/20" />
-                    <p className="text-[10px] font-black uppercase tracking-widest text-outline">Staff</p>
-                  </div>
-                  <p className="text-xl font-black text-primary">12</p>
                 </div>
               </div>
             </div>

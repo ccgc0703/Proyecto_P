@@ -61,6 +61,13 @@ export class JovenesController {
 
         // ABAC: Si el usuario es restringido (Adulto de Unidad), solo puede ver su unidad
         if (this.unitPolicy.isRestricted(user)) {
+            if (!user.unidadId) {
+                return {
+                    success: true,
+                    message: 'No tienes una unidad asignada',
+                    data: []
+                };
+            }
             const jovenes = await this.jovenesService.findAllByUnit(user.unidadId);
             return {
                 success: true,

@@ -13,6 +13,7 @@ export class UnitPolicy {
     private readonly unitRestrictedRoles: string[] = [
         RBAC_ROLES.ADULTO_MANADA,
         RBAC_ROLES.ADULTO_TROPA,
+        RBAC_ROLES.ADULTO_CAMINANTES,
         RBAC_ROLES.ADULTO_CLAN,
     ];
 

@@ -16,6 +16,8 @@ import {
   SaveAlt
 } from '@mui/icons-material';
 import { adultosApi, unidadesApi, rbacApi } from '../api';
+import { UnidadEntity } from '../types/member';
+import { getApiErrorMessage } from '../utils/errors';
 
 const staffSchema = z.object({
   nombres: z.string().min(2, 'Requerido'),
@@ -44,7 +46,7 @@ interface Role {
 
 export const StaffRegisterPage = () => {
   const navigate = useNavigate();
-  const [unidades, setUnidades] = useState<any[]>([]);
+  const [unidades, setUnidades] = useState<UnidadEntity[]>([]);
   const [roles, setRoles] = useState<Role[]>([]);
   const [formError, setFormError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
@@ -63,9 +65,9 @@ export const StaffRegisterPage = () => {
           unidadesApi.getAll(),
           rbacApi.getRoles()
         ]);
-        setUnidades(uData);
+        setUnidades(uData as UnidadEntity[]);
         setRoles(rData);
-      } catch (err) {
+      } catch {
         console.error('Error al cargar datos iniciales');
       }
     };
@@ -92,9 +94,9 @@ export const StaffRegisterPage = () => {
       setTimeout(() => {
         navigate({ to: '/app/staff' });
       }, 1500);
-    } catch (err: any) {
+    } catch (err) {
       console.error('Error:', err);
-      setFormError(err?.response?.data?.message || 'Error al procesar la solicitud');
+      setFormError(getApiErrorMessage(err, 'Error al procesar la solicitud'));
     }
   };
 
@@ -193,7 +195,7 @@ export const StaffRegisterPage = () => {
               </label>
               <select {...register('unidadId')} className={inputClasses}>
                 <option value="">Seleccione Unidad / Grupo</option>
-                {unidades.map((u: any) => (
+                {unidades.map((u) => (
                   <option key={u.id} value={u.id}>
                     {u.nombre}
                   </option>

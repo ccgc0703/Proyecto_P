@@ -58,6 +58,7 @@ const ROLES_SEED = [
     { nombre: 'ADULTO_MANADA', descripcion: 'Adulto de Unidad Manada' },
     { nombre: 'ADULTO_TROPA', descripcion: 'Adulto de Unidad Tropa' },
     { nombre: 'ADULTO_CLAN', descripcion: 'Adulto de Unidad Clan' },
+    { nombre: 'ADULTO_CAMINANTES', descripcion: 'Adulto de Comunidad de Caminantes' },
     { nombre: 'SECRETARIO', descripcion: 'Secretario del Grupo' },
     { nombre: 'ADULTO_COLABORADOR', descripcion: 'Adulto Colaborador' },
     { nombre: 'CONSULTOR', descripcion: 'Consultor — solo lectura' },
@@ -94,16 +95,25 @@ const ROL_PERMISOS_SEED: Record<string, string[]> = {
         'joven:create', 'joven:view', 'joven:update',
         'progresion:create', 'progresion:view',
         'unidad:view',
+        'representante:create', 'representante:view', 'representante:update',
     ],
     'ADULTO_TROPA': [
         'joven:create', 'joven:view', 'joven:update',
         'progresion:create', 'progresion:view',
         'unidad:view',
+        'representante:create', 'representante:view', 'representante:update',
     ],
     'ADULTO_CLAN': [
         'joven:create', 'joven:view', 'joven:update',
         'progresion:create', 'progresion:view',
         'unidad:view',
+        'representante:create', 'representante:view', 'representante:update',
+    ],
+    'ADULTO_CAMINANTES': [
+        'joven:create', 'joven:view', 'joven:update',
+        'progresion:create', 'progresion:view',
+        'unidad:view',
+        'representante:create', 'representante:view', 'representante:update',
     ],
     'SECRETARIO': [
         'representante:create', 'representante:view', 'representante:update',
@@ -123,9 +133,10 @@ async function main() {
 
     // ── 1. Unidades (usando findFirst + create en lugar de upsert por nombre) ──
     const unidades = [
-        { nombre: 'Manada', tipo: 'RAMA', descripcion: 'Rama para niños de 7 a 11 años' },
-        { nombre: 'Tropa', tipo: 'RAMA', descripcion: 'Rama para jóvenes de 11 a 15 años' },
-        { nombre: 'Clan', tipo: 'RAMA', descripcion: 'Rama para jóvenes de 15 a 21 años' },
+        { nombre: 'Manada', tipo: 'RAMA', descripcion: 'Rama para niños de 6 a 10 años' },
+        { nombre: 'Tropa', tipo: 'RAMA', descripcion: 'Rama para jóvenes de 10 a 15 años' },
+        { nombre: 'Caminantes', tipo: 'RAMA', descripcion: 'Comunidad de Caminantes para jóvenes de 15 a 18 años' },
+        { nombre: 'Clan', tipo: 'RAMA', descripcion: 'Rama para jóvenes de 18 a 21 años' },
     ];
 
     for (const u of unidades) {

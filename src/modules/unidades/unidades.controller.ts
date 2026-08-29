@@ -1,6 +1,7 @@
 import { Controller, Get, Post, Body, Param, Delete, UseGuards, Req } from '@nestjs/common';
 import { UnidadesService } from './unidades.service';
 import { CreateUnidadDto } from './dto/create-unidad.dto';
+import { CreatePatrullaDto } from './dto/create-patrulla.dto';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { PermissionsGuard } from '../../common/guards/permissions.guard';
 import { RequirePermission } from '../../common/decorators/permissions.decorator';
@@ -74,6 +75,26 @@ export class UnidadesController {
             success: true,
             message: 'Estructuras de unidad recuperadas',
             data: patrullas,
+        };
+    }
+
+    @Post(':id/patrullas')
+    @RequirePermission(PERMISSIONS.UNIDAD_VIEW)
+    async createPatrulla(
+        @Param('id') id: string,
+        @Body() dto: CreatePatrullaDto,
+        @Req() req: any,
+    ) {
+        this.unitPolicy.assertCanManageUnit(req.user, id);
+
+        const patrulla = await this.unidadesService.createPatrulla(
+            { ...dto, unidadId: id },
+            req.user.id,
+        );
+        return {
+            success: true,
+            message: 'Patrulla creada exitosamente',
+            data: patrulla,
         };
     }
 

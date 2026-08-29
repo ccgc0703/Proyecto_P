@@ -27,6 +27,15 @@ interface Permission {
   description?: string;
 }
 
+interface StaffRow {
+  id: string;
+  nombres?: string;
+  apellidos?: string;
+  email?: string;
+  cedula?: string;
+  Unidad?: { nombre?: string };
+}
+
 const groupByEntity = (perms: string[]) => {
   const groups: Record<string, string[]> = {};
   perms.forEach((p) => {
@@ -44,7 +53,7 @@ export const StaffPage = () => {
   const [tab, setTab] = useState(0);
   const [roles, setRoles] = useState<Role[]>([]);
   const [permisos, setPermisos] = useState<Permission[]>([]);
-  const [staffList, setStaffList] = useState<any[]>([]);
+  const [staffList, setStaffList] = useState<StaffRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
 
@@ -58,7 +67,7 @@ export const StaffPage = () => {
       ]);
       setRoles(rolesData);
       setPermisos(permisosData);
-      setStaffList(staffData);
+      setStaffList(staffData as StaffRow[]);
     } catch {
       console.error('Error al cargar datos');
     } finally {

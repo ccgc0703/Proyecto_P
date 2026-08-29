@@ -26,6 +26,11 @@ export class UpdateJovenDto {
     cedula?: string;
 
     @IsOptional()
+    @IsString()
+    @Transform(({ value }) => value?.toUpperCase()?.trim())
+    estado?: string;
+
+    @IsOptional()
     @IsEnum(['MASCULINO', 'FEMENINO'], { message: 'Género inválido (MASCULINO o FEMENINO)' })
     genero?: 'MASCULINO' | 'FEMENINO';
 

@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import {
   Box,
   Typography,
@@ -21,14 +22,26 @@ import {
   Wc,
   Home
 } from '@mui/icons-material';
+import { usePermission } from '../../hooks/usePermission';
+import { useFichaMedica } from '../../hooks/useFichaMedica';
+import { FichaMedicaResumen } from '../../features/fichaMedica/FichaMedicaResumen';
+import { FichaMedicaForm } from '../../features/fichaMedica/FichaMedicaForm';
+import { Member, Progresion } from '../../types/member';
 
 interface MemberProfileProps {
-  member: any;
+  member: Member;
   onClose: () => void;
 }
 
 export const MemberProfile = ({ member, onClose }: MemberProfileProps) => {
-  const calculateAge = (birthDate: string) => {
+  const canViewMedico = usePermission('medico:view');
+  const canEditMedico = usePermission('medico:edit');
+  const canUpdateMedico = usePermission('medico:update');
+  const canEdit = canEditMedico || canUpdateMedico;
+  const { ficha, loading, reload } = useFichaMedica(member?.id);
+  const [fichaDialogOpen, setFichaDialogOpen] = useState(false);
+  const calculateAge = (birthDate?: string) => {
+    if (!birthDate) return 0;
     const today = new Date();
     const birth = new Date(birthDate);
     let age = today.getFullYear() - birth.getFullYear();
@@ -39,7 +52,6 @@ export const MemberProfile = ({ member, onClose }: MemberProfileProps) => {
     return age;
   };
 
-  const fichaMedica = member.FichaMedica;
   const representante = member.Representante;
   const progresiones = member.Progresiones || [];
   const progresionActual = progresiones[0]; // La más reciente (ya ordenada desc)
@@ -118,7 +130,7 @@ export const MemberProfile = ({ member, onClose }: MemberProfileProps) => {
                   <div>
                     <p className="text-[9px] font-black uppercase tracking-widest text-outline mb-1">Nacimiento</p>
                     <p className="text-sm font-bold text-primary">
-                      {new Date(member.fechaNacimiento).toLocaleDateString('es')} ({calculateAge(member.fechaNacimiento)} años)
+                      {member.fechaNacimiento ? new Date(member.fechaNacimiento).toLocaleDateString('es') : '—'} ({calculateAge(member.fechaNacimiento)} años)
                     </p>
                   </div>
                 </div>
@@ -165,38 +177,14 @@ export const MemberProfile = ({ member, onClose }: MemberProfileProps) => {
             </Box>
 
             {/* Ficha Médica — Datos reales */}
-            <Box className="bg-emerald-500/5 p-8 rounded-[2rem] border border-emerald-500/10">
-              <Typography className="text-[10px] font-black uppercase tracking-widest text-emerald-600 mb-6 flex items-center gap-2">
-                <MedicalInformation fontSize="small" /> Ficha Médica
-              </Typography>
-
-              <div className="space-y-4">
-                <Box className="flex justify-between items-center bg-white/50 p-3 rounded-xl">
-                  <span className="text-[10px] font-bold text-outline">Tipo de Sangre</span>
-                  <span className="text-xs font-black text-emerald-700">
-                    {fichaMedica?.tipoSangre || 'No registrado'}
-                  </span>
-                </Box>
-                <Box className="bg-white/50 p-3 rounded-xl">
-                  <p className="text-[9px] font-bold text-outline mb-1 uppercase tracking-tighter">Alergias</p>
-                  <p className="text-xs font-medium text-primary">
-                    {fichaMedica?.alergias || 'Ninguna conocida'}
-                  </p>
-                </Box>
-                <Box className="bg-white/50 p-3 rounded-xl">
-                  <p className="text-[9px] font-bold text-outline mb-1 uppercase tracking-tighter">Condiciones</p>
-                  <p className="text-xs font-medium text-primary">
-                    {fichaMedica?.condiciones || 'Ninguna'}
-                  </p>
-                </Box>
-                <Box className="bg-white/50 p-3 rounded-xl">
-                  <p className="text-[9px] font-bold text-outline mb-1 uppercase tracking-tighter">Contacto Emergencia</p>
-                  <p className="text-xs font-medium text-primary">
-                    {fichaMedica?.contactoEmergencia || representante?.telefono || 'N/A'}
-                  </p>
-                </Box>
-              </div>
-            </Box>
+            {canViewMedico && (
+              <FichaMedicaResumen
+                ficha={ficha}
+                canEdit={canEdit}
+                loading={loading}
+                onEdit={() => setFichaDialogOpen(true)}
+              />
+            )}
           </Grid>
 
           {/* Right Column: Progress & Others */}
@@ -242,14 +230,14 @@ export const MemberProfile = ({ member, onClose }: MemberProfileProps) => {
 
                 <Grid item xs={12} md={6}>
                   <Box className="space-y-4">
-                    {progresiones.slice(0, 3).map((prog: any) => (
+                    {progresiones.slice(0, 3).map((prog: Progresion) => (
                       <div key={prog.id} className="bg-white/50 p-5 rounded-2xl flex items-center gap-4">
                         <div className="w-10 h-10 bg-primary/10 rounded-xl flex items-center justify-center text-primary">
                           <EmojiEvents fontSize="small" />
                         </div>
                         <div>
                           <p className="text-[9px] font-black text-outline uppercase tracking-widest leading-none mb-1">
-                            {new Date(prog.fechaInicio).toLocaleDateString('es')}
+                            {prog.fechaInicio ? new Date(prog.fechaInicio).toLocaleDateString('es') : '—'}
                           </p>
                           <p className="text-xs font-black text-primary">{prog.etapa}</p>
                         </div>
@@ -287,7 +275,7 @@ export const MemberProfile = ({ member, onClose }: MemberProfileProps) => {
                       <MedicalInformation className="group-hover:scale-110 transition-transform" />
                       <div>
                         <p className="text-[9px] font-black opacity-60 uppercase">Emergencia Médica</p>
-                        <p className="text-xs font-bold">{fichaMedica?.contactoEmergencia || representante?.telefono || 'N/A'}</p>
+                        <p className="text-xs font-bold">{ficha?.contactoEmergenciaTelefono || representante?.telefono || 'N/A'}</p>
                       </div>
                     </div>
                   </Box>
@@ -297,6 +285,15 @@ export const MemberProfile = ({ member, onClose }: MemberProfileProps) => {
           </Grid>
         </Grid>
       </Box>
+
+      <FichaMedicaForm
+        open={fichaDialogOpen}
+        miembroId={member.id}
+        miembroNombre={`${member.nombres} ${member.apellidos}`}
+        ficha={ficha}
+        onClose={() => setFichaDialogOpen(false)}
+        onSaved={reload}
+      />
     </Box>
   );
 };

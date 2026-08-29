@@ -41,6 +41,12 @@ describe('UnidadesService', () => {
             expect(result).toEqual(mockUnidades);
             expect(mockPrisma.unidad.findMany).toHaveBeenCalledWith({
                 where: { deletedAt: null },
+                include: {
+                    Usuarios: {
+                        where: { deletedAt: null },
+                        select: { id: true, nombre: true, apellido: true },
+                    },
+                },
             });
         });
     });

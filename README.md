@@ -176,6 +176,40 @@ joven:delete
 
 ---
 
+### 🩺 Ficha Médica
+
+Cada miembro posee **una única** ficha médica (relación 1:1 con el miembro).
+
+**Estructura:**
+
+- **Datos generales:** tipo de sangre (enum), teléfono, email.
+- **Datos médicos:** médico tratante, teléfono del médico, observaciones.
+- **Seguro médico:** compañía, póliza y vigencia.
+- **Contacto de emergencia:** nombre, teléfono y parentesco (desglosado).
+- **Tablas hijas (detalle, relación 1:N):**
+  - `Alergias` — nombre, severidad (LEVE/MODERADA/SEVERA), reacción.
+  - `Medicamentos` — nombre, dosis, frecuencia, motivo, prescrito por.
+  - `Condiciones` — nombre, descripción, fecha de diagnóstico, requiere control.
+  - `Vacunas` — nombre, fecha de aplicación, lote.
+- **Consentimiento/autorización médica:** bandera, fecha y observaciones.
+
+**Reglas de negocio:**
+
+- Un miembro solo puede tener **una** ficha médica.
+- Ver y crear/editar requiere los permisos `medico:view`, `medico:edit` y `medico:update`.
+- Las acciones de crear/actualizar/eliminar quedan registradas en auditoría (`FICHA_MEDICA_CREATED`, `FICHA_MEDICA_UPDATED`, `FICHA_MEDICA_DELETED`).
+- La eliminación es **lógica (soft delete)**, no se borran datos físicamente.
+- Si se registra consentimiento sin fecha, se asigna automáticamente la fecha actual.
+- La creación/actualización permite gestionar de forma anidada las tablas hijas (crear, actualizar o eliminar detalle).
+
+**Permisos necesarios:**
+
+```
+medico:view, medico:edit, medico:update
+```
+
+---
+
 ### 🔒 Restricción de acceso por unidad
 
 El acceso a los jóvenes se restringe según la unidad del adulto.

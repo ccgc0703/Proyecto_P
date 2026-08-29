@@ -12,6 +12,7 @@ import {
   ChildCare,
   SportsHandball,
   AutoStories,
+  Route,
   MenuOpen
 } from '@mui/icons-material';
 
@@ -53,7 +54,7 @@ export const Sidebar = ({ open, onToggle }: SidebarProps) => {
   ];
 
   const isRestricted = (role: string) =>
-    ['ADULTO_MANADA', 'ADULTO_TROPA', 'ADULTO_CLAN'].includes(role);
+    ['ADULTO_MANADA', 'ADULTO_TROPA', 'ADULTO_CAMINANTES', 'ADULTO_CLAN'].includes(role);
 
   const managementItems: NavItem[] = [
     { text: 'Miembros', icon: <Groups2 />, path: '/app/miembros', permission: canViewJovenes },
@@ -74,6 +75,12 @@ export const Sidebar = ({ open, onToggle }: SidebarProps) => {
       icon: <AutoStories />,
       path: '/app/clan',
       permission: canViewUnidades && (!user?.roles.some(isRestricted) || user?.roles.includes('ADULTO_CLAN'))
+    },
+    {
+      text: 'Caminantes',
+      icon: <Route />,
+      path: '/app/caminantes',
+      permission: canViewUnidades && (!user?.roles.some(isRestricted) || user?.roles.includes('ADULTO_CAMINANTES'))
     },
     { text: 'Staff', icon: <ManageAccounts />, path: '/app/staff', permission: canViewRBAC },
   ].filter((i) => i.permission);

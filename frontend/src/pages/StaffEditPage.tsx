@@ -11,9 +11,13 @@ import {
   Wc,
   EscalatorWarning,
   SaveAlt,
-  Edit
+  Edit,
+  MedicalInformation
 } from '@mui/icons-material';
 import { adultosApi, unidadesApi } from '../api';
+import { FichaMedicaPanel } from '../features/fichaMedica/FichaMedicaPanel';
+import { UnidadEntity } from '../types/member';
+import { getApiErrorMessage } from '../utils/errors';
 
 const editSchema = z.object({
   nombres: z.string().min(2, 'Requerido'),
@@ -29,10 +33,12 @@ type EditFormData = z.infer<typeof editSchema>;
 export const StaffEditPage = () => {
   const navigate = useNavigate();
   const { id } = useParams({ strict: false }) as { id: string };
-  const [unidades, setUnidades] = useState<any[]>([]);
+  const [unidades, setUnidades] = useState<UnidadEntity[]>([]);
   const [loading, setLoading] = useState(true);
   const [formError, setFormError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
+  const [miembroId, setMiembroId] = useState<string | undefined>(undefined);
+  const [staffNombre, setStaffNombre] = useState('');
 
   const { register, handleSubmit, reset, formState: { errors, isSubmitting } } = useForm<EditFormData>({
     resolver: zodResolver(editSchema),
@@ -47,6 +53,8 @@ export const StaffEditPage = () => {
           adultosApi.getById(id)
         ]);
         setUnidades(uData);
+        setMiembroId(staffData.miembroId);
+        setStaffNombre(`${staffData.nombres || ''} ${staffData.apellidos || ''}`.trim());
         reset({
           nombres: staffData.nombres,
           apellidos: staffData.apellidos,
@@ -73,9 +81,9 @@ export const StaffEditPage = () => {
       setTimeout(() => {
         navigate({ to: '/app/staff' });
       }, 1500);
-    } catch (err: any) {
-      console.error('Error:', err);
-      setFormError(err?.response?.data?.message || 'Error al actualizar los datos.');
+    } catch (err) {
+      console.error('Error al actualizar los datos:', err);
+      setFormError(getApiErrorMessage(err, 'Error al actualizar los datos.'));
     }
   };
 
@@ -182,7 +190,7 @@ export const StaffEditPage = () => {
               </label>
               <select {...register('unidadId')} className={inputClasses}>
                 <option value="">Seleccione Unidad / Grupo</option>
-                {unidades.map((u: any) => (
+                {unidades.map((u) => (
                   <option key={u.id} value={u.id}>
                     {u.nombre}
                   </option>
@@ -213,6 +221,15 @@ export const StaffEditPage = () => {
           </button>
         </div>
       </form>
+
+      {/* Ficha Médica del adulto/staff */}
+      <section className="bg-surface-container-lowest p-6 md:p-8 rounded-[2rem] shadow-sm border border-outline-variant/5">
+        <div className="flex items-center gap-3 mb-6">
+          <MedicalInformation className="text-emerald-600" />
+          <h3 className="text-lg font-black text-primary uppercase tracking-tight">Ficha Médica</h3>
+        </div>
+        <FichaMedicaPanel miembroId={miembroId} miembroNombre={staffNombre} />
+      </section>
     </div>
   );
 };

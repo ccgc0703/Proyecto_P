@@ -21,13 +21,14 @@ interface UnidadData {
 
 const unidadSchema = z.object({
   nombre: z.string().min(2, 'Mínimo 2 caracteres'),
-  tipo: z.enum(['MANADA', 'TROPA', 'CLAN']),
+  tipo: z.enum(['MANADA', 'TROPA', 'CAMINANTES', 'CLAN']),
 });
 type UnidadFormData = z.infer<typeof unidadSchema>;
 
 const TIPO_CONFIG: Record<string, { color: string; label: string; dot: string }> = {
   MANADA: { color: 'bg-primary/10 text-primary', label: 'Manada', dot: 'bg-primary' },
   TROPA: { color: 'bg-tertiary/10 text-primary', label: 'Tropa', dot: 'bg-tertiary' },
+  CAMINANTES: { color: 'bg-accent/10 text-primary', label: 'Caminantes', dot: 'bg-accent' },
   CLAN: { color: 'bg-secondary/10 text-secondary', label: 'Clan', dot: 'bg-secondary' },
 };
 

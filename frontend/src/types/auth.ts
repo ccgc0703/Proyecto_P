@@ -1,4 +1,4 @@
-export type Unidad = 'MANADA' | 'TROPA' | 'CLAN';
+export type Unidad = 'MANADA' | 'TROPA' | 'CAMINANTES' | 'CLAN';
 
 export type Role =
   | 'SYSTEM_ADMIN'
@@ -7,6 +7,7 @@ export type Role =
   | 'ADULTO_MANADA'
   | 'ADULTO_TROPA'
   | 'ADULTO_CLAN'
+  | 'ADULTO_CAMINANTES'
   | 'SECRETARIO'
   | 'ADULTO_COLABORADOR'
   | 'CONSULTOR';
@@ -84,8 +85,9 @@ export const ROL_HIERARCHY: Record<Role, number> = {
   GROUP_SUBLEADER: 3,
   ADULTO_MANADA: 4,
   ADULTO_TROPA: 5,
-  ADULTO_CLAN: 6,
-  SECRETARIO: 7,
-  ADULTO_COLABORADOR: 8,
-  CONSULTOR: 9,
+  ADULTO_CAMINANTES: 6,
+  ADULTO_CLAN: 7,
+  SECRETARIO: 8,
+  ADULTO_COLABORADOR: 9,
+  CONSULTOR: 10,
 };

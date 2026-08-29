@@ -1,4 +1,4 @@
-import { Injectable, ForbiddenException, NotFoundException } from '@nestjs/common';
+import { Injectable, ForbiddenException, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateJovenDto } from './dto/create-joven.dto';
 import { UpdateJovenDto } from './dto/update-joven.dto';
@@ -7,10 +7,18 @@ import { AuditService } from '../audit/audit.service';
 const ADULT_UNIT_MAP: Record<string, string> = {
     ADULTO_MANADA: 'Manada',
     ADULTO_TROPA: 'Tropa',
+    ADULTO_CAMINANTES: 'Caminantes',
     ADULTO_CLAN: 'Clan',
 };
 
 const UNIT_BYPASS_ROLES = ['SYSTEM_ADMIN', 'GROUP_LEADER'];
+
+const UNIT_AGE_RANGES: Record<string, { min: number; max: number }> = {
+    Manada: { min: 6, max: 10 },
+    Tropa: { min: 10, max: 15 },
+    Caminantes: { min: 15, max: 18 },
+    Clan: { min: 18, max: 21 },
+};
 
 @Injectable()
 export class JovenesService {
@@ -50,6 +58,22 @@ export class JovenesService {
         }
     }
 
+    private validateAgeForUnit(fechaNacimiento: Date, unidadNombre: string): void {
+        const range = UNIT_AGE_RANGES[unidadNombre];
+        if (!range) return;
+
+        const today = new Date();
+        let age = today.getFullYear() - fechaNacimiento.getFullYear();
+        const m = today.getMonth() - fechaNacimiento.getMonth();
+        if (m < 0 || (m === 0 && today.getDate() < fechaNacimiento.getDate())) age--;
+
+        if (age < range.min || age > range.max) {
+            throw new BadRequestException(
+                `El miembro tiene ${age} años. La unidad "${unidadNombre}" acepta edades de ${range.min} a ${range.max} años.`
+            );
+        }
+    }
+
     async findAllByUnit(unidadId: string) {
         const miembros = await this.prisma.miembro.findMany({
             where: {
@@ -62,9 +86,7 @@ export class JovenesService {
                 Joven: {
                     include: { Representante: true }
                 },
-                FichaMedica: {
-                    where: { deletedAt: null }
-                },
+                FichaMedica: true,
                 DatosScout: true,
             },
         });
@@ -73,9 +95,9 @@ export class JovenesService {
             const { Joven, DatosScout, ...rest } = m;
             return {
                 ...rest,
-                ...Joven,
-                ...DatosScout,
-                id: m.id, // ID del miembro es el principal
+                ...(Joven || {}),
+                ...(DatosScout || {}),
+                id: m.id,
             };
         });
     }
@@ -91,9 +113,7 @@ export class JovenesService {
                 Joven: {
                     include: { Representante: true }
                 },
-                FichaMedica: {
-                    where: { deletedAt: null }
-                },
+                FichaMedica: true,
                 DatosScout: true,
             },
         });
@@ -102,8 +122,8 @@ export class JovenesService {
             const { Joven, DatosScout, ...rest } = m;
             return {
                 ...rest,
-                ...Joven,
-                ...DatosScout,
+                ...(Joven || {}),
+                ...(DatosScout || {}),
                 id: m.id,
             };
         });
@@ -150,6 +170,14 @@ export class JovenesService {
 
     async createJoven(createJovenDto: CreateJovenDto, userId: string, userRol: string, userUnidadId?: string) {
         await this.validateUnitAccess(userId, createJovenDto.unidadId);
+
+        const unidad = await this.prisma.unidad.findFirst({
+            where: { id: createJovenDto.unidadId, deletedAt: null },
+            select: { nombre: true },
+        });
+        if (unidad) {
+            this.validateAgeForUnit(new Date(createJovenDto.fechaNacimiento), unidad.nombre);
+        }
 
         const miembro = await this.prisma.miembro.create({
             data: {
@@ -205,6 +233,19 @@ export class JovenesService {
             await this.validateUnitAccess(actorId, dto.unidadId);
         }
 
+        // Validar edad si cambia fecha de nacimiento o unidad
+        if (dto.fechaNacimiento || dto.unidadId) {
+            const targetUnidadId = dto.unidadId || miembro.unidadId;
+            const targetFecha = dto.fechaNacimiento || miembro.fechaNacimiento;
+            const unidad = await this.prisma.unidad.findFirst({
+                where: { id: targetUnidadId, deletedAt: null },
+                select: { nombre: true },
+            });
+            if (unidad) {
+                this.validateAgeForUnit(new Date(targetFecha), unidad.nombre);
+            }
+        }
+
         const miembroData: any = {};
         if (dto.nombres !== undefined) miembroData.nombres = dto.nombres;
         if (dto.apellidos !== undefined) miembroData.apellidos = dto.apellidos;
@@ -212,6 +253,7 @@ export class JovenesService {
         if (dto.unidadId !== undefined) miembroData.unidadId = dto.unidadId;
         if (dto.cedula !== undefined) miembroData.cedula = dto.cedula;
         if (dto.genero !== undefined) miembroData.genero = dto.genero;
+        if (dto.estado !== undefined) miembroData.estado = dto.estado;
         miembroData.updatedBy = actorId;
 
         const jovenData: any = {};
@@ -288,12 +330,15 @@ export class JovenesService {
             where: { tipo: 'JOVEN', deletedAt: null } 
         });
 
-        const [manada, tropa, clan] = await Promise.all([
+        const [manada, tropa, caminantes, clan] = await Promise.all([
             this.prisma.miembro.count({
                 where: { tipo: 'JOVEN', deletedAt: null, Unidad: { nombre: 'Manada' } }
             }),
             this.prisma.miembro.count({
                 where: { tipo: 'JOVEN', deletedAt: null, Unidad: { nombre: 'Tropa' } }
+            }),
+            this.prisma.miembro.count({
+                where: { tipo: 'JOVEN', deletedAt: null, Unidad: { nombre: 'Caminantes' } }
             }),
             this.prisma.miembro.count({
                 where: { tipo: 'JOVEN', deletedAt: null, Unidad: { nombre: 'Clan' } }
@@ -304,6 +349,7 @@ export class JovenesService {
             totalJovenes,
             manada,
             tropa,
+            caminantes,
             clan,
         };
     }

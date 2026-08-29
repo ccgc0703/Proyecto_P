@@ -41,7 +41,7 @@ export const useAuthStore = create<AuthStateWithHydration>()(
             nombre: rawUser.nombre,
             apellido: rawUser.apellido || '',
             roles: Array.isArray(rawUser.roles)
-              ? rawUser.roles.map((r: any) => (typeof r === 'string' ? r : r.nombre))
+              ? rawUser.roles.map((r: string | { nombre?: string }) => (typeof r === 'string' ? r : (r.nombre ?? '')))
               : [],
             permissions: rawUser.permissions || rawUser.permisos || [],
             unidad: rawUser.unidad || rawUser.unidadId || undefined,
@@ -86,7 +86,7 @@ export const useAuthStore = create<AuthStateWithHydration>()(
             nombre: data.nombre,
             apellido: data.apellido || '',
             roles: Array.isArray(data.roles)
-              ? data.roles.map((r: any) => (typeof r === 'string' ? r : r.nombre))
+              ? data.roles.map((r: string | { nombre?: string }) => (typeof r === 'string' ? r : (r.nombre ?? '')))
               : [],
             permissions: data.permissions || data.permisos || [],
             unidad: data.unidad || data.unidadId || undefined,

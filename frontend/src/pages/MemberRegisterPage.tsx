@@ -12,8 +12,11 @@ import {
   Wc,
   CalendarMonth,
   SaveAlt,
+  Add,
 } from '@mui/icons-material';
 import { miembrosApi, administrativoApi, unidadesApi } from '../api';
+import { UnidadEntity } from '../types/member';
+import { getApiErrorMessage } from '../utils/errors';
 
 const registerSchema = z.object({
   // Datos Personales
@@ -47,13 +50,16 @@ export const MemberRegisterPage = ({ unitType, unitLabel }: MemberRegisterPagePr
   const navigate = useNavigate();
   const [error, setError] = useState<string | null>(null);
   const [step, setStep] = useState<1 | 2>(1);
-  const [subUnidades, setSubUnidades] = useState<any[]>([]);
+  const [subUnidades, setSubUnidades] = useState<UnidadEntity[]>([]);
   const [isLoadingSub, setIsLoadingSub] = useState(false);
+  const [showCreateSub, setShowCreateSub] = useState(false);
+  const [newSubNombre, setNewSubNombre] = useState('');
+  const [creatingSub, setCreatingSub] = useState(false);
 
   // Determinar nomenclatura
   const subUnitLabel = unitType.toLowerCase() === 'manada' 
     ? 'Seisena' 
-    : unitType.toLowerCase() === 'clan' 
+    : unitType.toLowerCase() === 'clan' || unitType.toLowerCase() === 'caminantes'
       ? 'Equipo de Trabajo' 
       : 'Patrulla';
 
@@ -62,7 +68,7 @@ export const MemberRegisterPage = ({ unitType, unitLabel }: MemberRegisterPagePr
       try {
         setIsLoadingSub(true);
         const unidades = await unidadesApi.getAll();
-        const unidad = unidades.find((u: any) => 
+        const unidad = (unidades as UnidadEntity[]).find((u) => 
           u.nombre?.toLowerCase() === unitType.toLowerCase()
         );
         if (unidad) {
@@ -77,6 +83,27 @@ export const MemberRegisterPage = ({ unitType, unitLabel }: MemberRegisterPagePr
     };
     fetchSubUnits();
   }, [unitType]);
+
+  const handleCreateSubUnit = async () => {
+    if (!newSubNombre.trim()) return;
+    try {
+      setCreatingSub(true);
+      const unidades = await unidadesApi.getAll();
+      const unidad = (unidades as UnidadEntity[]).find((u) =>
+        u.nombre?.toLowerCase() === unitType.toLowerCase()
+      );
+      if (!unidad) return;
+
+      const created = await unidadesApi.createPatrulla(unidad.id, { nombre: newSubNombre.trim() });
+      setSubUnidades(prev => [...prev, created]);
+      setNewSubNombre('');
+      setShowCreateSub(false);
+    } catch (err) {
+      console.error('Error creating sub-unit:', err);
+    } finally {
+      setCreatingSub(false);
+    }
+  };
 
   const {
     register,
@@ -112,7 +139,7 @@ export const MemberRegisterPage = ({ unitType, unitLabel }: MemberRegisterPagePr
 
       // 2. Obtener unidadId
       const unidades = await unidadesApi.getAll();
-      const unidad = unidades.find((u: any) =>
+      const unidad = (unidades as UnidadEntity[]).find((u) =>
         u.nombre?.toLowerCase() === unitType.toLowerCase()
       );
       if (!unidad) {
@@ -145,9 +172,9 @@ export const MemberRegisterPage = ({ unitType, unitLabel }: MemberRegisterPagePr
 
       // 5. Redirigir al dashboard de la unidad
       navigate({ to: `/app/${unitType.toLowerCase()}` });
-    } catch (err: any) {
+    } catch (err) {
       console.error('Error en el registro:', err);
-      setError(err?.response?.data?.message || 'Error al registrar el miembro. Verifica los datos.');
+      setError(getApiErrorMessage(err, 'Error al registrar el miembro. Verifica los datos.'));
     }
   };
 
@@ -357,15 +384,45 @@ export const MemberRegisterPage = ({ unitType, unitLabel }: MemberRegisterPagePr
                 </div>
                 <div className="space-y-2">
                   <label className={labelClasses}>{subUnitLabel} *</label>
-                  <select {...register('patrullaId')} className={inputClasses}>
-                    <option value="">Seleccionar {subUnitLabel}...</option>
-                    {subUnidades.map(su => (
-                      <option key={su.id} value={su.id}>{su.nombre}</option>
-                    ))}
-                    {subUnidades.length === 0 && !isLoadingSub && (
-                      <option disabled>No hay {subUnitLabel.toLowerCase()}s registradas</option>
-                    )}
-                  </select>
+                  <div className="flex gap-2">
+                    <select {...register('patrullaId')} className={`${inputClasses} flex-1`}>
+                      <option value="">Seleccionar {subUnitLabel}...</option>
+                      {subUnidades.map(su => (
+                        <option key={su.id} value={su.id}>{su.nombre}</option>
+                      ))}
+                      {subUnidades.length === 0 && !isLoadingSub && (
+                        <option disabled>No hay {subUnitLabel.toLowerCase()}s registradas</option>
+                      )}
+                    </select>
+                    <button
+                      type="button"
+                      onClick={() => setShowCreateSub(!showCreateSub)}
+                      className="h-[54px] px-3 bg-primary/10 text-primary rounded-xl hover:bg-primary/20 transition-colors flex items-center justify-center"
+                      title={`Crear nueva ${subUnitLabel}`}
+                    >
+                      <Add sx={{ fontSize: 20 }} />
+                    </button>
+                  </div>
+                  {showCreateSub && (
+                    <div className="flex gap-2 mt-2">
+                      <input
+                        type="text"
+                        value={newSubNombre}
+                        onChange={(e) => setNewSubNombre(e.target.value)}
+                        placeholder={`Nombre de la ${subUnitLabel.toLowerCase()}`}
+                        className={`${inputClasses} flex-1`}
+                        onKeyDown={(e) => e.key === 'Enter' && handleCreateSubUnit()}
+                      />
+                      <button
+                        type="button"
+                        onClick={handleCreateSubUnit}
+                        disabled={creatingSub || !newSubNombre.trim()}
+                        className="h-[54px] px-4 sentinel-gradient text-on-primary rounded-xl font-black text-[10px] uppercase tracking-widest disabled:opacity-50"
+                      >
+                        {creatingSub ? '...' : 'Crear'}
+                      </button>
+                    </div>
+                  )}
                 </div>
                 <div className="space-y-2">
                   <label className={labelClasses}>Fecha de Ingreso al Grupo</label>

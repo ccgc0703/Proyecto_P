@@ -1,16 +1,18 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useAuth } from '../hooks/useAuth';
-import { api } from '../api';
+import { api, adultosApi } from '../api';
+import { FichaMedicaPanel } from '../features/fichaMedica/FichaMedicaPanel';
 import { 
   Person, 
   Shield, 
   Email, 
   Fingerprint,
   VerifiedUser,
-  Key
+  Key,
+  MedicalInformation
 } from '@mui/icons-material';
 
 const perfilSchema = z.object({
@@ -36,6 +38,22 @@ export const PerfilPage = () => {
   const [pwdSuccess, setPwdSuccess] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [pwdError, setPwdError] = useState<string | null>(null);
+  const [miembroId, setMiembroId] = useState<string | undefined>(undefined);
+  const [staffNombre, setStaffNombre] = useState('');
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const perfil = await adultosApi.getMiPerfil();
+        setMiembroId(perfil?.miembroId);
+        const m = perfil?.Miembro;
+        setStaffNombre(m ? `${m.nombres} ${m.apellidos}` : '');
+      } catch {
+        // El usuario logueado no está vinculado a un perfil de adulto: sin ficha médica
+        setMiembroId(undefined);
+      }
+    })();
+  }, []);
 
   const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<PerfilFormData>({
     resolver: zodResolver(perfilSchema),
@@ -251,6 +269,15 @@ export const PerfilPage = () => {
           </section>
         </div>
       </div>
+
+      {/* Ficha Médica propia (staff vinculado) */}
+      <section className="bg-surface-container-lowest p-6 md:p-8 rounded-[2rem] shadow-sm">
+        <div className="flex items-center gap-3 mb-6">
+          <MedicalInformation className="text-emerald-600" />
+          <h3 className="text-lg font-black text-primary uppercase tracking-tight">Ficha Médica</h3>
+        </div>
+        <FichaMedicaPanel miembroId={miembroId} miembroNombre={staffNombre} />
+      </section>
     </div>
   );
 };

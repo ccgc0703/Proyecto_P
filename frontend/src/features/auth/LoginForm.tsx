@@ -4,6 +4,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useAuth } from '../../hooks/useAuth';
 import { useRouter } from '@tanstack/react-router';
+import { getApiErrorMessage } from '../../utils/errors';
 
 const loginSchema = z.object({
   email: z.string().email('Email inválido'),
@@ -26,8 +27,8 @@ export const LoginForm = () => {
       setError(null);
       await login(data);
       router.navigate({ to: '/' });
-    } catch (err: any) {
-      setError(err.response?.data?.message || 'Error al iniciar sesión');
+    } catch (err) {
+      setError(getApiErrorMessage(err, 'Error al iniciar sesión'));
     }
   };
 

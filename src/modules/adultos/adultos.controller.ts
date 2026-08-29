@@ -19,6 +19,12 @@ export class AdultosController {
     return this.adultosService.findAll();
   }
 
+  // Self-scope: el usuario logueado consulta su propio perfil de staff (sin permisos adicionales)
+  @Get('mi-perfil')
+  findMiPerfil(@Req() req: any) {
+    return this.adultosService.findByUsuarioId(req.user.id);
+  }
+
   @Get(':id')
   @RequirePermission(PERMISSIONS.USER_VIEW)
   findOne(@Param('id') id: string) {

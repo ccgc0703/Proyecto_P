@@ -10,6 +10,18 @@ import {
   Shield,
 } from '@mui/icons-material';
 import { adultosApi, rbacApi } from '../api';
+import { getApiErrorMessage } from '../utils/errors';
+
+interface StaffAccount {
+  nombres?: string;
+  apellidos?: string;
+  cedula?: string;
+}
+
+interface RoleOption {
+  id: string;
+  nombre: string;
+}
 
 const accountSchema = z.object({
   email: z.string().email('Email inválido'),
@@ -22,8 +34,8 @@ type AccountFormData = z.infer<typeof accountSchema>;
 export const StaffAccountPage = () => {
   const navigate = useNavigate();
   const { id } = useParams({ strict: false }) as { id: string };
-  const [member, setMember] = useState<any>(null);
-  const [roles, setRoles] = useState<any[]>([]);
+  const [member, setMember] = useState<StaffAccount | null>(null);
+  const [roles, setRoles] = useState<RoleOption[]>([]);
   const [loading, setLoading] = useState(true);
   const [formError, setFormError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
@@ -40,8 +52,8 @@ export const StaffAccountPage = () => {
           adultosApi.getById(id),
           rbacApi.getRoles()
         ]);
-        setMember(mData);
-        setRoles(rData);
+        setMember(mData as StaffAccount);
+        setRoles(rData as RoleOption[]);
       } catch (err) {
         console.error('Error:', err);
         setFormError('No se pudo cargar la información del staff.');
@@ -60,9 +72,9 @@ export const StaffAccountPage = () => {
       setTimeout(() => {
         navigate({ to: '/app/staff' });
       }, 1500);
-    } catch (err: any) {
-      console.error('Error:', err);
-      setFormError(err?.response?.data?.message || 'Error al vincular la cuenta.');
+    } catch (err) {
+      console.error('Error al vincular la cuenta:', err);
+      setFormError(getApiErrorMessage(err, 'Error al vincular la cuenta.'));
     }
   };
 
