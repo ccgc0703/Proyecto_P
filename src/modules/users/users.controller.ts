@@ -5,7 +5,7 @@ import { UpdateUserDto } from './dto/update-user.dto';
 import { UpdateMeDto } from './dto/update-me.dto';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { PermissionsGuard } from '../../common/guards/permissions.guard';
-import { RequirePermission } from '../../common/decorators/permissions.decorator';
+import { RequirePermission, SelfScope } from '../../common/decorators/permissions.decorator';
 import { PERMISSIONS, RBAC_ROLES } from '../../common/constantes';
 import { resolverOpcionesLista, hayPaginacion, metaPagina } from '../../common/paginacion';
 
@@ -15,8 +15,9 @@ export class UsersController {
     constructor(private readonly usersService: UsersService) { }
 
     // ── Self-scope: cualquier usuario gestiona su propia cuenta ────────────
-    // (sin RequirePermission: el id siempre es el del usuario autenticado)
+    // (@SelfScope: el id siempre es el del usuario autenticado)
 
+    @SelfScope()
     @Patch('me')
     async updateMe(@Body() dto: UpdateMeDto, @Req() req: any) {
         const user = await this.usersService.updateUser(
@@ -33,6 +34,7 @@ export class UsersController {
         };
     }
 
+    @SelfScope()
     @Patch('me/password')
     async changeMyPassword(
         @Body() body: { currentPassword: string; newPassword: string },
@@ -129,6 +131,9 @@ export class UsersController {
         };
     }
 
+    // Sin permiso RBAC: el handler valida la propiedad de la cuenta
+    // (propia o SYSTEM_ADMIN) antes de actuar.
+    @SelfScope()
     @Patch(':id/password')
     async changePassword(
         @Param('id') id: string,

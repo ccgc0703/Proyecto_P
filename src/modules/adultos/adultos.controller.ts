@@ -4,7 +4,7 @@ import { CreateAdultoDto } from './dto/create-adulto.dto';
 import { UpdateAdultoDto } from './dto/update-adulto.dto';
 import { CreateAccountDto } from './dto/create-account.dto';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
-import { RequirePermission } from '../../common/decorators/permissions.decorator';
+import { RequirePermission, SelfScope } from '../../common/decorators/permissions.decorator';
 import { PERMISSIONS } from '../../common/constantes';
 import { PermissionsGuard } from '../../common/guards/permissions.guard';
 
@@ -20,6 +20,7 @@ export class AdultosController {
   }
 
   // Self-scope: el usuario logueado consulta su propio perfil de staff (sin permisos adicionales)
+  @SelfScope()
   @Get('mi-perfil')
   findMiPerfil(@Req() req: any) {
     return this.adultosService.findByUsuarioId(req.user.id);

@@ -5,7 +5,7 @@ import {
     ForbiddenException,
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
-import { PERMISSIONS_KEY } from '../decorators/permissions.decorator';
+import { PERMISSIONS_KEY, SELF_SCOPE_KEY } from '../decorators/permissions.decorator';
 
 /**
  * Guard de autorización RBAC.
@@ -18,6 +18,11 @@ import { PERMISSIONS_KEY } from '../decorators/permissions.decorator';
  *
  * Sin bypass para SYSTEM_ADMIN: todos los roles, incluido el admin, deben tener
  * sus permisos explícitamente asignados en RolPermiso.
+ *
+ * Política por defecto: DENEGAR. Un endpoint protegido por este guard debe
+ * declarar @RequirePermission(...) o, si su alcance es la propia identidad
+ * del usuario, @SelfScope(). Ver permissions.coverage.spec.ts, que hace
+ * cumplir esta regla sobre todos los controllers del proyecto.
  */
 @Injectable()
 export class PermissionsGuard implements CanActivate {
@@ -30,9 +35,20 @@ export class PermissionsGuard implements CanActivate {
             [context.getHandler(), context.getClass()],
         );
 
-        // Si el endpoint no tiene @RequirePermission, se permite el acceso
+        const selfScope = this.reflector.getAllAndOverride<boolean>(
+            SELF_SCOPE_KEY,
+            [context.getHandler(), context.getClass()],
+        );
+
+        // Sin permisos explícitos: solo se admite si el endpoint declara
+        // explícitamente que su alcance es la propia identidad (@SelfScope).
         if (!requiredPermissions || requiredPermissions.length === 0) {
-            return true;
+            if (selfScope) {
+                return true;
+            }
+            throw new ForbiddenException(
+                'Endpoint sin política de acceso: falta @RequirePermission o @SelfScope',
+            );
         }
 
         const { user } = context.switchToHttp().getRequest();

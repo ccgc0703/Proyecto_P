@@ -119,6 +119,7 @@ const ROL_PERMISOS_SEED: Record<string, string[]> = {
         'medico:view', 'medico:edit', 'medico:update',
         'rbac:view', 'rbac:manage', 'rbac:assign-role',
         'organizacion:view', 'organizacion:create', 'organizacion:update', 'organizacion:delete',
+        'formacion:view', 'formacion:manage',
     ],
     'GROUP_LEADER': [
         'user:create', 'user:view', 'user:update',
