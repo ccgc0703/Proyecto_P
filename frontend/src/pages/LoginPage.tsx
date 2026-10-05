@@ -4,6 +4,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useAuth } from '../hooks/useAuth';
 import { useNavigate } from '@tanstack/react-router';
+import { getApiErrorMessage } from '../utils/errors';
 import { 
   Shield, 
   Lock, 
@@ -38,8 +39,9 @@ export const LoginPage = () => {
       await login(data);
       navigate({ to: '/app' });
     } catch (err: unknown) {
-      const errorMessage = err instanceof Error ? err.message : 'Credenciales incorrectas';
-      setError(errorMessage);
+      // Muestra el mensaje del API (p.ej. "Credenciales inválidas") en vez
+      // del texto crudo de Axios ("Request failed with status code 401")
+      setError(getApiErrorMessage(err, 'No se pudo iniciar sesión'));
     }
   };
 

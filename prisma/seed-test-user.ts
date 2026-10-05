@@ -11,24 +11,24 @@ const adapter = new PrismaPg(pool);
 const prisma = new PrismaClient({ adapter });
 
 async function main() {
-    console.log('Creando usuario de prueba para Caminantes...\n');
+    console.log('Creando usuario de prueba para Comunidad...\n');
 
-    // 1. Buscar unidad Caminantes
+    // 1. Buscar unidad Comunidad
     const unidad = await prisma.unidad.findFirst({
-        where: { nombre: 'Caminantes', deletedAt: null },
+        where: { nombre: 'Comunidad', deletedAt: null },
     });
     if (!unidad) {
-        console.error('ERROR: Unidad "Caminantes" no encontrada. Ejecuta el seed primero.');
+        console.error('ERROR: Unidad "Comunidad" no encontrada. Ejecuta el seed primero.');
         process.exit(1);
     }
     console.log(`  Unidad encontrada: ${unidad.nombre} (${unidad.id})`);
 
-    // 2. Buscar rol ADULTO_CAMINANTES
+    // 2. Buscar rol ADULTO_COMUNIDAD
     const rol = await prisma.rol.findFirst({
-        where: { nombre: 'ADULTO_CAMINANTES' },
+        where: { nombre: 'ADULTO_COMUNIDAD' },
     });
     if (!rol) {
-        console.error('ERROR: Rol "ADULTO_CAMINANTES" no encontrado. Ejecuta el seed primero.');
+        console.error('ERROR: Rol "ADULTO_COMUNIDAD" no encontrado. Ejecuta el seed primero.');
         process.exit(1);
     }
     console.log(`  Rol encontrado: ${rol.nombre} (${rol.id})`);
@@ -60,7 +60,7 @@ async function main() {
     console.log(`  Adulto creado: ${adulto.id}`);
 
     // 5. Crear Usuario (cuenta de login)
-    const email = 'caminantes@test.com';
+    const email = 'comunidad@test.com';
     const hashedPassword = await bcrypt.hash('test123', 10);
 
     const usuario = await prisma.usuario.create({
@@ -81,7 +81,7 @@ async function main() {
     });
     console.log(`  Adulto vinculado al Usuario`);
 
-    // 7. Asignar rol ADULTO_CAMINANTES
+    // 7. Asignar rol ADULTO_COMUNIDAD
     await prisma.usuarioRol.create({
         data: {
             usuarioId: usuario.id,
@@ -89,13 +89,13 @@ async function main() {
             asignadoPor: usuario.id,
         },
     });
-    console.log(`  Rol ADULTO_CAMINANTES asignado`);
+    console.log(`  Rol ADULTO_COMUNIDAD asignado`);
 
     console.log('\n✅ Usuario de prueba creado exitosamente.');
     console.log(`   Email:    ${email}`);
     console.log(`   Password: test123`);
-    console.log(`   Unidad:   Caminantes`);
-    console.log(`   Rol:      ADULTO_CAMINANTES`);
+    console.log(`   Unidad:   Comunidad`);
+    console.log(`   Rol:      ADULTO_COMUNIDAD`);
 }
 
 main()

@@ -6,15 +6,12 @@ import {
   Avatar,
   IconButton,
   Chip,
-  LinearProgress,
   Divider
 } from '@mui/material';
 import {
   Close,
   Person,
   MedicalInformation,
-  EmojiEvents,
-  TrendingUp,
   Cake,
   Badge,
   Phone,
@@ -26,7 +23,8 @@ import { usePermission } from '../../hooks/usePermission';
 import { useFichaMedica } from '../../hooks/useFichaMedica';
 import { FichaMedicaResumen } from '../../features/fichaMedica/FichaMedicaResumen';
 import { FichaMedicaForm } from '../../features/fichaMedica/FichaMedicaForm';
-import { Member, Progresion } from '../../types/member';
+import { ProgresionSeccion } from '../../features/progresion/ProgresionSeccion';
+import { Member } from '../../types/member';
 
 interface MemberProfileProps {
   member: Member;
@@ -53,8 +51,6 @@ export const MemberProfile = ({ member, onClose }: MemberProfileProps) => {
   };
 
   const representante = member.Representante;
-  const progresiones = member.Progresiones || [];
-  const progresionActual = progresiones[0]; // La más reciente (ya ordenada desc)
 
   return (
     <Box className="bg-surface-container-lowest min-h-screen md:min-h-0 md:h-[90vh] overflow-y-auto rounded-none md:rounded-[2.5rem] relative">
@@ -190,69 +186,7 @@ export const MemberProfile = ({ member, onClose }: MemberProfileProps) => {
           {/* Right Column: Progress & Others */}
           <Grid item xs={12} md={8} className="space-y-6">
             {/* Progress Section */}
-            <Box className="bg-surface-container-low p-10 rounded-[2.5rem] border border-outline-variant/10">
-              <Box className="flex justify-between items-center mb-10">
-                <Typography className="text-[10px] font-black uppercase tracking-widest text-primary flex items-center gap-2">
-                  <TrendingUp fontSize="small" /> Datos Scout & Adelanto
-                </Typography>
-                {progresionActual && (
-                  <Chip
-                    label={progresionActual.etapa}
-                    className="bg-primary/10 text-primary font-black text-[9px] uppercase tracking-widest"
-                  />
-                )}
-              </Box>
-
-              <Grid container spacing={4}>
-                <Grid item xs={12} md={6}>
-                  <Box className="flex flex-col items-center p-6 bg-white/30 rounded-3xl relative overflow-hidden">
-                    <Typography className="text-[10px] font-black text-primary uppercase mb-4 z-10">
-                      {progresionActual ? progresionActual.etapa : 'Sin progresión'}
-                    </Typography>
-                    <Box className="w-24 h-24 rounded-full border-8 border-primary/10 flex items-center justify-center relative z-10">
-                      <Typography variant="h4" className="font-black text-primary">
-                        {progresiones.length}
-                      </Typography>
-                    </Box>
-                    <Box className="mt-6 w-full space-y-3 z-10">
-                      <div className="flex justify-between items-center">
-                        <span className="text-[10px] font-bold text-outline">Etapas Registradas</span>
-                        <span className="text-[10px] font-black text-primary">{progresiones.length}</span>
-                      </div>
-                      <LinearProgress
-                        variant="determinate"
-                        value={progresiones.length > 0 ? Math.min(progresiones.length * 25, 100) : 0}
-                        className="h-1.5 rounded-full bg-primary/10"
-                      />
-                    </Box>
-                  </Box>
-                </Grid>
-
-                <Grid item xs={12} md={6}>
-                  <Box className="space-y-4">
-                    {progresiones.slice(0, 3).map((prog: Progresion) => (
-                      <div key={prog.id} className="bg-white/50 p-5 rounded-2xl flex items-center gap-4">
-                        <div className="w-10 h-10 bg-primary/10 rounded-xl flex items-center justify-center text-primary">
-                          <EmojiEvents fontSize="small" />
-                        </div>
-                        <div>
-                          <p className="text-[9px] font-black text-outline uppercase tracking-widest leading-none mb-1">
-                            {prog.fechaInicio ? new Date(prog.fechaInicio).toLocaleDateString('es') : '—'}
-                          </p>
-                          <p className="text-xs font-black text-primary">{prog.etapa}</p>
-                        </div>
-                      </div>
-                    ))}
-
-                    {progresiones.length === 0 && (
-                      <div className="bg-white/50 p-5 rounded-2xl text-center">
-                        <p className="text-xs text-outline font-bold">Sin progresiones registradas</p>
-                      </div>
-                    )}
-                  </Box>
-                </Grid>
-              </Grid>
-            </Box>
+            <ProgresionSeccion miembroId={member.id} />
 
             {/* Critical Contacts */}
             <Box className="bg-surface-container-high p-8 rounded-[2.5rem] border border-outline-variant/10 text-primary">

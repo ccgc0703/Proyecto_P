@@ -46,6 +46,7 @@ export const useAuthStore = create<AuthStateWithHydration>()(
             permissions: rawUser.permissions || rawUser.permisos || [],
             unidad: rawUser.unidad || rawUser.unidadId || undefined,
             activo: rawUser.activo ?? true,
+            miembroId: rawUser.miembroId || undefined,
           };
 
           set({
@@ -91,6 +92,7 @@ export const useAuthStore = create<AuthStateWithHydration>()(
             permissions: data.permissions || data.permisos || [],
             unidad: data.unidad || data.unidadId || undefined,
             activo: data.activo ?? true,
+            miembroId: data.miembroId || undefined,
           };
 
           set({
@@ -104,7 +106,14 @@ export const useAuthStore = create<AuthStateWithHydration>()(
     }),
     {
       name: 'auth-storage',
-      partialize: (state) => ({ token: state.token, user: state.user }),
+      // Se persiste también `isAuthenticated`: sin él, una recarga (F5) dejaba
+      // token+usuario guardados pero `isAuthenticated=false`, y el guard de la
+      // ruta /app* redirigía al login pese a tener sesión válida.
+      partialize: (state) => ({
+        token: state.token,
+        user: state.user,
+        isAuthenticated: state.isAuthenticated,
+      }),
       onRehydrateStorage: () => (state) => {
         state?.setHasHydrated(true);
       },

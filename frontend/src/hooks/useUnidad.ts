@@ -23,7 +23,7 @@ export const useUnidadesFiltradas = (): Unidad[] => {
   if (!user) return [];
 
   if (canViewAll) {
-    return ['MANADA', 'TROPA', 'CAMINANTES', 'CLAN'];
+    return ['MANADA', 'TROPA', 'COMUNIDAD', 'CLAN'];
   }
   
   if (user.unidad) {
@@ -37,9 +37,32 @@ export const useUnidadLabel = (unidad?: Unidad): string => {
   const labels: Record<Unidad, string> = {
     MANADA: 'Manada',
     TROPA: 'Tropa',
-    CAMINANTES: 'Caminantes',
+    COMUNIDAD: 'Comunidad',
     CLAN: 'Clan',
   };
   
   return unidad ? labels[unidad] : 'Todas';
 };
+
+export const ORDEN_UNIDADES: Unidad[] = ['MANADA', 'TROPA', 'COMUNIDAD', 'CLAN'];
+
+const indiceCanonico = (valor?: string | null): number => {
+  const normalizado = (valor ?? '').trim().toUpperCase();
+  const indice = ORDEN_UNIDADES.indexOf(normalizado as Unidad);
+  return indice >= 0 ? indice : ORDEN_UNIDADES.length;
+};
+
+/**
+ * Ordena listados de unidades en el orden de presentación del sistema:
+ * Manada → Tropa → Comunidad → Clan. Reconoce tanto el tipo como el nombre
+ * (la API puede devolver cualquiera de los dos).
+ */
+export const ordenarPorUnidad = <T extends { nombre?: string | null; tipo?: string | null }>(
+  lista: T[],
+): T[] =>
+  [...lista].sort((a, b) => {
+    const indiceA = Math.min(indiceCanonico(a.tipo), indiceCanonico(a.nombre));
+    const indiceB = Math.min(indiceCanonico(b.tipo), indiceCanonico(b.nombre));
+    if (indiceA !== indiceB) return indiceA - indiceB;
+    return (a.nombre ?? '').localeCompare(b.nombre ?? '', 'es');
+  });

@@ -15,7 +15,7 @@ export class AuthService {
     async login(loginDto: LoginDto) {
         const usuario = await this.prisma.usuario.findUnique({
             where: { email: loginDto.email },
-            include: { Unidad: true },
+            include: { Unidad: true, Joven: { select: { miembroId: true } } },
         });
 
         if (!usuario || usuario.deletedAt) {
@@ -37,11 +37,15 @@ export class AuthService {
             this.loadUserRoles(usuario.id),
         ]);
 
+        const miembroId = usuario.Joven?.miembroId ?? null;
+
         // ── JWT payload: mantiene rol legacy + agrega permissions[] RBAC ──────
         const payload = {
             sub: usuario.id,
             email: usuario.email,
             unidadId: usuario.unidadId,
+            nodoId: usuario.nodoId,
+            miembroId,
             permissions,
             roles,
             tokenVersion: usuario.tokenVersion,
@@ -54,7 +58,9 @@ export class AuthService {
                 nombre: usuario.nombre,
                 email: usuario.email,
                 unidadId: usuario.unidadId,
+                nodoId: usuario.nodoId,
                 unidad: usuario.Unidad?.nombre,
+                miembroId,
                 roles,
                 permissions,
             },
@@ -73,8 +79,10 @@ export class AuthService {
                 nombre: true,
                 email: true,
                 unidadId: true,
+                nodoId: true,
                 activo: true,
                 Unidad: true,
+                Joven: { select: { miembroId: true } },
                 UsuarioRoles: {
                     where: { deletedAt: null },
                     include: {
@@ -114,7 +122,9 @@ export class AuthService {
             nombre: usuario.nombre,
             email: usuario.email,
             unidadId: usuario.unidadId,
+            nodoId: usuario.nodoId,
             unidad: usuario.Unidad?.nombre,
+            miembroId: usuario.Joven?.miembroId ?? null,
             roles: roles.map(r => r.nombre),
             permissions: Array.from(permisosSet),
         };
@@ -138,7 +148,7 @@ export class AuthService {
     async refreshToken(userId: string) {
         const usuario = await this.prisma.usuario.findFirst({
             where: { id: userId, deletedAt: null, activo: true },
-            include: { Unidad: true },
+            include: { Unidad: true, Joven: { select: { miembroId: true } } },
         });
 
         if (!usuario) {
@@ -154,6 +164,8 @@ export class AuthService {
             sub: usuario.id,
             email: usuario.email,
             unidadId: usuario.unidadId,
+            nodoId: usuario.nodoId,
+            miembroId: usuario.Joven?.miembroId ?? null,
             permissions,
             roles,
             tokenVersion: usuario.tokenVersion,

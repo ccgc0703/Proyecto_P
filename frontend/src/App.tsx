@@ -4,6 +4,7 @@ import {
   createRouter,
   createRootRoute,
   createRoute,
+  lazyRouteComponent,
   Outlet,
   redirect,
   useParams,
@@ -11,21 +12,60 @@ import {
 import { theme } from './theme/theme';
 import { MainLayout } from './components/layout/MainLayout';
 import { LoginPage } from './pages/LoginPage';
-import { DashboardPage } from './pages/DashboardPage';
-import { MiembrosPage } from './pages/MiembrosPage';
-
-import { StaffPage } from './pages/StaffPage';
-import { StaffRegisterPage } from './pages/StaffRegisterPage';
-import { StaffEditPage } from './pages/StaffEditPage';
-import { StaffAccountPage } from './pages/StaffAccountPage';
-import { PerfilPage } from './pages/PerfilPage';
-import { ManadaPage } from './pages/ManadaPage';
-import { TropaPage } from './pages/TropaPage';
-import { ClanPage } from './pages/ClanPage';
-import { CaminantesPage } from './pages/CaminantesPage';
-import { MemberRegisterPage } from './pages/MemberRegisterPage';
-import { MemberEditPage } from './pages/MemberEditPage';
 import { useAuthStore } from './stores/authStore';
+import { PERMISSIONS } from './types/auth';
+
+// ── F4.4 · Code-splitting ──────────────────────────────────────────────────
+// Cada página de /app se importa bajo demanda: genera un chunk por ruta y
+// mantiene en el bundle inicial solo el shell (layout), el login y los
+// vendors compartidos (MUI, router, React).
+const DashboardPage = lazyRouteComponent(() => import('./pages/DashboardPage'), 'DashboardPage');
+const MiembrosPage = lazyRouteComponent(() => import('./pages/MiembrosPage'), 'MiembrosPage');
+const StaffPage = lazyRouteComponent(() => import('./pages/StaffPage'), 'StaffPage');
+const StaffRegisterPage = lazyRouteComponent(() => import('./pages/StaffRegisterPage'), 'StaffRegisterPage');
+const StaffEditPage = lazyRouteComponent(() => import('./pages/StaffEditPage'), 'StaffEditPage');
+const StaffAccountPage = lazyRouteComponent(() => import('./pages/StaffAccountPage'), 'StaffAccountPage');
+const PerfilPage = lazyRouteComponent(() => import('./pages/PerfilPage'), 'PerfilPage');
+const ManadaPage = lazyRouteComponent(() => import('./pages/ManadaPage'), 'ManadaPage');
+const TropaPage = lazyRouteComponent(() => import('./pages/TropaPage'), 'TropaPage');
+const ClanPage = lazyRouteComponent(() => import('./pages/ClanPage'), 'ClanPage');
+const ComunidadPage = lazyRouteComponent(() => import('./pages/ComunidadPage'), 'ComunidadPage');
+const MemberRegisterPage = lazyRouteComponent(() => import('./pages/MemberRegisterPage'), 'MemberRegisterPage');
+const MemberEditPage = lazyRouteComponent(() => import('./pages/MemberEditPage'), 'MemberEditPage');
+const ProgresionPage = lazyRouteComponent(() => import('./pages/ProgresionPage'), 'ProgresionPage');
+const ProgresionFichaPage = lazyRouteComponent(() => import('./pages/ProgresionFichaPage'), 'ProgresionFichaPage');
+const MiProgresionPage = lazyRouteComponent(() => import('./pages/MiProgresionPage'), 'MiProgresionPage');
+const EstructuraPage = lazyRouteComponent(() => import('./pages/EstructuraPage'), 'EstructuraPage');
+
+const exigirProgresion = () => {
+  const { user } = useAuthStore.getState();
+  // Los jóvenes solo ven su propia progresión (portal del joven)
+  if (user?.roles?.includes('JOVEN')) {
+    throw redirect({ to: '/app/mi-progresion' });
+  }
+  const permisos = user?.permissions ?? [];
+  const puede =
+    permisos.includes(PERMISSIONS.PROGRESION_VIEW) ||
+    permisos.includes(PERMISSIONS.RBAC_MANAGE);
+  if (!puede) {
+    throw redirect({ to: '/app' });
+  }
+};
+
+const exigirMiProgresion = () => {
+  const { user } = useAuthStore.getState();
+  if (!user?.roles?.includes('JOVEN')) {
+    throw redirect({ to: '/app' });
+  }
+};
+
+const exigirOrganizacion = () => {
+  const { user } = useAuthStore.getState();
+  const permisos = user?.permissions ?? [];
+  if (!permisos.includes(PERMISSIONS.ORGANIZACION_VIEW)) {
+    throw redirect({ to: '/app' });
+  }
+};
 
 // Root
 const rootRoute = createRootRoute({
@@ -141,27 +181,27 @@ const clanEditRoute = createRoute({
   component: ClanEditWrapper,
 });
 
-const caminantesRoute = createRoute({
+const comunidadRoute = createRoute({
   getParentRoute: () => layoutRoute,
-  path: '/caminantes',
-  component: CaminantesPage,
+  path: '/comunidad',
+  component: ComunidadPage,
 });
 
-const caminantesRegisterRoute = createRoute({
+const comunidadRegisterRoute = createRoute({
   getParentRoute: () => layoutRoute,
-  path: '/caminantes/nuevo',
-  component: () => <MemberRegisterPage unitType="Caminantes" unitLabel="Caminantes" />,
+  path: '/comunidad/nuevo',
+  component: () => <MemberRegisterPage unitType="Comunidad" unitLabel="Comunidad" />,
 });
 
-const CaminantesEditWrapper = () => {
+const ComunidadEditWrapper = () => {
   const { id } = useParams({ strict: false }) as { id: string };
-  return <MemberEditPage memberId={id} unitType="Caminantes" unitLabel="Caminantes" />;
+  return <MemberEditPage memberId={id} unitType="Comunidad" unitLabel="Comunidad" />;
 };
 
-const caminantesEditRoute = createRoute({
+const comunidadEditRoute = createRoute({
   getParentRoute: () => layoutRoute,
-  path: '/caminantes/editar/$id',
-  component: CaminantesEditWrapper,
+  path: '/comunidad/editar/$id',
+  component: ComunidadEditWrapper,
 });
 
 const staffRoute = createRoute({
@@ -202,6 +242,34 @@ const perfilRoute = createRoute({
   component: PerfilPage,
 });
 
+const progresionRoute = createRoute({
+  getParentRoute: () => layoutRoute,
+  path: '/progresion',
+  beforeLoad: exigirProgresion,
+  component: ProgresionPage,
+});
+
+const progresionFichaRoute = createRoute({
+  getParentRoute: () => layoutRoute,
+  path: '/progresion/$miembroId',
+  beforeLoad: exigirProgresion,
+  component: ProgresionFichaPage,
+});
+
+const miProgresionRoute = createRoute({
+  getParentRoute: () => layoutRoute,
+  path: '/mi-progresion',
+  beforeLoad: exigirMiProgresion,
+  component: MiProgresionPage,
+});
+
+const estructuraRoute = createRoute({
+  getParentRoute: () => layoutRoute,
+  path: '/estructura',
+  beforeLoad: exigirOrganizacion,
+  component: EstructuraPage,
+});
+
 // Index redirect
 const indexRoute = createRoute({
   getParentRoute: () => rootRoute,
@@ -227,18 +295,37 @@ const routeTree = rootRoute.addChildren([
     clanRoute,
     clanRegisterRoute,
     clanEditRoute,
-    caminantesRoute,
-    caminantesRegisterRoute,
-    caminantesEditRoute,
+    comunidadRoute,
+    comunidadRegisterRoute,
+    comunidadEditRoute,
     staffRoute,
     staffRegisterRoute,
     staffEditRoute,
     staffAccountRoute,
     perfilRoute,
+    progresionRoute,
+    progresionFichaRoute,
+    miProgresionRoute,
+    estructuraRoute,
   ]),
 ]);
 
-const router = createRouter({ routeTree });
+// Fallback mientras se descarga el chunk de la ruta (F4.4)
+const PendingPage = () => (
+  <Box
+    sx={{
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      minHeight: '40vh',
+      bgcolor: 'background.default',
+    }}
+  >
+    <CircularProgress />
+  </Box>
+);
+
+const router = createRouter({ routeTree, defaultPendingComponent: PendingPage });
 
 declare module '@tanstack/react-router' {
   interface Register {

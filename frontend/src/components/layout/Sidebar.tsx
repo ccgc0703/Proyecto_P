@@ -13,7 +13,9 @@ import {
   SportsHandball,
   AutoStories,
   Route,
-  MenuOpen
+  MenuOpen,
+  TrendingUp,
+  AccountTree
 } from '@mui/icons-material';
 
 export const DRAWER_WIDTH_EXPANDED = 260;
@@ -40,6 +42,9 @@ export const Sidebar = ({ open, onToggle }: SidebarProps) => {
   const canViewJovenes = usePermission('joven:view');
   const canViewRBAC = usePermission('rbac:view');
   const canViewUnidades = usePermission('unidad:view');
+  const canViewProgresion = usePermission('progresion:view');
+  const canViewOrganizacion = usePermission('organizacion:view');
+  const esJoven = user?.roles?.includes('JOVEN') ?? false;
 
   const handleLogout = () => {
     logout();
@@ -54,7 +59,7 @@ export const Sidebar = ({ open, onToggle }: SidebarProps) => {
   ];
 
   const isRestricted = (role: string) =>
-    ['ADULTO_MANADA', 'ADULTO_TROPA', 'ADULTO_CAMINANTES', 'ADULTO_CLAN'].includes(role);
+    ['ADULTO_MANADA', 'ADULTO_TROPA', 'ADULTO_COMUNIDAD', 'ADULTO_CLAN'].includes(role);
 
   const managementItems: NavItem[] = [
     { text: 'Miembros', icon: <Groups2 />, path: '/app/miembros', permission: canViewJovenes },
@@ -62,26 +67,33 @@ export const Sidebar = ({ open, onToggle }: SidebarProps) => {
       text: 'Manada',
       icon: <ChildCare />,
       path: '/app/manada',
-      permission: canViewUnidades && (!user?.roles.some(isRestricted) || user?.roles.includes('ADULTO_MANADA'))
+      permission: canViewUnidades && !esJoven && (!user?.roles.some(isRestricted) || user?.roles.includes('ADULTO_MANADA'))
     },
     {
       text: 'Tropa',
       icon: <SportsHandball />,
       path: '/app/tropa',
-      permission: canViewUnidades && (!user?.roles.some(isRestricted) || user?.roles.includes('ADULTO_TROPA'))
+      permission: canViewUnidades && !esJoven && (!user?.roles.some(isRestricted) || user?.roles.includes('ADULTO_TROPA'))
+    },
+    {
+      text: 'Comunidad',
+      icon: <Route />,
+      path: '/app/comunidad',
+      permission: canViewUnidades && !esJoven && (!user?.roles.some(isRestricted) || user?.roles.includes('ADULTO_COMUNIDAD'))
     },
     {
       text: 'Clan',
       icon: <AutoStories />,
       path: '/app/clan',
-      permission: canViewUnidades && (!user?.roles.some(isRestricted) || user?.roles.includes('ADULTO_CLAN'))
+      permission: canViewUnidades && !esJoven && (!user?.roles.some(isRestricted) || user?.roles.includes('ADULTO_CLAN'))
     },
     {
-      text: 'Caminantes',
-      icon: <Route />,
-      path: '/app/caminantes',
-      permission: canViewUnidades && (!user?.roles.some(isRestricted) || user?.roles.includes('ADULTO_CAMINANTES'))
+      text: esJoven ? 'Mi Progresión' : 'Progresión',
+      icon: <TrendingUp />,
+      path: esJoven ? '/app/mi-progresion' : '/app/progresion',
+      permission: canViewProgresion,
     },
+    { text: 'Estructura', icon: <AccountTree />, path: '/app/estructura', permission: canViewOrganizacion && !esJoven },
     { text: 'Staff', icon: <ManageAccounts />, path: '/app/staff', permission: canViewRBAC },
   ].filter((i) => i.permission);
 

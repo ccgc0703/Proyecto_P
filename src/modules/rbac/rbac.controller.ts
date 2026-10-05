@@ -42,7 +42,13 @@ export class RbacController {
         return { success: true, message: `Permisos del usuario ${id}`, data };
     }
 
+    /**
+     * POST /rbac/usuarios/:id/roles
+     * Asigna un rol a un usuario por id (override: rbac:assign-role, no rbac:manage).
+     * La jerarquía se valida en el servicio: no se pueden asignar roles iguales o superiores.
+     */
     @Post('usuarios/:id/roles')
+    @RequirePermission(PERMISSIONS.RBAC_ASSIGN_ROLE)
     async assignRole(
         @Param('id', ParseUUIDPipe) usuarioId: string,
         @Body() dto: AssignRoleDto,

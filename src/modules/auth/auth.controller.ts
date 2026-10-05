@@ -1,4 +1,5 @@
 import { Controller, Post, Get, Body, Req, UseGuards, HttpCode, HttpStatus } from '@nestjs/common';
+import { Throttle } from '@nestjs/throttler';
 import { AuthService } from './auth.service';
 import { LoginDto } from './dto/login.dto';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
@@ -7,7 +8,9 @@ import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 export class AuthController {
     constructor(private readonly authService: AuthService) { }
 
+    // F4.5 · Fuerza bruta: 20 intentos/min por IP (por debajo del global).
     @Post('login')
+    @Throttle({ default: { limit: 20, ttl: 60_000 } })
     @HttpCode(HttpStatus.OK)
     async login(@Body() loginDto: LoginDto) {
         const result = await this.authService.login(loginDto);

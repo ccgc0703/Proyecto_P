@@ -1,4 +1,4 @@
-import { IsOptional, IsString, IsEmail } from 'class-validator';
+import { IsOptional, IsString, IsEmail, IsUUID } from 'class-validator';
 import { Transform } from 'class-transformer';
 
 export class UpdateUserDto {
@@ -19,4 +19,9 @@ export class UpdateUserDto {
     @IsOptional()
     @IsString()
     unidadId?: string;
+
+    /** F4.3: ámbito jerárquico. null limpia el ámbito (visión global). */
+    @IsOptional()
+    @IsUUID('4', { message: 'nodoId debe ser un UUID válido o null' })
+    nodoId?: string | null;
 }

@@ -16,8 +16,11 @@ import {
   SaveAlt
 } from '@mui/icons-material';
 import { adultosApi, unidadesApi, rbacApi } from '../api';
+import { ordenarPorUnidad } from '../hooks/useUnidad';
 import { UnidadEntity } from '../types/member';
 import { getApiErrorMessage } from '../utils/errors';
+import { useAuth } from '../hooks/useAuth';
+import { puedeAsignarRol } from '../types/auth';
 
 const staffSchema = z.object({
   nombres: z.string().min(2, 'Requerido'),
@@ -46,6 +49,7 @@ interface Role {
 
 export const StaffRegisterPage = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [unidades, setUnidades] = useState<UnidadEntity[]>([]);
   const [roles, setRoles] = useState<Role[]>([]);
   const [formError, setFormError] = useState<string | null>(null);
@@ -65,7 +69,7 @@ export const StaffRegisterPage = () => {
           unidadesApi.getAll(),
           rbacApi.getRoles()
         ]);
-        setUnidades(uData as UnidadEntity[]);
+        setUnidades(ordenarPorUnidad(uData as UnidadEntity[]));
         setRoles(rData);
       } catch {
         console.error('Error al cargar datos iniciales');
@@ -243,9 +247,11 @@ export const StaffRegisterPage = () => {
                 </label>
                 <select {...register('rolId')} className={inputClasses}>
                   <option value="">Seleccione Rol</option>
-                  {roles.map((r) => (
-                    <option key={r.id} value={r.id}>{r.nombre.replace(/_/g, ' ')}</option>
-                  ))}
+                  {roles
+                    .filter((r) => puedeAsignarRol(user?.roles ?? [], r.nombre))
+                    .map((r) => (
+                      <option key={r.id} value={r.id}>{r.nombre.replace(/_/g, ' ')}</option>
+                    ))}
                 </select>
                 {errors.rolId && <p className="text-[10px] text-error font-bold px-1">{errors.rolId.message}</p>}
               </div>

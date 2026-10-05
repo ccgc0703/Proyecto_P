@@ -3,7 +3,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useAuth } from '../hooks/useAuth';
-import { api, adultosApi } from '../api';
+import { adultosApi, miembrosApi, usuariosApi } from '../api';
 import { FichaMedicaPanel } from '../features/fichaMedica/FichaMedicaPanel';
 import { 
   Person, 
@@ -12,7 +12,8 @@ import {
   Fingerprint,
   VerifiedUser,
   Key,
-  MedicalInformation
+  MedicalInformation,
+  MilitaryTech
 } from '@mui/icons-material';
 
 const perfilSchema = z.object({
@@ -32,17 +33,65 @@ const passwordSchema = z.object({
 });
 type PasswordFormData = z.infer<typeof passwordSchema>;
 
+const miPerfilSchema = z.object({
+  nombres: z.string().min(2, 'Mínimo 2 caracteres'),
+  apellidos: z.string().min(2, 'Mínimo 2 caracteres'),
+  cedula: z.string().min(3, 'Mínimo 3 caracteres'),
+  fechaNacimiento: z.string().min(1, 'Fecha requerida'),
+  genero: z.enum(['MASCULINO', 'FEMENINO'], { message: 'Seleccioná un género' }),
+  cargoActual: z.string().optional(),
+  fechaIngreso: z.string().optional(),
+  fechaPromesa: z.string().optional(),
+  historial: z.string().optional(),
+});
+type MiPerfilFormData = z.infer<typeof miPerfilSchema>;
+
+interface MiPerfilJoven {
+  id: string;
+  nombres?: string;
+  apellidos?: string;
+  cedula?: string;
+  fechaNacimiento?: string;
+  genero?: string;
+  estado?: string;
+  historial?: string;
+  fechaIngreso?: string;
+  fechaPromesa?: string;
+  cargoActual?: string;
+  Unidad?: { id?: string; nombre?: string };
+  Representante?: { id?: string; nombre?: string } | null;
+}
+
 export const PerfilPage = () => {
-  const { user } = useAuth();
+  const { user, checkAuth, logout } = useAuth();
   const [success, setSuccess] = useState(false);
   const [pwdSuccess, setPwdSuccess] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [pwdError, setPwdError] = useState<string | null>(null);
   const [miembroId, setMiembroId] = useState<string | undefined>(undefined);
   const [staffNombre, setStaffNombre] = useState('');
+  const [miembroDatos, setMiembroDatos] = useState<MiPerfilJoven | null>(null);
+  const [miSuccess, setMiSuccess] = useState(false);
+  const [miError, setMiError] = useState<string | null>(null);
+
+  const esJoven = user?.roles?.includes('JOVEN') ?? false;
 
   useEffect(() => {
     (async () => {
+      if (esJoven) {
+        try {
+          const perfil = (await miembrosApi.getMiPerfil()) as MiPerfilJoven | undefined;
+          if (perfil) {
+            setMiembroDatos(perfil);
+            setMiembroId(perfil.id ?? user?.miembroId);
+            setStaffNombre(`${perfil.nombres ?? ''} ${perfil.apellidos ?? ''}`.trim());
+          }
+        } catch {
+          // Sin perfil de joven vinculado: conservar miembroId del token si existe
+          setMiembroId(user?.miembroId);
+        }
+        return;
+      }
       try {
         const perfil = await adultosApi.getMiPerfil();
         setMiembroId(perfil?.miembroId);
@@ -53,7 +102,7 @@ export const PerfilPage = () => {
         setMiembroId(undefined);
       }
     })();
-  }, []);
+  }, [esJoven, user?.miembroId]);
 
   const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<PerfilFormData>({
     resolver: zodResolver(perfilSchema),
@@ -62,12 +111,45 @@ export const PerfilPage = () => {
 
   const pwdForm = useForm<PasswordFormData>({ resolver: zodResolver(passwordSchema) });
 
+  const miForm = useForm<MiPerfilFormData>({
+    resolver: zodResolver(miPerfilSchema),
+    defaultValues: {
+      nombres: '',
+      apellidos: '',
+      cedula: '',
+      fechaNacimiento: '',
+      genero: 'MASCULINO',
+      cargoActual: '',
+      fechaIngreso: '',
+      fechaPromesa: '',
+      historial: '',
+    },
+  });
+
+  useEffect(() => {
+    if (miembroDatos) {
+      miForm.reset({
+        nombres: miembroDatos.nombres ?? '',
+        apellidos: miembroDatos.apellidos ?? '',
+        cedula: miembroDatos.cedula ?? '',
+        fechaNacimiento: miembroDatos.fechaNacimiento ? miembroDatos.fechaNacimiento.slice(0, 10) : '',
+        genero: miembroDatos.genero === 'FEMENINO' ? 'FEMENINO' : 'MASCULINO',
+        cargoActual: miembroDatos.cargoActual ?? '',
+        fechaIngreso: miembroDatos.fechaIngreso ? miembroDatos.fechaIngreso.slice(0, 10) : '',
+        fechaPromesa: miembroDatos.fechaPromesa ? miembroDatos.fechaPromesa.slice(0, 10) : '',
+        historial: miembroDatos.historial ?? '',
+      });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [miembroDatos]);
+
   const onSubmitPerfil = async (data: PerfilFormData) => {
     try {
       setError(null);
-      await api.patch(`/users/${user?.id}`, data);
+      await usuariosApi.updateMe(data);
       setSuccess(true);
       setTimeout(() => setSuccess(false), 3000);
+      await checkAuth();
     } catch {
       setError('Error al actualizar el perfil');
     }
@@ -76,15 +158,42 @@ export const PerfilPage = () => {
   const onSubmitPassword = async (data: PasswordFormData) => {
     try {
       setPwdError(null);
-      await api.patch(`/users/${user?.id}/password`, {
+      await usuariosApi.changeMyPassword({
         currentPassword: data.currentPassword,
         newPassword: data.newPassword,
       });
       pwdForm.reset();
       setPwdSuccess(true);
-      setTimeout(() => setPwdSuccess(false), 3000);
+      // El backend invalida el token vigente: llevar al login tras el aviso
+      setTimeout(() => {
+        logout();
+        window.location.replace('/login');
+      }, 2500);
     } catch {
       setPwdError('Error al cambiar la contraseña');
+    }
+  };
+
+  const onSubmitMiPerfil = async (data: MiPerfilFormData) => {
+    try {
+      setMiError(null);
+      const payload: Record<string, unknown> = {
+        nombres: data.nombres,
+        apellidos: data.apellidos,
+        cedula: data.cedula,
+        fechaNacimiento: data.fechaNacimiento,
+        genero: data.genero,
+        cargoActual: data.cargoActual?.trim() || null,
+        fechaIngreso: data.fechaIngreso || null,
+        fechaPromesa: data.fechaPromesa || null,
+        historial: data.historial?.trim() || null,
+      };
+      const actualizado = (await miembrosApi.updateMiPerfil(payload)) as MiPerfilJoven | undefined;
+      if (actualizado) setMiembroDatos(actualizado);
+      setMiSuccess(true);
+      setTimeout(() => setMiSuccess(false), 3000);
+    } catch {
+      setMiError('No se pudo actualizar tu información scout');
     }
   };
 
@@ -100,7 +209,9 @@ export const PerfilPage = () => {
           <Person fontSize="medium" />
         </div>
         <div>
-          <h2 className="text-2xl font-black tracking-tight text-primary uppercase">Mi Perfil Agente</h2>
+          <h2 className="text-2xl font-black tracking-tight text-primary uppercase">
+            {esJoven ? 'Mi Perfil Joven' : 'Mi Perfil Agente'}
+          </h2>
           <p className="text-[10px] font-bold text-outline uppercase tracking-[0.2em]">ID de Enlace: {user?.id.slice(0, 8)}...</p>
         </div>
       </header>
@@ -217,6 +328,103 @@ export const PerfilPage = () => {
             </form>
           </section>
 
+          {/* Mis Datos Scout (solo jóvenes con perfil vinculado) */}
+          {esJoven && miembroDatos && (
+            <section className="bg-surface-container-lowest p-8 rounded-[2rem] shadow-sm">
+              <div className="flex items-center gap-3 mb-8">
+                <MilitaryTech className="text-primary" />
+                <h3 className="text-lg font-black text-primary uppercase tracking-tight">Mis Datos Scout</h3>
+              </div>
+
+              {miSuccess && (
+                <div className="mb-6 p-4 bg-success/10 border border-success/20 text-success rounded-xl text-sm font-bold animate-fade-in flex items-center gap-2">
+                  <span>✓ Información scout actualizada correctamente.</span>
+                </div>
+              )}
+
+              {miError && (
+                <div className="mb-6 p-4 bg-error/10 border border-error/20 text-error rounded-xl text-sm font-bold animate-fade-in">
+                  {miError}
+                </div>
+              )}
+
+              <div className="mb-8 grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div className="bg-surface-container-high rounded-xl p-4">
+                  <p className="text-[9px] font-black uppercase tracking-widest text-outline mb-1">Unidad</p>
+                  <p className="text-sm font-bold text-on-surface">{miembroDatos.Unidad?.nombre ?? '—'}</p>
+                </div>
+                <div className="bg-surface-container-high rounded-xl p-4">
+                  <p className="text-[9px] font-black uppercase tracking-widest text-outline mb-1">Representante</p>
+                  <p className="text-sm font-bold text-on-surface">{miembroDatos.Representante?.nombre ?? '—'}</p>
+                </div>
+                <div className="bg-surface-container-high rounded-xl p-4">
+                  <p className="text-[9px] font-black uppercase tracking-widest text-outline mb-1">Estado</p>
+                  <p className="text-sm font-bold text-on-surface">{miembroDatos.estado ?? '—'}</p>
+                </div>
+              </div>
+
+              <form onSubmit={miForm.handleSubmit(onSubmitMiPerfil)} className="space-y-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black uppercase tracking-widest px-1 text-outline">Nombres</label>
+                    <input {...miForm.register('nombres')} className="w-full p-4 bg-surface-container-high border-none rounded-xl text-sm font-bold focus:ring-2 focus:ring-primary h-[54px]" />
+                    {miForm.formState.errors.nombres && <p className="text-[10px] text-error font-bold px-1">{miForm.formState.errors.nombres.message}</p>}
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black uppercase tracking-widest px-1 text-outline">Apellidos</label>
+                    <input {...miForm.register('apellidos')} className="w-full p-4 bg-surface-container-high border-none rounded-xl text-sm font-bold focus:ring-2 focus:ring-primary h-[54px]" />
+                    {miForm.formState.errors.apellidos && <p className="text-[10px] text-error font-bold px-1">{miForm.formState.errors.apellidos.message}</p>}
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black uppercase tracking-widest px-1 text-outline">Cédula</label>
+                    <input {...miForm.register('cedula')} className="w-full p-4 bg-surface-container-high border-none rounded-xl text-sm font-bold focus:ring-2 focus:ring-primary h-[54px]" />
+                    {miForm.formState.errors.cedula && <p className="text-[10px] text-error font-bold px-1">{miForm.formState.errors.cedula.message}</p>}
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black uppercase tracking-widest px-1 text-outline">Fecha de Nacimiento</label>
+                    <input {...miForm.register('fechaNacimiento')} type="date" className="w-full p-4 bg-surface-container-high border-none rounded-xl text-sm font-bold focus:ring-2 focus:ring-primary h-[54px]" />
+                    {miForm.formState.errors.fechaNacimiento && <p className="text-[10px] text-error font-bold px-1">{miForm.formState.errors.fechaNacimiento.message}</p>}
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black uppercase tracking-widest px-1 text-outline">Género</label>
+                    <select {...miForm.register('genero')} className="w-full p-4 bg-surface-container-high border-none rounded-xl text-sm font-bold focus:ring-2 focus:ring-primary h-[54px]">
+                      <option value="MASCULINO">MASCULINO</option>
+                      <option value="FEMENINO">FEMENINO</option>
+                    </select>
+                    {miForm.formState.errors.genero && <p className="text-[10px] text-error font-bold px-1">{miForm.formState.errors.genero.message}</p>}
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black uppercase tracking-widest px-1 text-outline">Cargo Actual</label>
+                    <input {...miForm.register('cargoActual')} className="w-full p-4 bg-surface-container-high border-none rounded-xl text-sm font-bold focus:ring-2 focus:ring-primary h-[54px]" />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black uppercase tracking-widest px-1 text-outline">Fecha de Ingreso</label>
+                    <input {...miForm.register('fechaIngreso')} type="date" className="w-full p-4 bg-surface-container-high border-none rounded-xl text-sm font-bold focus:ring-2 focus:ring-primary h-[54px]" />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black uppercase tracking-widest px-1 text-outline">Fecha de Promesa</label>
+                    <input {...miForm.register('fechaPromesa')} type="date" className="w-full p-4 bg-surface-container-high border-none rounded-xl text-sm font-bold focus:ring-2 focus:ring-primary h-[54px]" />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black uppercase tracking-widest px-1 text-outline">Historial</label>
+                  <textarea {...miForm.register('historial')} rows={3} className="w-full p-4 bg-surface-container-high border-none rounded-xl text-sm font-bold focus:ring-2 focus:ring-primary" />
+                </div>
+
+                <div className="pt-2">
+                  <button
+                    type="submit"
+                    disabled={miForm.formState.isSubmitting}
+                    className="sentinel-gradient px-8 py-3 rounded-xl text-on-primary font-black text-[10px] uppercase tracking-widest shadow-lg shadow-primary/20 hover:shadow-xl transition-all disabled:opacity-50"
+                  >
+                    {miForm.formState.isSubmitting ? 'Guardando...' : 'Guardar Datos Scout'}
+                  </button>
+                </div>
+              </form>
+            </section>
+          )}
+
           {/* Password Change Form */}
           <section className="p-8 rounded-[2rem] shadow-sm bg-surface-container-low">
             <div className="flex items-center gap-3 mb-8">
@@ -226,7 +434,7 @@ export const PerfilPage = () => {
 
             {pwdSuccess && (
               <div className="mb-6 p-4 bg-success/10 border border-success/20 text-success rounded-xl text-sm font-bold animate-fade-in flex items-center gap-2">
-                <span>✓ Se ha generado una nueva firma criptográfica de acceso.</span>
+                <span>✓ Contraseña actualizada. Serás redirigido al login en unos segundos.</span>
               </div>
             )}
             

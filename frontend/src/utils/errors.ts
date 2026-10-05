@@ -10,7 +10,10 @@ export const getApiStatus = (err: unknown): number | undefined => {
 
 export const getApiErrorMessage = (err: unknown, fallback: string): string => {
   if (isAxiosError(err)) {
-    const data = err.response?.data as { message?: string } | undefined;
+    const data = err.response?.data as { message?: string | string[] } | undefined;
+    if (Array.isArray(data?.message)) {
+      return data.message.join(' / ');
+    }
     return data?.message || fallback;
   }
   if (err instanceof Error && err.message) {

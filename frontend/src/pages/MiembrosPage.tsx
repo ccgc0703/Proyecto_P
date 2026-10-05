@@ -6,11 +6,13 @@ import { DataGrid, GridColDef, GridRenderCellParams } from '@mui/x-data-grid';
 import { Add, Search, Groups2, FilterList } from '@mui/icons-material';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { useNavigate } from '@tanstack/react-router';
 import { z } from 'zod';
-import { miembrosApi } from '../api';
+import { miembrosApi, unidadesApi } from '../api';
 import { usePermission } from '../hooks/usePermission';
-import { useUnidad, useCanViewAllUnidades } from '../hooks/useUnidad';
+import { useUnidad, useCanViewAllUnidades, ordenarPorUnidad } from '../hooks/useUnidad';
 import { Unidad } from '../types/auth';
+import { UnidadEntity } from '../types/member';
 
 interface Joven {
   id: string;
@@ -30,7 +32,7 @@ const jovenSchema = z.object({
   fechaNacimiento: z.string().min(1, 'Fecha requerida'),
   cedula: z.string().min(5, 'Cédula requerida'),
   genero: z.enum(['MASCULINO', 'FEMENINO']),
-  unidad: z.enum(['MANADA', 'TROPA', 'CAMINANTES', 'CLAN']),
+  unidad: z.enum(['MANADA', 'TROPA', 'COMUNIDAD', 'CLAN']),
 });
 type JovenFormData = z.infer<typeof jovenSchema>;
 
@@ -39,6 +41,7 @@ export const MiembrosPage = () => {
   const canCreate = usePermission('joven:create');
   const unidadAsignada = useUnidad();
   const canViewAll = useCanViewAllUnidades();
+  const navigate = useNavigate();
 
   const [jovenes, setJovenes] = useState<Joven[]>([]);
   const [loading, setLoading] = useState(true);
@@ -48,17 +51,29 @@ export const MiembrosPage = () => {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [unidades, setUnidades] = useState<UnidadEntity[]>([]);
 
-  const { register, handleSubmit, reset, formState: { errors } } = useForm<JovenFormData>({
+  const { register, handleSubmit, reset, watch, formState: { errors } } = useForm<JovenFormData>({
     resolver: zodResolver(jovenSchema),
   });
+
+  useEffect(() => {
+    unidadesApi
+      .getAll()
+      .then((data) => setUnidades(ordenarPorUnidad(data as UnidadEntity[])))
+      .catch(() => setUnidades([]));
+  }, []);
 
   const fetchJovenes = useCallback(async () => {
     try {
       setLoading(true);
       const params = canViewAll ? undefined : (unidadAsignada || undefined);
       const data = await miembrosApi.getAll(params);
-      setJovenes(data);
+      const filas = (data as Array<Joven & { Unidad?: { nombre?: string } }>).map((j) => ({
+        ...j,
+        unidad: ((j.Unidad?.nombre ?? j.unidad ?? '') as string).toUpperCase() as Unidad,
+      }));
+      setJovenes(filas);
     } catch {
       setError('Error al cargar miembros');
     } finally {
@@ -95,13 +110,33 @@ export const MiembrosPage = () => {
     setOpenDialog(true);
   };
 
+  const construirPayload = (data: JovenFormData) => {
+    const { unidad, ...resto } = data;
+    const unidadId = unidades.find(
+      (u) => (u.nombre ?? '').toUpperCase() === unidad,
+    )?.id;
+    return unidadId ? { ...resto, unidadId } : resto;
+  };
+
+  const rutaAltaUnidad = (unidad: string) => `/app/${unidad.toLowerCase()}/nuevo`;
+
+  const iniciarAlta = () => {
+    if (!canViewAll && unidadAsignada) {
+      navigate({ to: rutaAltaUnidad(unidadAsignada) });
+      return;
+    }
+    handleOpenDialog();
+  };
+
+  const continuarAlta = () => {
+    const unidad = watch('unidad') || unidadAsignada;
+    if (unidad) navigate({ to: rutaAltaUnidad(unidad) });
+  };
+
   const onSubmit = async (data: JovenFormData) => {
+    if (!editingId) return;
     try {
-      if (editingId) {
-        await miembrosApi.update(editingId, data);
-      } else {
-        await miembrosApi.create(data);
-      }
+      await miembrosApi.update(editingId, construirPayload(data));
       setOpenDialog(false);
       setEditingId(null);
       reset();
@@ -204,7 +239,7 @@ export const MiembrosPage = () => {
 
         {canCreate && (
           <button 
-            onClick={() => handleOpenDialog()}
+            onClick={iniciarAlta}
             className="sentinel-gradient px-4 py-2.5 rounded-xl text-on-primary font-black text-[10px] uppercase tracking-widest shadow-lg shadow-primary/20 hover:scale-105 active:scale-95 transition-all flex items-center gap-2"
           >
             <Add sx={{ fontSize: 16 }} />
@@ -249,6 +284,7 @@ export const MiembrosPage = () => {
               <option value="">Todas las Unidades</option>
               <option value="MANADA">🟢 Manada</option>
               <option value="TROPA">🟡 Tropa</option>
+              <option value="COMUNIDAD">🟠 Comunidad</option>
               <option value="CLAN">🟣 Clan</option>
             </select>
           )}
@@ -330,9 +366,17 @@ export const MiembrosPage = () => {
       <Dialog open={openDialog} onClose={() => { setOpenDialog(false); reset(); }} maxWidth="sm" fullWidth PaperProps={{ className: 'rounded-[2rem] !bg-surface-container-lowest shadow-2xl animate-fade-in-up' }}>
         <form onSubmit={handleSubmit(onSubmit)}>
           <DialogTitle className="text-xl font-black text-primary px-8 pt-8">
-            {editingId ? 'Actualizar Archivo' : 'Crear Registro de Campo'}
+            {editingId ? 'Actualizar Archivo' : 'Registrar Miembro'}
           </DialogTitle>
           <DialogContent className="px-8 space-y-4">
+            {!editingId && (
+              <p className="mt-2 p-4 bg-surface-container-high rounded-xl text-[11px] font-bold text-outline">
+                El alta completa (datos del joven y de su representante) se realiza en el formulario
+                de la unidad que elijas.
+              </p>
+            )}
+            {editingId && (
+            <>
             <div className="grid grid-cols-2 gap-4 mt-2">
               <div className="space-y-2">
                 <label className="text-[10px] font-black uppercase tracking-widest px-1 text-outline">Nombre</label>
@@ -367,12 +411,15 @@ export const MiembrosPage = () => {
                 {errors.genero && <p className="text-[10px] text-error font-bold px-1">{errors.genero.message}</p>}
               </div>
             </div>
+            </>
+            )}
 
             <div className="space-y-2">
               <label className="text-[10px] font-black uppercase tracking-widest px-1 text-outline">Designación de Unidad</label>
               <select {...register('unidad')} className="w-full p-4 bg-surface-container-high border-none rounded-xl text-sm font-bold focus:ring-2 focus:ring-primary h-[54px] appearance-none">
                 {(canViewAll || unidadAsignada === 'MANADA') && <option value="MANADA">🟢 Manada</option>}
                 {(canViewAll || unidadAsignada === 'TROPA') && <option value="TROPA">🟡 Tropa</option>}
+                {(canViewAll || unidadAsignada === 'COMUNIDAD') && <option value="COMUNIDAD">🟠 Comunidad</option>}
                 {(canViewAll || unidadAsignada === 'CLAN') && <option value="CLAN">🟣 Clan</option>}
               </select>
             </div>
@@ -381,8 +428,12 @@ export const MiembrosPage = () => {
             <button type="button" onClick={() => { setOpenDialog(false); reset(); }} className="px-6 py-3 font-black text-[10px] uppercase tracking-widest text-outline hover:text-primary transition-colors">
               Abortar
             </button>
-            <button type="submit" className="sentinel-gradient px-8 py-3 rounded-xl text-on-primary font-black text-[10px] uppercase tracking-widest shadow-lg shadow-primary/20 hover:shadow-xl transition-all">
-              {editingId ? 'Confirmar Cambios' : 'Desplegar Registro'}
+            <button
+              type={editingId ? 'submit' : 'button'}
+              onClick={editingId ? undefined : continuarAlta}
+              className="sentinel-gradient px-8 py-3 rounded-xl text-on-primary font-black text-[10px] uppercase tracking-widest shadow-lg shadow-primary/20 hover:shadow-xl transition-all"
+            >
+              {editingId ? 'Confirmar Cambios' : 'Continuar al alta'}
             </button>
           </DialogActions>
         </form>

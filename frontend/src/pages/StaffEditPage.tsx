@@ -15,6 +15,7 @@ import {
   MedicalInformation
 } from '@mui/icons-material';
 import { adultosApi, unidadesApi } from '../api';
+import { ordenarPorUnidad } from '../hooks/useUnidad';
 import { FichaMedicaPanel } from '../features/fichaMedica/FichaMedicaPanel';
 import { UnidadEntity } from '../types/member';
 import { getApiErrorMessage } from '../utils/errors';
@@ -52,7 +53,7 @@ export const StaffEditPage = () => {
           unidadesApi.getAll(),
           adultosApi.getById(id)
         ]);
-        setUnidades(uData);
+        setUnidades(ordenarPorUnidad(uData as UnidadEntity[]));
         setMiembroId(staffData.miembroId);
         setStaffNombre(`${staffData.nombres || ''} ${staffData.apellidos || ''}`.trim());
         reset({

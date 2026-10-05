@@ -5,6 +5,7 @@ import { UpdateAdultoDto } from './dto/update-adulto.dto';
 import { CreateAccountDto } from './dto/create-account.dto';
 import { UsersService } from '../users/users.service';
 import { AuditService } from '../audit/audit.service';
+import { verificarJerarquiaAsignacion } from '../../common/jerarquia';
 
 @Injectable()
 export class AdultosService {
@@ -74,6 +75,9 @@ export class AdultosService {
 
         // Crear usuario si envía datos
         if (dto.email && dto.password) {
+            // Validar jerarquía ANTES de crear la cuenta (no dejar huérfanos)
+            if (dto.rolId) await this.validarRolInicial(dto.rolId, creatorId);
+
             const user = await this.usersService.create(
                 {
                     nombre: dto.nombres,
@@ -87,7 +91,6 @@ export class AdultosService {
             usuarioId = user.id;
 
             if (dto.rolId) {
-                // Assign role (bypass rbac service to keep it simple, or inject it)
                 await this.prisma.usuarioRol.create({
                     data: { usuarioId: user.id, rolId: dto.rolId, asignadoPor: creatorId }
                 });
@@ -165,6 +168,9 @@ export class AdultosService {
         if (!adulto) throw new NotFoundException('Adulto no encontrado');
         if (adulto.usuarioId) throw new ConflictException('Adulto ya tiene una cuenta de usuario vinculada');
 
+        // Validar jerarquía ANTES de crear la cuenta (no dejar huérfanos)
+        if (dto.rolId) await this.validarRolInicial(dto.rolId, creatorId);
+
         const user = await this.usersService.create(
             {
                 nombre: adulto.Miembro.nombres,
@@ -188,6 +194,19 @@ export class AdultosService {
         });
 
         return this.findOne(id);
+    }
+
+    /**
+     * Valida que el creador pueda otorgar `rolId` al crear una cuenta:
+     * jerarquía de roles (no puede asignar un rol igual o superior al suyo).
+     * Se ejecuta ANTES de crear el usuario para no dejar cuentas huérfanas.
+     */
+    private async validarRolInicial(rolId: string, creatorId: string) {
+        const rol = await this.prisma.rol.findFirst({
+            where: { id: rolId, deletedAt: null, activo: true },
+        });
+        if (!rol) throw new NotFoundException('Rol no encontrado o inactivo');
+        await verificarJerarquiaAsignacion(this.prisma, rol.nombre, creatorId);
     }
 
     async remove(id: string, actorId: string) {

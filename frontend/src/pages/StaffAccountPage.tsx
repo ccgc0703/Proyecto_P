@@ -11,6 +11,8 @@ import {
 } from '@mui/icons-material';
 import { adultosApi, rbacApi } from '../api';
 import { getApiErrorMessage } from '../utils/errors';
+import { useAuth } from '../hooks/useAuth';
+import { puedeAsignarRol } from '../types/auth';
 
 interface StaffAccount {
   nombres?: string;
@@ -33,6 +35,7 @@ type AccountFormData = z.infer<typeof accountSchema>;
 
 export const StaffAccountPage = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const { id } = useParams({ strict: false }) as { id: string };
   const [member, setMember] = useState<StaffAccount | null>(null);
   const [roles, setRoles] = useState<RoleOption[]>([]);
@@ -161,9 +164,11 @@ export const StaffAccountPage = () => {
               </label>
               <select {...register('rolId')} className={inputClasses}>
                 <option value="">Seleccione el nivel jerárquico</option>
-                {roles.map((r) => (
-                  <option key={r.id} value={r.id}>{r.nombre.replace(/_/g, ' ')}</option>
-                ))}
+                {roles
+                  .filter((r) => puedeAsignarRol(user?.roles ?? [], r.nombre))
+                  .map((r) => (
+                    <option key={r.id} value={r.id}>{r.nombre.replace(/_/g, ' ')}</option>
+                  ))}
               </select>
               {errors.rolId && <p className="text-[10px] text-error font-bold px-1">{errors.rolId.message}</p>}
             </div>

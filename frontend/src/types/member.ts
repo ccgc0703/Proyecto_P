@@ -12,10 +12,18 @@ export interface RepresentanteInfo {
   parentesco?: string;
 }
 
+export interface AdelantoRef {
+  id: string;
+  nombre: string;
+  orden: number;
+}
+
 export interface Progresion {
   id: string;
-  etapa: string;
+  adelanto?: AdelantoRef;
+  estado?: string;
   fechaInicio?: string;
+  fechaCulminacion?: string | null;
 }
 
 export interface UnitUser {

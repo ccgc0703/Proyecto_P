@@ -1,16 +1,56 @@
-import { Controller, Get, Post, Patch, Body, Param, Delete, UseGuards, Req } from '@nestjs/common';
+import { Controller, Get, Post, Patch, Body, Param, Delete, UseGuards, Req, Query, ForbiddenException } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
+import { UpdateMeDto } from './dto/update-me.dto';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { PermissionsGuard } from '../../common/guards/permissions.guard';
 import { RequirePermission } from '../../common/decorators/permissions.decorator';
-import { PERMISSIONS } from '../../common/constantes';
+import { PERMISSIONS, RBAC_ROLES } from '../../common/constantes';
+import { resolverOpcionesLista, hayPaginacion, metaPagina } from '../../common/paginacion';
 
 @Controller('users')
 @UseGuards(JwtAuthGuard, PermissionsGuard)
 export class UsersController {
     constructor(private readonly usersService: UsersService) { }
+
+    // ── Self-scope: cualquier usuario gestiona su propia cuenta ────────────
+    // (sin RequirePermission: el id siempre es el del usuario autenticado)
+
+    @Patch('me')
+    async updateMe(@Body() dto: UpdateMeDto, @Req() req: any) {
+        const user = await this.usersService.updateUser(
+            req.user.id,
+            dto,
+            req.user.id,
+            req.ip,
+            req.headers?.['user-agent'],
+        );
+        return {
+            success: true,
+            message: 'Tu cuenta fue actualizada exitosamente',
+            data: user,
+        };
+    }
+
+    @Patch('me/password')
+    async changeMyPassword(
+        @Body() body: { currentPassword: string; newPassword: string },
+        @Req() req: any,
+    ) {
+        const result = await this.usersService.changePassword(
+            req.user.id,
+            body.currentPassword,
+            body.newPassword,
+            req.user.id,
+            req.ip,
+        );
+        return {
+            success: true,
+            message: result.message,
+            data: null,
+        };
+    }
 
     @Post()
     @RequirePermission(PERMISSIONS.USER_CREATE)
@@ -30,12 +70,18 @@ export class UsersController {
 
     @Get()
     @RequirePermission(PERMISSIONS.USER_VIEW)
-    async findAll() {
-        const users = await this.usersService.findAll();
+    async findAll(
+        @Query('page') page?: string,
+        @Query('limit') limit?: string,
+        @Query('q') q?: string,
+    ) {
+        const opts = resolverOpcionesLista({ page, limit, q });
+        const { data, total } = await this.usersService.findAll({}, opts);
         return {
             success: true,
             message: 'Usuarios recuperados exitosamente',
-            data: users,
+            data,
+            ...(hayPaginacion(opts) ? { meta: metaPagina(total, opts) } : {}),
         };
     }
 
@@ -89,6 +135,10 @@ export class UsersController {
         @Body() body: { currentPassword: string; newPassword: string },
         @Req() req: any,
     ) {
+        // Ownership: solo la propia cuenta (o SYSTEM_ADMIN) puede cambiar la contraseña
+        if (id !== req.user.id && !(req.user.roles ?? []).includes(RBAC_ROLES.SYSTEM_ADMIN)) {
+            throw new ForbiddenException('Solo puedes cambiar la contraseña de tu propia cuenta');
+        }
         const result = await this.usersService.changePassword(
             id,
             body.currentPassword,

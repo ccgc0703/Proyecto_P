@@ -82,9 +82,98 @@ enum Severidad {
   SEVERA
 }
 
+// ─── Progresión personal de jóvenes ───────────────────────────────────────
+
+enum EstadoLogro {
+  PENDIENTE
+  EN_PROCESO
+  PENDIENTE_APROBACION
+  COMPLETADO
+}
+
+enum EstadoProgresion {
+  EN_CURSO
+  SOLICITADA
+  APROBADA
+  RECHAZADA
+}
+
+enum TipoArea {
+  AREA_CRECIMIENTO
+  PRUEBA_ADELANTO
+}
+
+// Rama del catálogo de progresión (nacional, compartido por todos los grupos)
+enum RamaUnidad {
+  MANADA
+  TROPA
+  COMUNIDAD
+  CLAN
+}
+
 // ─────────────────────────────────────────────
-// Modelos Base: Usuario y Unidad
+// Modelos Base: Usuario, Unidad y Organización
 // ─────────────────────────────────────────────
+
+/// Nivel jerárquico del árbol organizacional (1 = cúspide).
+/// No confundir con los niveles RBAC (ROLE_HIERARCHY).
+enum TipoNodoOrganizacion {
+  CONSEJO_NACIONAL
+  DIRECCION_EJECUTIVA
+  REGION
+  DISTRITO
+  GRUPO
+}
+
+model OrganizacionNodo {
+  id        String               @id @default(uuid())
+  codigo    String               @unique // Autogenerado: CON-01, DIR-01, REG-01, DIS-01, GRP-01
+  nombre    String
+  tipo      TipoNodoOrganizacion
+  nivel     Int // 1 Consejo, 2 Dirección, 3 Región, 4 Distrito, 5 Grupo
+  padreId   String?
+  activo    Boolean              @default(true)
+  createdAt DateTime             @default(now())
+  updatedAt DateTime             @updatedAt
+  deletedAt DateTime?
+  createdBy String?
+  updatedBy String?
+
+  padre    OrganizacionNodo?  @relation("NodoJerarquia", fields: [padreId], references: [id])
+  hijos    OrganizacionNodo[] @relation("NodoJerarquia")
+  Unidades Unidad[]
+  Usuarios Usuario[]
+  Cargos   CargoAsignacion[]
+
+  @@index([padreId])
+  @@index([tipo])
+  @@index([padreId, activo])
+}
+
+// ─────────────────────────────────────────────
+// Cargos: quién ocupa qué cargo en cada nodo
+// ─────────────────────────────────────────────
+
+model CargoAsignacion {
+  id        String    @id @default(uuid())
+  usuarioId String
+  nodoId    String
+  cargo     String // Canónico: JEFE_GRUPO, COMISIONADO_REGIONAL, DIR_EJECUTIVO...
+  desde     DateTime  @default(now())
+  hasta     DateTime? // Cierre (renombrado/desplazado); null = vigente
+  activo    Boolean   @default(true)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+  createdBy String?
+  updatedBy String?
+
+  Usuario Usuario          @relation(fields: [usuarioId], references: [id])
+  Nodo    OrganizacionNodo @relation(fields: [nodoId], references: [id])
+
+  @@index([nodoId])
+  @@index([usuarioId])
+}
 
 model Usuario {
   id           String    @id @default(uuid())
@@ -94,6 +183,7 @@ model Usuario {
   password     String
   fotoUrl      String?
   unidadId     String?
+  nodoId       String? // Ámbito del líder (región/distrito/grupo/nacional)
   activo       Boolean   @default(true)
   tokenVersion Int       @default(0)
   createdAt    DateTime  @default(now())
@@ -102,29 +192,40 @@ model Usuario {
   createdBy    String?
   updatedBy    String?
 
-  Unidad          Unidad?              @relation(fields: [unidadId], references: [id])
-  AuditLogs       BitacoraAuditoria[]
-  AuditLogEntries AuditLog[]           @relation("AuditLogActor")
-  UsuarioRoles    UsuarioRol[]
-  Adulto          Adulto?
+  Unidad            Unidad?             @relation(fields: [unidadId], references: [id])
+  Nodo              OrganizacionNodo?   @relation(fields: [nodoId], references: [id])
+  CargoAsignaciones CargoAsignacion[]
+  AuditLogs         BitacoraAuditoria[]
+  AuditLogEntries   AuditLog[]          @relation("AuditLogActor")
+  UsuarioRoles      UsuarioRol[]
+  Adulto            Adulto?
+  Joven             Joven?
+
+  @@index([unidadId])
+  @@index([nodoId])
+  @@index([deletedAt])
 }
 
 model Unidad {
   id          String    @id @default(uuid())
-  nombre      String    // Manada, Tropa, Clan
+  nombre      String // Manada, Tropa, Comunidad, Clan
   tipo        String?
   descripcion String?
+  grupoId     String? // Nodo GRUPO al que pertenece
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
   deletedAt   DateTime?
   createdBy   String?
   updatedBy   String?
 
+  Grupo           OrganizacionNodo? @relation(fields: [grupoId], references: [id])
   Usuarios        Usuario[]
   Miembros        Miembro[]
-  Progresiones    Progresion[]
   Patrullas       Patrulla[]
   Planificaciones Planificacion[]
+
+  @@unique([grupoId, tipo]) // Una instancia de rama por grupo
+  @@index([grupoId])
 }
 
 // ─────────────────────────────────────────────
@@ -132,39 +233,49 @@ model Unidad {
 // ─────────────────────────────────────────────
 
 model Miembro {
-  id              String         @id @default(uuid())
+  id              String        @id @default(uuid())
   nombres         String
   apellidos       String
-  cedula          String         @unique
+  cedula          String        @unique
   fechaNacimiento DateTime
   genero          Genero
   tipo            TipoMiembro
-  estado          EstadoMiembro  @default(ACTIVO)
+  estado          EstadoMiembro @default(ACTIVO)
   unidadId        String
-  createdAt       DateTime       @default(now())
-  updatedAt       DateTime       @updatedAt
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
   deletedAt       DateTime?
   createdBy       String?
   updatedBy       String?
 
-  Unidad              Unidad                   @relation(fields: [unidadId], references: [id])
-  Joven               Joven?
-  Adulto              Adulto?
-  DatosScout          DatosScout?
-  FichaMedica         FichaMedica?
-  Condecoraciones     MiembroCondecoracion[]
-  ProgramasMundiales  MiembroProgramaMundial[]
+  Unidad             Unidad                   @relation(fields: [unidadId], references: [id])
+  Joven              Joven?
+  Adulto             Adulto?
+  DatosScout         DatosScout?
+  FichaMedica        FichaMedica?
+  Condecoraciones    MiembroCondecoracion[]
+  ProgramasMundiales MiembroProgramaMundial[]
+
+  @@index([tipo, deletedAt])
+  @@index([unidadId, tipo, deletedAt])
+  @@index([deletedAt])
+  @@index([apellidos, nombres])
 }
 
 model Joven {
-  id              String    @id @default(uuid())
-  miembroId       String    @unique
+  id              String  @id @default(uuid())
+  miembroId       String  @unique
+  usuarioId       String? @unique
   representanteId String
   historial       String?
 
-  Miembro       Miembro       @relation(fields: [miembroId], references: [id])
-  Representante Representante @relation(fields: [representanteId], references: [id])
+  Miembro       Miembro            @relation(fields: [miembroId], references: [id])
+  Usuario       Usuario?           @relation(fields: [usuarioId], references: [id])
+  Representante Representante      @relation(fields: [representanteId], references: [id])
   Progresiones  Progresion[]
+  EstadosLogro  EstadoLogroJoven[]
+
+  @@index([representanteId])
 }
 
 model Adulto {
@@ -181,19 +292,19 @@ model Adulto {
 }
 
 model Representante {
-  id          String    @id @default(uuid())
-  nombre      String
-  cedula      String    @unique
-  telefono    String?
-  direccion   String?
-  parentesco  String?
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-  deletedAt   DateTime?
-  createdBy   String?
-  updatedBy   String?
+  id         String    @id @default(uuid())
+  nombre     String
+  cedula     String    @unique
+  telefono   String?
+  direccion  String?
+  parentesco String?
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+  deletedAt  DateTime?
+  createdBy  String?
+  updatedBy  String?
 
-  Jovenes     Joven[]
+  Jovenes Joven[]
 }
 
 // ─────────────────────────────────────────────
@@ -201,58 +312,60 @@ model Representante {
 // ─────────────────────────────────────────────
 
 model DatosScout {
-  id             String    @id @default(uuid())
-  miembroId      String    @unique
-  fechaRegistro  DateTime?
-  fechaIngreso   DateTime?
-  fechaPromesa   DateTime?
-  cargoActual    String?
-  observaciones  String?
-  patrullaId     String?
+  id            String    @id @default(uuid())
+  miembroId     String    @unique
+  fechaRegistro DateTime?
+  fechaIngreso  DateTime?
+  fechaPromesa  DateTime?
+  cargoActual   String?
+  observaciones String?
+  patrullaId    String?
 
   Miembro  Miembro   @relation(fields: [miembroId], references: [id])
   Patrulla Patrulla? @relation(fields: [patrullaId], references: [id])
+
+  @@index([patrullaId])
 }
 
 model FichaMedica {
-  id                               String    @id @default(uuid())
+  id                           String      @id @default(uuid())
   // Datos generales del miembro
-  tipoSangre                       TipoSangre?
-  telefono                         String?
-  email                            String?
+  tipoSangre                   TipoSangre?
+  telefono                     String?
+  email                        String?
   // Datos médicos individuales
-  medicoTratante                   String?
-  telefonoMedico                   String?
+  medicoTratante               String?
+  telefonoMedico               String?
   // Seguro médico
-  seguroCompania                   String?
-  seguroPoliza                     String?
-  seguroVigencia                   DateTime?
+  seguroCompania               String?
+  seguroPoliza                 String?
+  seguroVigencia               DateTime?
   // Contacto de emergencia (desglosado)
-  contactoEmergenciaNombre         String?
-  contactoEmergenciaTelefono       String?
-  contactoEmergenciaParentesco     String?
+  contactoEmergenciaNombre     String?
+  contactoEmergenciaTelefono   String?
+  contactoEmergenciaParentesco String?
   // Texto libre resumen (opcional — el detalle vive en tablas hijas)
-  alergias                         String?
-  medicamentos                     String?
-  condiciones                      String?
-  observaciones                    String?
+  alergias                     String?
+  medicamentos                 String?
+  condiciones                  String?
+  observaciones                String?
   // Consentimiento / autorización médica
-  consentimiento                   Boolean?  @default(false)
-  consentimientoFecha              DateTime?
-  consentimientoObservaciones      String?
+  consentimiento               Boolean?    @default(false)
+  consentimientoFecha          DateTime?
+  consentimientoObservaciones  String?
 
-  miembroId                        String    @unique
-  createdAt                        DateTime  @default(now())
-  updatedAt                        DateTime  @updatedAt
-  deletedAt                        DateTime?
-  createdBy                        String?
-  updatedBy                        String?
+  miembroId String    @unique
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+  createdBy String?
+  updatedBy String?
 
-  Miembro                          Miembro                 @relation(fields: [miembroId], references: [id])
-  Alergias                         AlergiaFichaMedica[]
-  Medicamentos                     MedicamentoFichaMedica[]
-  Condiciones                      CondicionFichaMedica[]
-  Vacunas                          VacunaFichaMedica[]
+  Miembro      Miembro                  @relation(fields: [miembroId], references: [id])
+  Alergias     AlergiaFichaMedica[]
+  Medicamentos MedicamentoFichaMedica[]
+  Condiciones  CondicionFichaMedica[]
+  Vacunas      VacunaFichaMedica[]
 }
 
 model AlergiaFichaMedica {
@@ -268,7 +381,7 @@ model AlergiaFichaMedica {
   createdBy     String?
   updatedBy     String?
 
-  FichaMedica   FichaMedica @relation(fields: [fichaMedicaId], references: [id])
+  FichaMedica FichaMedica @relation(fields: [fichaMedicaId], references: [id])
 
   @@index([fichaMedicaId])
 }
@@ -287,7 +400,7 @@ model MedicamentoFichaMedica {
   createdBy     String?
   updatedBy     String?
 
-  FichaMedica   FichaMedica @relation(fields: [fichaMedicaId], references: [id])
+  FichaMedica FichaMedica @relation(fields: [fichaMedicaId], references: [id])
 
   @@index([fichaMedicaId])
 }
@@ -305,40 +418,42 @@ model CondicionFichaMedica {
   createdBy        String?
   updatedBy        String?
 
-  FichaMedica      FichaMedica @relation(fields: [fichaMedicaId], references: [id])
+  FichaMedica FichaMedica @relation(fields: [fichaMedicaId], references: [id])
 
   @@index([fichaMedicaId])
 }
 
 model VacunaFichaMedica {
-  id               String    @id @default(uuid())
-  fichaMedicaId    String
-  nombre           String
-  fechaAplicacion  DateTime?
-  lote             String?
-  observaciones    String?
-  createdAt        DateTime  @default(now())
-  updatedAt        DateTime  @updatedAt
-  deletedAt        DateTime?
-  createdBy        String?
-  updatedBy        String?
+  id              String    @id @default(uuid())
+  fichaMedicaId   String
+  nombre          String
+  fechaAplicacion DateTime?
+  lote            String?
+  observaciones   String?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  deletedAt       DateTime?
+  createdBy       String?
+  updatedBy       String?
 
-  FichaMedica      FichaMedica @relation(fields: [fichaMedicaId], references: [id])
+  FichaMedica FichaMedica @relation(fields: [fichaMedicaId], references: [id])
 
   @@index([fichaMedicaId])
 }
 
 model Formacion {
-  id        String   @id @default(uuid())
-  nombre    String   
-  fecha     DateTime 
-  director  String   
+  id        String    @id @default(uuid())
+  nombre    String
+  fecha     DateTime
+  director  String
   adultoId  String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
   deletedAt DateTime?
 
-  Adulto    Adulto   @relation(fields: [adultoId], references: [id])
+  Adulto Adulto @relation(fields: [adultoId], references: [id])
+
+  @@index([adultoId])
 }
 
 model Condecoracion {
@@ -352,7 +467,7 @@ model Condecoracion {
   createdBy   String?
   updatedBy   String?
 
-  Miembros    MiembroCondecoracion[]
+  Miembros MiembroCondecoracion[]
 }
 
 model MiembroCondecoracion {
@@ -366,27 +481,136 @@ model MiembroCondecoracion {
   createdBy       String?
   updatedBy       String?
 
-  Miembro         Miembro       @relation(fields: [miembroId], references: [id])
-  Condecoracion   Condecoracion @relation(fields: [condecoracionId], references: [id])
+  Miembro       Miembro       @relation(fields: [miembroId], references: [id])
+  Condecoracion Condecoracion @relation(fields: [condecoracionId], references: [id])
 
   @@unique([miembroId, condecoracionId])
 }
 
-model Progresion {
-  id               String    @id @default(uuid())
-  etapa            String
-  fechaInicio      DateTime  @default(now())
-  fechaCulminacion DateTime?
-  unidadId         String
-  jovenId          String
-  createdAt        DateTime  @default(now())
-  updatedAt        DateTime  @updatedAt
+// ─────────────────────────────────────────────
+// Progresión personal de jóvenes
+// ─────────────────────────────────────────────
+
+model AreaCrecimiento {
+  id        String      @id @default(uuid())
+  nombre    String      @unique
+  tipo      TipoArea    @default(AREA_CRECIMIENTO)
+  orden     Int
+  activo    Boolean     @default(true)
+  rama      RamaUnidad? // null = aplica a todas las ramas
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+  deletedAt DateTime?
+  createdBy String?
+  updatedBy String?
+
+  Indicadores IndicadorLogro[]
+}
+
+model Etapa {
+  id        String     @id @default(uuid())
+  numero    Int        @unique
+  nombre    String
+  rama      RamaUnidad
+  activo    Boolean    @default(true)
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+  deletedAt DateTime?
+  createdBy String?
+  updatedBy String?
+
+  Indicadores IndicadorLogro[]
+}
+
+model IndicadorLogro {
+  id        String     @id @default(uuid())
+  codigo    String
+  texto     String
+  etapaId   String
+  areaId    String
+  rama      RamaUnidad
+  orden     Int
+  activo    Boolean    @default(true)
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+  deletedAt DateTime?
+  createdBy String?
+  updatedBy String?
+
+  Etapa   Etapa              @relation(fields: [etapaId], references: [id])
+  Area    AreaCrecimiento    @relation(fields: [areaId], references: [id])
+  Estados EstadoLogroJoven[]
+
+  @@unique([etapaId, areaId, codigo])
+  @@index([etapaId])
+  @@index([areaId])
+  @@index([rama])
+}
+
+model Adelanto {
+  id               String     @id @default(uuid())
+  rama             RamaUnidad
+  orden            Int
+  nombre           String
+  edadMinima       Int?
+  umbralPorcentaje Int?
+  activo           Boolean    @default(true)
+  createdAt        DateTime   @default(now())
+  updatedAt        DateTime   @updatedAt
   deletedAt        DateTime?
   createdBy        String?
   updatedBy        String?
 
-  Unidad           Unidad    @relation(fields: [unidadId], references: [id])
-  Joven            Joven     @relation(fields: [jovenId], references: [id])
+  Progresiones Progresion[]
+
+  @@unique([rama, orden])
+}
+
+model Progresion {
+  id               String           @id @default(uuid())
+  jovenId          String
+  adelantoId       String
+  fechaInicio      DateTime         @default(now())
+  fechaCulminacion DateTime?
+  estado           EstadoProgresion @default(EN_CURSO)
+  aprobadoPor      String?
+  aprobadoEn       DateTime?
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+  deletedAt        DateTime?
+  createdBy        String?
+  updatedBy        String?
+
+  Joven    Joven    @relation(fields: [jovenId], references: [id])
+  Adelanto Adelanto @relation(fields: [adelantoId], references: [id])
+
+  @@unique([jovenId, adelantoId])
+  @@index([jovenId])
+  @@index([jovenId, estado])
+}
+
+model EstadoLogroJoven {
+  id            String      @id @default(uuid())
+  jovenId       String
+  indicadorId   String
+  estado        EstadoLogro @default(PENDIENTE)
+  observaciones String?
+  registradoPor String?
+  registradoEn  DateTime    @default(now())
+  aprobadoPor   String?
+  aprobadoEn    DateTime?
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+  deletedAt     DateTime?
+  createdBy     String?
+  updatedBy     String?
+
+  Joven     Joven          @relation(fields: [jovenId], references: [id])
+  Indicador IndicadorLogro @relation(fields: [indicadorId], references: [id])
+
+  @@unique([jovenId, indicadorId])
+  @@index([jovenId])
+  @@index([jovenId, estado])
 }
 
 model ProgramaMundial {
@@ -399,7 +623,7 @@ model ProgramaMundial {
   updatedAt   DateTime            @updatedAt
   deletedAt   DateTime?
 
-  Miembros    MiembroProgramaMundial[]
+  Miembros MiembroProgramaMundial[]
 }
 
 model MiembroProgramaMundial {
@@ -424,21 +648,25 @@ model MiembroProgramaMundial {
 // ─────────────────────────────────────────────
 
 model BitacoraAuditoria {
-  id            String    @id @default(uuid())
-  usuarioId     String?
-  accion        String
-  tabla         String
-  registroId    String
-  datosAntes    Json?
-  datosDespues  Json?
-  ip            String?
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
-  deletedAt     DateTime?
-  createdBy     String?
-  updatedBy     String?
+  id           String    @id @default(uuid())
+  usuarioId    String?
+  accion       String
+  tabla        String
+  registroId   String
+  datosAntes   Json?
+  datosDespues Json?
+  ip           String?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  deletedAt    DateTime?
+  createdBy    String?
+  updatedBy    String?
 
-  Usuario       Usuario?  @relation(fields: [usuarioId], references: [id])
+  Usuario Usuario? @relation(fields: [usuarioId], references: [id])
+
+  @@index([usuarioId])
+  @@index([tabla, registroId])
+  @@index([createdAt])
 }
 
 model AuditLog {
@@ -452,7 +680,11 @@ model AuditLog {
   userAgent   String?
   createdAt   DateTime @default(now())
 
-  actor       Usuario? @relation("AuditLogActor", fields: [actorId], references: [id])
+  actor Usuario? @relation("AuditLogActor", fields: [actorId], references: [id])
+
+  @@index([createdAt])
+  @@index([module, action])
+  @@index([actorId])
 }
 
 // ─────────────────────────────────────────────
@@ -461,7 +693,7 @@ model AuditLog {
 
 model Rol {
   id          String    @id @default(uuid())
-  nombre      String    @unique  // SYSTEM_ADMIN, GROUP_LEADER, etc.
+  nombre      String    @unique // SYSTEM_ADMIN, GROUP_LEADER, etc.
   descripcion String?
   activo      Boolean   @default(true)
   createdAt   DateTime  @default(now())
@@ -474,12 +706,12 @@ model Rol {
 }
 
 model Permiso {
-  id          String    @id @default(uuid())
-  accion      String    @unique  // "user:create", "joven:view", "rbac:manage"
-  modulo      String             // "users", "jovenes", "rbac"
+  id          String   @id @default(uuid())
+  accion      String   @unique // "user:create", "joven:view", "rbac:manage"
+  modulo      String // "users", "jovenes", "rbac"
   descripcion String?
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
   RolPermisos RolPermiso[]
 }
@@ -493,38 +725,38 @@ model UsuarioRol {
   updatedAt   DateTime  @updatedAt
   deletedAt   DateTime?
 
-  Usuario     Usuario   @relation(fields: [usuarioId], references: [id])
-  Rol         Rol       @relation(fields: [rolId], references: [id])
+  Usuario Usuario @relation(fields: [usuarioId], references: [id])
+  Rol     Rol     @relation(fields: [rolId], references: [id])
 
   @@unique([usuarioId, rolId])
   @@index([usuarioId])
 }
 
 model RolPermiso {
-  id          String    @id @default(uuid())
-  rolId       String
-  permisoId   String
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-  deletedAt   DateTime?
+  id        String    @id @default(uuid())
+  rolId     String
+  permisoId String
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
 
-  Rol         Rol       @relation(fields: [rolId], references: [id])
-  Permiso     Permiso   @relation(fields: [permisoId], references: [id])
+  Rol     Rol     @relation(fields: [rolId], references: [id])
+  Permiso Permiso @relation(fields: [permisoId], references: [id])
 
   @@unique([rolId, permisoId])
   @@index([rolId])
 }
 
 model AuditRBAC {
-  id              String    @id @default(uuid())
-  accion          String
-  entidad         String
-  entidadId       String
-  realizadoPorId  String?
-  datosCambio     Json?
-  ip              String?
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
+  id             String   @id @default(uuid())
+  accion         String
+  entidad        String
+  entidadId      String
+  realizadoPorId String?
+  datosCambio    Json?
+  ip             String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
 }
 
 // ─────────────────────────────────────────────
@@ -532,18 +764,18 @@ model AuditRBAC {
 // ─────────────────────────────────────────────
 
 model Patrulla {
-  id          String    @id @default(uuid())
-  nombre      String
-  unidadId    String
-  color       String?
-  activa      Boolean   @default(true)
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-  deletedAt   DateTime?
-  createdBy   String?
+  id        String    @id @default(uuid())
+  nombre    String
+  unidadId  String
+  color     String?
+  activa    Boolean   @default(true)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+  createdBy String?
 
-  Unidad      Unidad    @relation(fields: [unidadId], references: [id])
-  Miembros    DatosScout[]
+  Unidad   Unidad       @relation(fields: [unidadId], references: [id])
+  Miembros DatosScout[]
 
   @@index([unidadId])
 }
@@ -553,28 +785,30 @@ model Patrulla {
 // ─────────────────────────────────────────────
 
 model Planificacion {
-  id          String    @id @default(uuid())
+  id          String              @id @default(uuid())
   titulo      String
   descripcion String?
   fechaInicio DateTime
   fechaFin    DateTime
   unidadId    String?
   estado      EstadoPlanificacion @default(BORRADOR)
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  createdAt   DateTime            @default(now())
+  updatedAt   DateTime            @updatedAt
   deletedAt   DateTime?
   createdBy   String?
   updatedBy   String?
 
-  Unidad      Unidad?   @relation(fields: [unidadId], references: [id])
+  Unidad      Unidad?     @relation(fields: [unidadId], references: [id])
   Actividades Actividad[]
+
+  @@index([unidadId])
 }
 
 model Actividad {
-  id              String    @id @default(uuid())
+  id              String          @id @default(uuid())
   titulo          String
   descripcion     String?
-  tipo            TipoActividad @default(REUNION)
+  tipo            TipoActividad   @default(REUNION)
   fecha           DateTime
   horaInicio      String?
   horaFin         String?
@@ -582,12 +816,12 @@ model Actividad {
   responsable     String?
   planificacionId String
   estado          EstadoActividad @default(PENDIENTE)
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
   deletedAt       DateTime?
   createdBy       String?
 
-  Planificacion   Planificacion @relation(fields: [planificacionId], references: [id])
+  Planificacion Planificacion @relation(fields: [planificacionId], references: [id])
 
   @@index([planificacionId])
   @@index([fecha])

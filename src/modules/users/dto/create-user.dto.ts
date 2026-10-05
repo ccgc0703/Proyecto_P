@@ -1,4 +1,4 @@
-import { IsEmail, IsString, IsOptional, IsBoolean, IsEnum } from 'class-validator';
+import { IsEmail, IsString, IsOptional, IsBoolean, IsEnum, IsUUID } from 'class-validator';
 import { Transform } from 'class-transformer';
 import { ROLES } from '../../../common/constantes';
 
@@ -22,6 +22,11 @@ export class CreateUserDto {
     @IsOptional()
     @IsString()
     unidadId?: string;
+
+    /** F4.3: ámbito jerárquico del usuario (nodo CONSEJO/DIRECCIÓN/REGIÓN/DISTRITO/GRUPO). */
+    @IsOptional()
+    @IsUUID('4', { message: 'nodoId debe ser un UUID válido' })
+    nodoId?: string;
 
     @IsOptional()
     @IsBoolean()

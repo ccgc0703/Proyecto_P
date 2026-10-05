@@ -1,22 +1,25 @@
-import { Injectable, ForbiddenException, NotFoundException, BadRequestException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, ConflictException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateJovenDto } from './dto/create-joven.dto';
 import { UpdateJovenDto } from './dto/update-joven.dto';
+import { CreateAccountDto } from '../adultos/dto/create-account.dto';
 import { AuditService } from '../audit/audit.service';
+import { UnitAccessPolicy } from '../../common/policies/unit-access.policy';
+import { UsersService } from '../users/users.service';
+import { RBAC_ROLES } from '../../common/constantes';
+import {
+    OpcionesLista,
+    hayPaginacion,
+    rangoLista,
+    filtroBusqueda,
+} from '../../common/paginacion';
 
-const ADULT_UNIT_MAP: Record<string, string> = {
-    ADULTO_MANADA: 'Manada',
-    ADULTO_TROPA: 'Tropa',
-    ADULTO_CAMINANTES: 'Caminantes',
-    ADULTO_CLAN: 'Clan',
-};
-
-const UNIT_BYPASS_ROLES = ['SYSTEM_ADMIN', 'GROUP_LEADER'];
+const CAMPOS_BUSQUEDA_JOVEN = ['nombres', 'apellidos', 'cedula'];
 
 const UNIT_AGE_RANGES: Record<string, { min: number; max: number }> = {
     Manada: { min: 6, max: 10 },
     Tropa: { min: 10, max: 15 },
-    Caminantes: { min: 15, max: 18 },
+    Comunidad: { min: 15, max: 18 },
     Clan: { min: 18, max: 21 },
 };
 
@@ -25,37 +28,13 @@ export class JovenesService {
     constructor(
         private readonly prisma: PrismaService,
         private readonly auditService: AuditService,
+        private readonly unitAccess: UnitAccessPolicy,
+        private readonly usersService: UsersService,
     ) {
     }
 
     private async validateUnitAccess(actorId: string, unidadId: string): Promise<void> {
-        const actorRoles = await this.prisma.usuarioRol.findMany({
-            where: { usuarioId: actorId, deletedAt: null },
-            include: { Rol: true },
-        });
-
-        const roleNames = actorRoles.map(ur => ur.Rol.nombre);
-
-        if (roleNames.some(r => UNIT_BYPASS_ROLES.includes(r))) {
-            return;
-        }
-
-        const adultRole = roleNames.find(r => r in ADULT_UNIT_MAP);
-        if (!adultRole) {
-            return;
-        }
-
-        const unidad = await this.prisma.unidad.findFirst({
-            where: { id: unidadId, deletedAt: null },
-            select: { nombre: true },
-        });
-
-        if (!unidad) return;
-
-        const allowedUnit = ADULT_UNIT_MAP[adultRole];
-        if (unidad.nombre !== allowedUnit) {
-            throw new ForbiddenException('No tienes acceso a jóvenes de otra unidad');
-        }
+        await this.unitAccess.assertCanAccessUnit(actorId, unidadId);
     }
 
     private validateAgeForUnit(fechaNacimiento: Date, unidadNombre: string): void {
@@ -74,23 +53,17 @@ export class JovenesService {
         }
     }
 
-    async findAllByUnit(unidadId: string) {
-        const miembros = await this.prisma.miembro.findMany({
-            where: {
-                tipo: 'JOVEN',
-                unidadId,
-                deletedAt: null,
-            },
-            include: {
-                Unidad: true,
-                Joven: {
-                    include: { Representante: true }
-                },
-                FichaMedica: true,
-                DatosScout: true,
-            },
-        });
+    private baseWhereJoven(unidadId?: string, opts?: OpcionesLista, unidadIds?: string[]) {
+        return {
+            tipo: 'JOVEN' as const,
+            deletedAt: null,
+            ...(unidadId ? { unidadId } : {}),
+            ...(unidadIds ? { unidadId: { in: unidadIds } } : {}),
+            ...(filtroBusqueda(opts?.q, CAMPOS_BUSQUEDA_JOVEN) ?? {}),
+        };
+    }
 
+    private proyectarMiembro(miembros: any[]) {
         return miembros.map(m => {
             const { Joven, DatosScout, ...rest } = m;
             return {
@@ -102,31 +75,67 @@ export class JovenesService {
         });
     }
 
-    async findAll() {
-        const miembros = await this.prisma.miembro.findMany({
-            where: {
-                tipo: 'JOVEN',
-                deletedAt: null,
-            },
-            include: {
-                Unidad: true,
-                Joven: {
-                    include: { Representante: true }
-                },
-                FichaMedica: true,
-                DatosScout: true,
-            },
-        });
+    private readonly MIEMBRO_INCLUDE = {
+        Unidad: true,
+        Joven: {
+            include: { Representante: true }
+        },
+        FichaMedica: true,
+        DatosScout: true,
+    };
 
-        return miembros.map(m => {
-            const { Joven, DatosScout, ...rest } = m;
-            return {
-                ...rest,
-                ...(Joven || {}),
-                ...(DatosScout || {}),
-                id: m.id,
-            };
-        });
+    /**
+     * Listado paginado (opt-in). Sin page/limit devuelve la lista completa
+     * como siempre; con page/limit aplica skip/take y devuelve total.
+     */
+    async findAllByUnit(unidadId: string, opts?: OpcionesLista) {
+        const where = this.baseWhereJoven(unidadId, opts);
+
+        if (!hayPaginacion(opts ?? {})) {
+            const miembros = await this.prisma.miembro.findMany({
+                where,
+                include: this.MIEMBRO_INCLUDE,
+            });
+            return { data: this.proyectarMiembro(miembros), total: miembros.length };
+        }
+
+        const [miembros, total] = await Promise.all([
+            this.prisma.miembro.findMany({
+                where,
+                include: this.MIEMBRO_INCLUDE,
+                orderBy: [{ apellidos: 'asc' }, { nombres: 'asc' }],
+                ...rangoLista(opts!),
+            }),
+            this.prisma.miembro.count({ where }),
+        ]);
+        return { data: this.proyectarMiembro(miembros), total };
+    }
+
+    /**
+     * Listado global con filtro opcional de ámbito (F4.3).
+     * `unidadIds` (incluso vacío) restringe el resultado a esas unidades.
+     */
+    async findAll(opts?: OpcionesLista, unidadIds?: string[]) {
+        const where = this.baseWhereJoven(undefined, opts, unidadIds);
+
+        if (!hayPaginacion(opts ?? {})) {
+            const miembros = await this.prisma.miembro.findMany({
+                where,
+                include: this.MIEMBRO_INCLUDE,
+            });
+            return { data: this.proyectarMiembro(miembros), total: miembros.length };
+        }
+
+        const [miembros, total] = await Promise.all([
+            this.prisma.miembro.findMany({
+                where,
+                include: this.MIEMBRO_INCLUDE,
+                orderBy: [{ apellidos: 'asc' }, { nombres: 'asc' }],
+                ...rangoLista(opts!),
+            }),
+            this.prisma.miembro.count({ where }),
+        ]);
+        return { data: this.proyectarMiembro(miembros), total };
     }
 
     async findOne(id: string) {
@@ -147,6 +156,7 @@ export class JovenesService {
                         Progresiones: {
                             where: { deletedAt: null },
                             orderBy: { fechaInicio: 'desc' },
+                            include: { Adelanto: true },
                         }
                     }
                 },
@@ -325,23 +335,27 @@ export class JovenesService {
         return result;
     }
 
-    async getStats() {
-        const totalJovenes = await this.prisma.miembro.count({ 
-            where: { tipo: 'JOVEN', deletedAt: null } 
-        });
+    async getStats(unidadIds?: string[]) {
+        const base = {
+            tipo: 'JOVEN' as const,
+            deletedAt: null,
+            ...(unidadIds ? { unidadId: { in: unidadIds } } : {}),
+        };
 
-        const [manada, tropa, caminantes, clan] = await Promise.all([
+        const totalJovenes = await this.prisma.miembro.count({ where: base });
+
+        const [manada, tropa, comunidad, clan] = await Promise.all([
             this.prisma.miembro.count({
-                where: { tipo: 'JOVEN', deletedAt: null, Unidad: { nombre: 'Manada' } }
+                where: { ...base, Unidad: { nombre: 'Manada' } }
             }),
             this.prisma.miembro.count({
-                where: { tipo: 'JOVEN', deletedAt: null, Unidad: { nombre: 'Tropa' } }
+                where: { ...base, Unidad: { nombre: 'Tropa' } }
             }),
             this.prisma.miembro.count({
-                where: { tipo: 'JOVEN', deletedAt: null, Unidad: { nombre: 'Caminantes' } }
+                where: { ...base, Unidad: { nombre: 'Comunidad' } }
             }),
             this.prisma.miembro.count({
-                where: { tipo: 'JOVEN', deletedAt: null, Unidad: { nombre: 'Clan' } }
+                where: { ...base, Unidad: { nombre: 'Clan' } }
             }),
         ]);
 
@@ -349,8 +363,61 @@ export class JovenesService {
             totalJovenes,
             manada,
             tropa,
-            caminantes,
+            comunidad,
             clan,
         };
+    }
+
+    /**
+     * Crea la cuenta de acceso (Usuario) de un joven y la vincula a su
+     * registro Joven. Asigna obligatoriamente el rol JOVEN (self-scope).
+     * El rol recibido en el DTO se ignora a propósito: una cuenta joven
+     * solo puede tener el rol JOVEN.
+     */
+    async createAccount(miembroId: string, dto: CreateAccountDto, creatorId: string) {
+        const miembro = await this.prisma.miembro.findFirst({
+            where: { id: miembroId, deletedAt: null, tipo: 'JOVEN' },
+            include: { Joven: true },
+        });
+        if (!miembro) throw new NotFoundException('Joven no encontrado');
+        if (!miembro.Joven) throw new BadRequestException('El miembro no tiene ficha de joven');
+        if (miembro.Joven.usuarioId) {
+            throw new ConflictException('El joven ya tiene una cuenta de usuario vinculada');
+        }
+
+        const user = await this.usersService.create(
+            {
+                nombre: miembro.nombres,
+                apellido: miembro.apellidos,
+                email: dto.email,
+                password: dto.password,
+                unidadId: miembro.unidadId,
+            },
+            creatorId,
+        );
+
+        const rolJoven = await this.prisma.rol.findUnique({
+            where: { nombre: RBAC_ROLES.JOVEN },
+        });
+        if (rolJoven) {
+            await this.prisma.usuarioRol.create({
+                data: { usuarioId: user.id, rolId: rolJoven.id, asignadoPor: creatorId },
+            });
+        }
+
+        await this.prisma.joven.update({
+            where: { id: miembro.Joven.id },
+            data: { usuarioId: user.id },
+        });
+
+        await this.auditService.logAction({
+            actorId: creatorId,
+            action: 'JOVEN_ACCOUNT_CREATED',
+            module: 'jovenes',
+            targetId: miembroId,
+            description: `Cuenta de acceso creada para el joven (${dto.email})`,
+        });
+
+        return this.findOne(miembroId);
     }
 }

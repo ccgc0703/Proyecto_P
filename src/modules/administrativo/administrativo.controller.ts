@@ -6,11 +6,15 @@ import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { PermissionsGuard } from '../../common/guards/permissions.guard';
 import { RequirePermission } from '../../common/decorators/permissions.decorator';
 import { PERMISSIONS } from '../../common/constantes';
+import { SelfScopePolicy } from '../../common/policies/self-scope.policy';
 
 @Controller('administrativo')
 @UseGuards(JwtAuthGuard, PermissionsGuard)
 export class AdministrativoController {
-    constructor(private readonly administrativoService: AdministrativoService) { }
+    constructor(
+        private readonly administrativoService: AdministrativoService,
+        private readonly selfScope: SelfScopePolicy,
+    ) { }
 
     @Post('representantes')
     @RequirePermission(PERMISSIONS.REPRESENTANTE_CREATE)
@@ -74,6 +78,8 @@ export class AdministrativoController {
     @Post('ficha-medica')
     @RequirePermission(PERMISSIONS.MEDICO_EDIT)
     async createFichaMedica(@Body() data: any, @Req() req: any) {
+        // Self-scope: el rol JOVEN solo puede crear su propia ficha
+        this.selfScope.assertSelf(req.user, data?.miembroId);
         const fichaMedica = await this.administrativoService.createFichaMedica(data, req.user.id);
         return {
             success: true,

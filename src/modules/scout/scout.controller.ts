@@ -1,4 +1,4 @@
-import { Controller, Post, Get, Patch, Delete, Body, Param, UseGuards, Req } from '@nestjs/common';
+import { Controller, Post, Get, Delete, Body, Param, UseGuards, Req } from '@nestjs/common';
 import { ScoutService } from './scout.service';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { PermissionsGuard } from '../../common/guards/permissions.guard';
@@ -9,41 +9,6 @@ import { PERMISSIONS } from '../../common/constantes';
 @UseGuards(JwtAuthGuard, PermissionsGuard)
 export class ScoutController {
     constructor(private readonly scoutService: ScoutService) { }
-
-    @Post('progresiones')
-    @RequirePermission(PERMISSIONS.PROGRESION_CREATE)
-    async createProgresion(@Body() data: any, @Req() req: any) {
-        const progresion = await this.scoutService.createProgresion(data, req.user.id);
-        return { success: true, message: 'Progresión registrada', data: progresion };
-    }
-
-    @Get('progresiones')
-    @RequirePermission(PERMISSIONS.PROGRESION_VIEW)
-    async findAllProgresiones() {
-        const progresiones = await this.scoutService.findAllProgresiones();
-        return { success: true, message: 'Progresiones recuperadas', data: progresiones };
-    }
-
-    @Get('progresiones/:id')
-    @RequirePermission(PERMISSIONS.PROGRESION_VIEW)
-    async findProgresion(@Param('id') id: string) {
-        const progresion = await this.scoutService.findProgresionById(id);
-        return { success: true, message: 'Progresión recuperada', data: progresion };
-    }
-
-    @Patch('progresiones/:id')
-    @RequirePermission(PERMISSIONS.PROGRESION_UPDATE)
-    async updateProgresion(@Param('id') id: string, @Body() data: any, @Req() req: any) {
-        const progresion = await this.scoutService.updateProgresion(id, data, req.user.id);
-        return { success: true, message: 'Progresión actualizada', data: progresion };
-    }
-
-    @Delete('progresiones/:id')
-    @RequirePermission(PERMISSIONS.PROGRESION_DELETE)
-    async removeProgresion(@Param('id') id: string, @Req() req: any) {
-        await this.scoutService.removeProgresion(id, req.user.id);
-        return { success: true, message: 'Progresión eliminada', data: null };
-    }
 
     @Post('condecoraciones')
     @RequirePermission(PERMISSIONS.CONDECORACION_CREATE)

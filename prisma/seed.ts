@@ -1,4 +1,4 @@
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient, TipoNodoOrganizacion } from '@prisma/client';
 import { PrismaPg } from '@prisma/adapter-pg';
 import { Pool } from 'pg';
 import * as bcrypt from 'bcryptjs';
@@ -36,6 +36,10 @@ const PERMISOS_SEED = [
     { accion: 'progresion:create', modulo: 'scout', descripcion: 'Registrar progresión scout' },
     { accion: 'progresion:view', modulo: 'scout', descripcion: 'Ver progresión scout' },
     { accion: 'progresion:update', modulo: 'scout', descripcion: 'Actualizar progresión scout' },
+    { accion: 'progresion:aprobar', modulo: 'scout', descripcion: 'Aprobar o rechazar ascenso de adelanto' },
+    // Catálogo de progresión
+    { accion: 'catalogo:view', modulo: 'scout', descripcion: 'Ver catálogo de progresión' },
+    { accion: 'catalogo:manage', modulo: 'scout', descripcion: 'Administrar catálogo de progresión' },
     // Condecoraciones
     { accion: 'condecoracion:create', modulo: 'scout', descripcion: 'Crear condecoraciones en catálogo' },
     { accion: 'condecoracion:view', modulo: 'scout', descripcion: 'Ver condecoraciones' },
@@ -48,20 +52,58 @@ const PERMISOS_SEED = [
     { accion: 'rbac:view', modulo: 'rbac', descripcion: 'Ver roles y permisos' },
     { accion: 'rbac:manage', modulo: 'rbac', descripcion: 'Administrar roles y permisos' },
     { accion: 'rbac:assign-role', modulo: 'rbac', descripcion: 'Asignar roles a usuarios' },
+    // Self-scope (perfil propio)
+    { accion: 'self:view', modulo: 'perfil', descripcion: 'Ver el propio perfil' },
+    { accion: 'self:update', modulo: 'perfil', descripcion: 'Editar el propio perfil' },
+    // Estructura organizacional (Fase 1)
+    { accion: 'organizacion:view', modulo: 'organizacion', descripcion: 'Ver la estructura organizacional' },
+    { accion: 'organizacion:create', modulo: 'organizacion', descripcion: 'Crear nodos de la estructura (regiones, distritos, grupos)' },
+    { accion: 'organizacion:update', modulo: 'organizacion', descripcion: 'Actualizar nodos de la estructura' },
+    { accion: 'organizacion:delete', modulo: 'organizacion', descripcion: 'Eliminar nodos de la estructura' },
+    // Módulos futuros (claves definidas, sin implementar aún)
+    { accion: 'normativa:view', modulo: 'normativa', descripcion: 'Ver normativas' },
+    { accion: 'normativa:manage', modulo: 'normativa', descripcion: 'Crear y aprobar normativas' },
+    { accion: 'finanza:view', modulo: 'finanza', descripcion: 'Ver finanzas del grupo' },
+    { accion: 'finanza:manage', modulo: 'finanza', descripcion: 'Gestionar cuotas y cobros' },
+    { accion: 'evento:view', modulo: 'evento', descripcion: 'Ver eventos' },
+    { accion: 'evento:create', modulo: 'evento', descripcion: 'Crear y gestionar eventos' },
+    { accion: 'inventario:view', modulo: 'inventario', descripcion: 'Ver inventario' },
+    { accion: 'inventario:manage', modulo: 'inventario', descripcion: 'Gestionar inventario' },
+    { accion: 'asistencia:view', modulo: 'asistencia', descripcion: 'Ver asistencias' },
+    { accion: 'asistencia:manage', modulo: 'asistencia', descripcion: 'Cargar asistencias' },
+    { accion: 'formacion:view', modulo: 'formacion', descripcion: 'Ver formación de adultos' },
+    { accion: 'formacion:manage', modulo: 'formacion', descripcion: 'Gestionar formación de adultos' },
 ];
 
 // ─── Catálogo de roles ────────────────────────────────────────────────────
 const ROLES_SEED = [
-    { nombre: 'SYSTEM_ADMIN', descripcion: 'Administrador del Sistema — acceso total' },
+    { nombre: 'SYSTEM_ADMIN', descripcion: 'Administrador del Sistema — acceso total (técnico)' },
+    // ── Nacional ──
+    { nombre: 'NATIONAL_BOARD', descripcion: 'Consejo Nacional' },
+    { nombre: 'NATIONAL_EXECUTIVE', descripcion: 'Director Ejecutivo Nacional' },
+    { nombre: 'NATIONAL_DIR_JOVENES', descripcion: 'Director Nacional del Programa de Jóvenes' },
+    { nombre: 'NATIONAL_DIR_ADULTOS', descripcion: 'Director Nacional de Adultos en el Movimiento' },
+    { nombre: 'NATIONAL_DIR_DESARROLLO', descripcion: 'Director Nacional de Desarrollo Institucional' },
+    { nombre: 'NATIONAL_COLABORADOR', descripcion: 'Cooperador Nacional' },
+    // ── Regional ──
+    { nombre: 'REGION_COMMISSIONER', descripcion: 'Comisionado Regional' },
+    { nombre: 'REGION_ASSISTANT', descripcion: 'Asistente de Programa Regional' },
+    { nombre: 'REGION_COLABORADOR', descripcion: 'Cooperador Regional' },
+    // ── Distrital ──
+    { nombre: 'DISTRICT_COMMISSIONER', descripcion: 'Comisionado Distrital' },
+    { nombre: 'DISTRICT_ASSISTANT', descripcion: 'Asistente de Programa Distrital' },
+    { nombre: 'DISTRICT_COLABORADOR', descripcion: 'Cooperador Distrital' },
+    // ── Grupo / Unidad ──
     { nombre: 'GROUP_LEADER', descripcion: 'Jefe de Grupo' },
     { nombre: 'GROUP_SUBLEADER', descripcion: 'Subjefe de Grupo' },
     { nombre: 'ADULTO_MANADA', descripcion: 'Adulto de Unidad Manada' },
     { nombre: 'ADULTO_TROPA', descripcion: 'Adulto de Unidad Tropa' },
     { nombre: 'ADULTO_CLAN', descripcion: 'Adulto de Unidad Clan' },
-    { nombre: 'ADULTO_CAMINANTES', descripcion: 'Adulto de Comunidad de Caminantes' },
-    { nombre: 'SECRETARIO', descripcion: 'Secretario del Grupo' },
+    { nombre: 'ADULTO_COMUNIDAD', descripcion: 'Adulto de Comunidad' },
+    { nombre: 'REPRESENTANTE_UNIDAD', descripcion: 'Representante de Unidad' },
     { nombre: 'ADULTO_COLABORADOR', descripcion: 'Adulto Colaborador' },
     { nombre: 'CONSULTOR', descripcion: 'Consultor — solo lectura' },
+    { nombre: 'JOVEN', descripcion: 'Joven miembro — acceso propio (self-scope)' },
 ];
 
 // ─── Matriz: qué permisos tiene cada rol ─────────────────────────────────
@@ -71,51 +113,107 @@ const ROL_PERMISOS_SEED: Record<string, string[]> = {
         'joven:create', 'joven:view', 'joven:update', 'joven:delete',
         'unidad:create', 'unidad:view', 'unidad:update', 'unidad:delete',
         'representante:create', 'representante:view', 'representante:update', 'representante:delete',
-        'progresion:create', 'progresion:view', 'progresion:update',
+        'progresion:create', 'progresion:view', 'progresion:update', 'progresion:aprobar',
+        'catalogo:view', 'catalogo:manage',
         'condecoracion:create', 'condecoracion:view', 'condecoracion:otorgar',
         'medico:view', 'medico:edit', 'medico:update',
         'rbac:view', 'rbac:manage', 'rbac:assign-role',
+        'organizacion:view', 'organizacion:create', 'organizacion:update', 'organizacion:delete',
     ],
     'GROUP_LEADER': [
         'user:create', 'user:view', 'user:update',
         'joven:create', 'joven:view', 'joven:update',
         'unidad:create', 'unidad:view',
         'representante:create', 'representante:view',
-        'progresion:create',
+        'progresion:create', 'progresion:view', 'progresion:update', 'progresion:aprobar',
+        'catalogo:view', 'catalogo:manage',
         'condecoracion:create', 'condecoracion:otorgar',
-        'rbac:assign-role',
+        'rbac:view', 'rbac:assign-role',
+        'organizacion:view',
     ],
     'GROUP_SUBLEADER': [
         'user:view',
         'joven:view', 'joven:update',
         'unidad:view',
         'representante:view',
+        'catalogo:view',
+        'organizacion:view',
+    ],
+    // ── Nacional ──
+    'NATIONAL_BOARD': [
+        'organizacion:view', 'organizacion:create', 'organizacion:update', 'organizacion:delete',
+        'user:view', 'rbac:view',
+        'normativa:view', 'finanza:view', 'evento:view', 'inventario:view', 'asistencia:view', 'formacion:view',
+    ],
+    'NATIONAL_EXECUTIVE': [
+        'organizacion:view', 'organizacion:create', 'organizacion:update', 'organizacion:delete',
+        'user:view', 'rbac:view', 'rbac:assign-role',
+        'unidad:view', 'joven:view',
+        'normativa:view', 'finanza:view', 'evento:view', 'asistencia:view', 'formacion:view',
+    ],
+    'NATIONAL_DIR_JOVENES': [
+        'organizacion:view', 'joven:view', 'progresion:view', 'catalogo:view', 'evento:view',
+    ],
+    'NATIONAL_DIR_ADULTOS': [
+        'organizacion:view', 'formacion:view', 'asistencia:view', 'evento:view',
+    ],
+    'NATIONAL_DIR_DESARROLLO': [
+        'organizacion:view', 'user:view', 'rbac:view', 'finanza:view', 'inventario:view', 'normativa:view',
+    ],
+    'NATIONAL_COLABORADOR': [
+        'organizacion:view',
+    ],
+    // ── Regional ──
+    'REGION_COMMISSIONER': [
+        'organizacion:view', 'user:view', 'rbac:view', 'rbac:assign-role',
+        'unidad:view', 'joven:view',
+    ],
+    'REGION_ASSISTANT': [
+        'organizacion:view', 'unidad:view', 'joven:view', 'evento:view',
+    ],
+    'REGION_COLABORADOR': [
+        'organizacion:view',
+    ],
+    // ── Distrital ──
+    'DISTRICT_COMMISSIONER': [
+        'organizacion:view', 'user:view', 'rbac:view', 'rbac:assign-role',
+        'unidad:view', 'joven:view',
+    ],
+    'DISTRICT_ASSISTANT': [
+        'organizacion:view', 'unidad:view', 'joven:view', 'evento:view',
+    ],
+    'DISTRICT_COLABORADOR': [
+        'organizacion:view',
     ],
     'ADULTO_MANADA': [
         'joven:create', 'joven:view', 'joven:update',
-        'progresion:create', 'progresion:view',
+        'progresion:create', 'progresion:view', 'progresion:update', 'progresion:aprobar',
+        'catalogo:view',
         'unidad:view',
         'representante:create', 'representante:view', 'representante:update',
     ],
     'ADULTO_TROPA': [
         'joven:create', 'joven:view', 'joven:update',
-        'progresion:create', 'progresion:view',
+        'progresion:create', 'progresion:view', 'progresion:update', 'progresion:aprobar',
+        'catalogo:view',
         'unidad:view',
         'representante:create', 'representante:view', 'representante:update',
     ],
     'ADULTO_CLAN': [
         'joven:create', 'joven:view', 'joven:update',
-        'progresion:create', 'progresion:view',
+        'progresion:create', 'progresion:view', 'progresion:update', 'progresion:aprobar',
+        'catalogo:view',
         'unidad:view',
         'representante:create', 'representante:view', 'representante:update',
     ],
-    'ADULTO_CAMINANTES': [
+    'ADULTO_COMUNIDAD': [
         'joven:create', 'joven:view', 'joven:update',
-        'progresion:create', 'progresion:view',
+        'progresion:create', 'progresion:view', 'progresion:update', 'progresion:aprobar',
+        'catalogo:view',
         'unidad:view',
         'representante:create', 'representante:view', 'representante:update',
     ],
-    'SECRETARIO': [
+    'REPRESENTANTE_UNIDAD': [
         'representante:create', 'representante:view', 'representante:update',
         'medico:update',
         'joven:view',
@@ -126,17 +224,49 @@ const ROL_PERMISOS_SEED: Record<string, string[]> = {
     'CONSULTOR': [
         'joven:view',
     ],
+    'JOVEN': [
+        'self:view', 'self:update',
+        'progresion:view', 'progresion:create', 'progresion:update',
+        'medico:view', 'medico:edit', 'medico:update',
+        // Lecturas necesarias para ver y iniciar adelantos propios
+        'unidad:view', 'catalogo:view',
+    ],
 };
 
 async function main() {
     console.log('🌱 Iniciando seed...\n');
 
+    // ── 0. Renombres de compatibilidad (ejecución idempotente) ───────────
+    const unidadRenombrada = await prisma.unidad.updateMany({
+        where: { nombre: 'Caminantes', deletedAt: null },
+        data: { nombre: 'Comunidad', descripcion: 'Comunidad de jóvenes de 15 a 18 años' },
+    });
+    if (unidadRenombrada.count > 0) {
+        console.log(`  ↻ Unidad renombrada: Caminantes → Comunidad (${unidadRenombrada.count})`);
+    }
+
+    const rolRenombrado = await prisma.rol.updateMany({
+        where: { nombre: 'ADULTO_CAMINANTES' },
+        data: { nombre: 'ADULTO_COMUNIDAD', descripcion: 'Adulto de Comunidad' },
+    });
+    if (rolRenombrado.count > 0) {
+        console.log(`  ↻ Rol renombrado: ADULTO_CAMINANTES → ADULTO_COMUNIDAD (${rolRenombrado.count})`);
+    }
+
+    const rolSecretario = await prisma.rol.updateMany({
+        where: { nombre: 'SECRETARIO' },
+        data: { nombre: 'REPRESENTANTE_UNIDAD', descripcion: 'Representante de Unidad' },
+    });
+    if (rolSecretario.count > 0) {
+        console.log(`  ↻ Rol renombrado: SECRETARIO → REPRESENTANTE_UNIDAD (${rolSecretario.count})`);
+    }
+
     // ── 1. Unidades (usando findFirst + create en lugar de upsert por nombre) ──
     const unidades = [
-        { nombre: 'Manada', tipo: 'RAMA', descripcion: 'Rama para niños de 6 a 10 años' },
-        { nombre: 'Tropa', tipo: 'RAMA', descripcion: 'Rama para jóvenes de 10 a 15 años' },
-        { nombre: 'Caminantes', tipo: 'RAMA', descripcion: 'Comunidad de Caminantes para jóvenes de 15 a 18 años' },
-        { nombre: 'Clan', tipo: 'RAMA', descripcion: 'Rama para jóvenes de 18 a 21 años' },
+        { nombre: 'Manada', tipo: 'MANADA', descripcion: 'Rama para niños de 6 a 10 años' },
+        { nombre: 'Tropa', tipo: 'TROPA', descripcion: 'Rama para jóvenes de 10 a 15 años' },
+        { nombre: 'Comunidad', tipo: 'COMUNIDAD', descripcion: 'Comunidad de jóvenes de 15 a 18 años' },
+        { nombre: 'Clan', tipo: 'CLAN', descripcion: 'Rama para jóvenes de 18 a 21 años' },
     ];
 
     for (const u of unidades) {
@@ -146,6 +276,74 @@ async function main() {
             console.log(`  ✓ Unidad creada: ${u.nombre}`);
         } else {
             console.log(`  — Unidad ya existe: ${u.nombre}`);
+            if (existing.tipo !== u.tipo) {
+                await prisma.unidad.update({ where: { id: existing.id }, data: { tipo: u.tipo } });
+                console.log(`  ↻ Tipo de unidad corregido: ${u.nombre} → ${u.tipo}`);
+            }
+        }
+    }
+
+    // ── 1b. Estructura organizacional demo (Fase 1) ───────────────────────
+    console.log('\n  🌐 Estructura organizacional...');
+    const jerarquiaDemo: Array<{ tipo: TipoNodoOrganizacion; nombre: string; padre: TipoNodoOrganizacion | null }> = [
+        { tipo: 'CONSEJO_NACIONAL', nombre: 'Consejo Nacional', padre: null },
+        { tipo: 'DIRECCION_EJECUTIVA', nombre: 'Dirección Ejecutiva', padre: 'CONSEJO_NACIONAL' },
+        { tipo: 'REGION', nombre: 'Región Centro', padre: 'DIRECCION_EJECUTIVA' },
+        { tipo: 'DISTRITO', nombre: 'Distrito Capital', padre: 'REGION' },
+        { tipo: 'GRUPO', nombre: 'Grupo Scout Poseidon', padre: 'DISTRITO' },
+    ];
+    const prefijosNodo: Record<TipoNodoOrganizacion, string> = {
+        CONSEJO_NACIONAL: 'CON', DIRECCION_EJECUTIVA: 'DIR', REGION: 'REG', DISTRITO: 'DIS', GRUPO: 'GRP',
+    };
+    const nivelesNodo: Record<TipoNodoOrganizacion, number> = {
+        CONSEJO_NACIONAL: 1, DIRECCION_EJECUTIVA: 2, REGION: 3, DISTRITO: 4, GRUPO: 5,
+    };
+    const nodosDemo: Partial<Record<TipoNodoOrganizacion, { id: string }>> = {};
+
+    for (const item of jerarquiaDemo) {
+        let nodo = await prisma.organizacionNodo.findFirst({
+            where: { tipo: item.tipo, nombre: item.nombre, deletedAt: null },
+        });
+        if (!nodo) {
+            let codigo = '';
+            let n = 1;
+            while (!codigo && n < 1000) {
+                const candidato = `${prefijosNodo[item.tipo]}-${String(n).padStart(2, '0')}`;
+                const usado = await prisma.organizacionNodo.findFirst({ where: { codigo: candidato } });
+                if (!usado) codigo = candidato;
+                n++;
+            }
+            nodo = await prisma.organizacionNodo.create({
+                data: {
+                    codigo,
+                    nombre: item.nombre,
+                    tipo: item.tipo,
+                    nivel: nivelesNodo[item.tipo],
+                    padreId: item.padre ? nodosDemo[item.padre]?.id ?? null : null,
+                },
+            });
+            console.log(`  ✓ Nodo creado: ${item.nombre} (${nodo.codigo})`);
+        } else {
+            console.log(`  — Nodo ya existe: ${item.nombre} (${nodo.codigo})`);
+            if (item.padre && nodosDemo[item.padre] && nodo.padreId !== nodosDemo[item.padre].id) {
+                await prisma.organizacionNodo.update({
+                    where: { id: nodo.id },
+                    data: { padreId: nodosDemo[item.padre].id },
+                });
+            }
+        }
+        nodosDemo[item.tipo] = nodo;
+    }
+
+    // Backfill: unidades sin grupo → Grupo demo
+    const grupoDemo = nodosDemo['GRUPO'];
+    if (grupoDemo) {
+        const unidadesSinGrupo = await prisma.unidad.findMany({
+            where: { deletedAt: null, grupoId: null },
+        });
+        for (const u of unidadesSinGrupo) {
+            await prisma.unidad.update({ where: { id: u.id }, data: { grupoId: grupoDemo.id } });
+            console.log(`  ↻ Unidad asignada al grupo: ${u.nombre} → Grupo demo`);
         }
     }
 

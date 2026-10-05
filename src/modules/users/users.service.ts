@@ -5,6 +5,14 @@ import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { AuditService } from '../audit/audit.service';
 import * as bcrypt from 'bcryptjs';
+import {
+    OpcionesLista,
+    hayPaginacion,
+    rangoLista,
+    filtroBusqueda,
+} from '../../common/paginacion';
+
+const CAMPOS_BUSQUEDA_USUARIO = ['nombre', 'apellido', 'email'];
 
 @Injectable()
 export class UsersService extends BaseService<any> {
@@ -16,14 +24,14 @@ export class UsersService extends BaseService<any> {
     }
 
     /**
-     * Lista todos los usuarios con sus relaciones (roles, unidad).
+     * Lista usuarios con sus relaciones (roles, unidad).
+     * Paginación y búsqueda: opt-in vía `opts` (sin page/limit = lista completa).
      */
-    async findAll(where: any = {}) {
-        const users = await this.prisma.usuario.findMany({
-            where: {
-                ...where,
-                deletedAt: null,
-            },
+    async findAll(where: any = {}, opts?: OpcionesLista) {
+        const filtro = { ...where, deletedAt: null, ...(filtroBusqueda(opts?.q, CAMPOS_BUSQUEDA_USUARIO) ?? {}) };
+
+        const base = {
+            where: filtro,
             include: {
                 Unidad: true,
                 UsuarioRoles: {
@@ -34,14 +42,29 @@ export class UsersService extends BaseService<any> {
                     include: { Miembro: true },
                 },
             },
-        });
-        return users.map((user) => {
-            const { password, ...rest } = user;
-            return {
-                ...rest,
-                roles: user.UsuarioRoles.map((ur) => ur.Rol.nombre),
-            };
-        });
+        };
+
+        const [users, total] = hayPaginacion(opts ?? {})
+            ? await Promise.all([
+                this.prisma.usuario.findMany({
+                    ...base,
+                    orderBy: [{ nombre: 'asc' }, { apellido: 'asc' }],
+                    ...rangoLista(opts!),
+                }),
+                this.prisma.usuario.count({ where: filtro }),
+            ])
+            : [await this.prisma.usuario.findMany(base), null];
+
+        return {
+            data: users.map((user) => {
+                const { password, ...rest } = user;
+                return {
+                    ...rest,
+                    roles: user.UsuarioRoles.map((ur) => ur.Rol.nombre),
+                };
+            }),
+            total: total ?? users.length,
+        };
     }
 
     /**
@@ -75,6 +98,8 @@ export class UsersService extends BaseService<any> {
         if (existing) {
             throw new ConflictException('El email ya está registrado');
         }
+
+        await this.assertNodoExiste(createUserDto.nodoId);
 
         const hashedPassword = await bcrypt.hash(createUserDto.password, 10);
 
@@ -124,6 +149,10 @@ export class UsersService extends BaseService<any> {
         if (dto.apellido !== undefined) updateData.apellido = dto.apellido;
         if (dto.email !== undefined) updateData.email = dto.email;
         if (dto.unidadId !== undefined) updateData.unidadId = dto.unidadId;
+        if (dto.nodoId !== undefined) {
+            await this.assertNodoExiste(dto.nodoId);
+            updateData.nodoId = dto.nodoId;
+        }
         updateData.updatedBy = actorId;
 
         const user = await this.prisma.usuario.update({
@@ -198,6 +227,19 @@ export class UsersService extends BaseService<any> {
         });
 
         return result;
+    }
+
+    /** F4.3: valida que el nodo del ámbito exista y esté activo (null = sin ámbito). */
+    private async assertNodoExiste(nodoId?: string | null): Promise<void> {
+        if (nodoId === undefined || nodoId === null) return;
+
+        const nodo = await this.prisma.organizacionNodo.findFirst({
+            where: { id: nodoId, deletedAt: null },
+            select: { id: true },
+        });
+        if (!nodo) {
+            throw new BadRequestException('Nodo no encontrado');
+        }
     }
 
     private excludePassword(user: any) {

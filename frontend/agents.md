@@ -34,7 +34,8 @@ Desarrollar el frontend del Sistema de Gestión Scout utilizando React + TypeScr
   joven:create, joven:view, joven:update, joven:delete
   unidad:create, unidad:view, unidad:update, unidad:delete
   representante:create, representante:view, representante:update, representante:delete
-  progresion:create, progresion:view, progresion:update, progresion:delete
+  progresion:create, progresion:view, progresion:update, progresion:delete, progresion:aprobar
+  catalogo:view, catalogo:manage
   condecoracion:create, condecoracion:view, condecoracion:update, condecoracion:delete, condecoracion:otorgar
   medico:view, medico:edit, medico:update
   rbac:view, rbac:manage, rbac:assign-role
@@ -43,6 +44,7 @@ Desarrollar el frontend del Sistema de Gestión Scout utilizando React + TypeScr
 ### 🏕️ Control de Acceso por Unidad
 - **ADULTO_MANADA**: Solo puede ver/gestionar jóvenes de **Manada**
 - **ADULTO_TROPA**: Solo puede ver/gestionar jóvenes de **Tropa**
+- **ADULTO_COMUNIDAD**: Solo puede ver/gestionar jóvenes de **Comunidad**
 - **ADULTO_CLAN**: Solo puede ver/gestionar jóvenes de **Clan**
 - **SYSTEM_ADMIN, GROUP_LEADER, GROUP_SUBLEADER**: Acceso a todas las unidades
 
@@ -54,10 +56,11 @@ Desarrollar el frontend del Sistema de Gestión Scout utilizando React + TypeScr
 | 3 | GROUP_SUBLEADER |
 | 4 | ADULTO_MANADA |
 | 5 | ADULTO_TROPA |
-| 6 | ADULTO_CLAN |
-| 7 | SECRETARIO |
-| 8 | ADULTO_COLABORADOR |
-| 9 | CONSULTOR |
+| 6 | ADULTO_COMUNIDAD |
+| 7 | ADULTO_CLAN |
+| 8 | SECRETARIO |
+| 9 | ADULTO_COLABORADOR |
+| 10 | CONSULTOR |
 
 Un usuario no puede asignar roles iguales o superiores al suyo.
 

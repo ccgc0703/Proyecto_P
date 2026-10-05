@@ -30,9 +30,11 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
                 nombre: true,
                 email: true,
                 unidadId: true,
+                nodoId: true,        // F4.3: ámbito jerárquico (se lee de DB para aplicar cambios sin re-login)
                 activo: true,
                 deletedAt: true,
                 tokenVersion: true,   // Para validar invalidación de JWT
+                Joven: { select: { miembroId: true } },  // Vínculo joven → miembro (self-scope)
             },
         });
 
@@ -53,6 +55,8 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
             nombre: usuario.nombre,
             email: usuario.email,
             unidadId: usuario.unidadId,
+            nodoId: usuario.nodoId,
+            miembroId: usuario.Joven?.miembroId ?? null,  // null salvo cuentas vinculadas a un joven
             permissions: payload.permissions ?? [],   // Inyectado al JWT en login
             roles: payload.roles ?? [],               // Inyectado al JWT en login
         };

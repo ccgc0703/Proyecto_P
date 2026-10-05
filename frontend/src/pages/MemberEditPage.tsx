@@ -54,7 +54,7 @@ export const MemberEditPage = ({ memberId, unitType, unitLabel }: MemberEditPage
   // Determinar nomenclatura
   const subUnitLabel = unitType.toLowerCase() === 'manada' 
     ? 'Seisena' 
-    : unitType.toLowerCase() === 'clan' || unitType.toLowerCase() === 'caminantes'
+    : unitType.toLowerCase() === 'clan' || unitType.toLowerCase() === 'comunidad'
       ? 'Equipo de Trabajo' 
       : 'Patrulla';
 

@@ -132,8 +132,8 @@ export class RolesService {
         // NO se usa createMany porque @@unique([rolId, permisoId]) incluye registros
         // soft-deleted: si ya existe un registro con deletedAt != null, el insert lanza
         // P2002 y skipDuplicates lo OMITE silenciosamente (el permiso no queda asignado).
-        // Solución: buscar si existe un registro previo (activo o soft-deleted) y restaurarlo,
-        // o crear uno nuevo si nunca existió.
+        // Solución: UNA sola lectura de los registros previos (activos o soft-deleted)
+        // y luego 2 escrituras en lote (updateMany para restaurar, createMany para crear).
         await this.prisma.$transaction(async (tx) => {
             // 4a. Soft-delete de los permisos activos actuales del rol
             await tx.rolPermiso.updateMany({
@@ -141,24 +141,28 @@ export class RolesService {
                 data: { deletedAt: new Date() },
             });
 
-            // 4b. Para cada permiso nuevo: restaurar si existe (soft-deleted), o crear
-            for (const permisoId of uniqueIds) {
-                const existing = await tx.rolPermiso.findFirst({
-                    where: { rolId: roleId, permisoId },
-                });
+            // 4b. Una sola consulta: qué registros ya existen para este rol (con o sin soft-delete)
+            const existentes = await tx.rolPermiso.findMany({
+                where: { rolId: roleId, permisoId: { in: uniqueIds } },
+                select: { permisoId: true },
+            });
+            const existentesSet = new Set(existentes.map((e) => e.permisoId));
 
-                if (existing) {
-                    // Restaurar el registro soft-deleted (deletedAt → null)
-                    await tx.rolPermiso.update({
-                        where: { id: existing.id },
-                        data: { deletedAt: null },
-                    });
-                } else {
-                    // Crear registro nuevo (primera vez que se asigna este permiso al rol)
-                    await tx.rolPermiso.create({
-                        data: { rolId: roleId, permisoId },
-                    });
-                }
+            // 4c. Restaurar en lote los que ya existían (soft-deleted → activo)
+            const aRestaurar = existentes.map((e) => e.permisoId);
+            if (aRestaurar.length > 0) {
+                await tx.rolPermiso.updateMany({
+                    where: { rolId: roleId, permisoId: { in: aRestaurar } },
+                    data: { deletedAt: null },
+                });
+            }
+
+            // 4d. Crear en lote los que nunca existieron (sin conflicto de unique)
+            const aCrear = uniqueIds.filter((id) => !existentesSet.has(id));
+            if (aCrear.length > 0) {
+                await tx.rolPermiso.createMany({
+                    data: aCrear.map((permisoId) => ({ rolId: roleId, permisoId })),
+                });
             }
         });
 

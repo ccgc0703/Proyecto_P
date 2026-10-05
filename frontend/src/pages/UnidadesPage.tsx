@@ -9,6 +9,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { api } from '../api';
 import { usePermission } from '../hooks/usePermission';
+import { ordenarPorUnidad } from '../hooks/useUnidad';
 import { Unidad } from '../types/auth';
 
 interface UnidadData {
@@ -21,14 +22,14 @@ interface UnidadData {
 
 const unidadSchema = z.object({
   nombre: z.string().min(2, 'Mínimo 2 caracteres'),
-  tipo: z.enum(['MANADA', 'TROPA', 'CAMINANTES', 'CLAN']),
+  tipo: z.enum(['MANADA', 'TROPA', 'COMUNIDAD', 'CLAN']),
 });
 type UnidadFormData = z.infer<typeof unidadSchema>;
 
 const TIPO_CONFIG: Record<string, { color: string; label: string; dot: string }> = {
   MANADA: { color: 'bg-primary/10 text-primary', label: 'Manada', dot: 'bg-primary' },
   TROPA: { color: 'bg-tertiary/10 text-primary', label: 'Tropa', dot: 'bg-tertiary' },
-  CAMINANTES: { color: 'bg-accent/10 text-primary', label: 'Caminantes', dot: 'bg-accent' },
+  COMUNIDAD: { color: 'bg-accent/10 text-primary', label: 'Comunidad', dot: 'bg-accent' },
   CLAN: { color: 'bg-secondary/10 text-secondary', label: 'Clan', dot: 'bg-secondary' },
 };
 
@@ -160,9 +161,12 @@ export const UnidadesPage = () => {
     },
   ];
 
-  const filtered = unidades.filter((u) =>
-    u.nombre.toLowerCase().includes(search.toLowerCase()) ||
-    u.tipo.toLowerCase().includes(search.toLowerCase())
+  const filtered = ordenarPorUnidad(
+    unidades.filter(
+      (u) =>
+        u.nombre.toLowerCase().includes(search.toLowerCase()) ||
+        String(u.tipo ?? '').toLowerCase().includes(search.toLowerCase()),
+    ),
   );
 
   if (!canView) {
@@ -284,6 +288,7 @@ export const UnidadesPage = () => {
               <select {...register('tipo')} className="w-full p-4 bg-surface-container-high border-none rounded-xl text-sm font-bold focus:ring-2 focus:ring-primary h-[54px] appearance-none">
                 <option value="MANADA">🟢 Manada</option>
                 <option value="TROPA">🟡 Tropa</option>
+                <option value="COMUNIDAD">🟠 Comunidad</option>
                 <option value="CLAN">🟣 Clan</option>
               </select>
               {errors.tipo && <p className="text-[10px] text-error font-bold px-1">{errors.tipo.message}</p>}

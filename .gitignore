@@ -7,3 +7,14 @@ node_modules
 dist/
 frontend/dist/
 *.tsbuildinfo
+
+# E2E (Playwright)
+frontend/e2e/output/
+frontend/playwright-report/
+frontend/test-results/
+
+# Salidas de exportación (exceljs) y logs locales
+/*.xlsx
+frontend/vite-dev.log
+
+

@@ -1,64 +1,11 @@
-import { Injectable, ForbiddenException, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { BaseService } from '../../common/base.service';
-import { ROLES } from '../../common/constantes';
 
 @Injectable()
 export class ScoutService extends BaseService<any> {
     constructor(prisma: PrismaService) {
-        super(prisma, 'progresion');
-    }
-
-    async createProgresion(data: any, userId: string) {
-        return this.prisma.progresion.create({
-            data: {
-                ...data,
-                createdAt: new Date(),
-                createdBy: userId,
-            },
-        });
-    }
-
-    async findAllProgresiones() {
-        return this.prisma.progresion.findMany({
-            where: { deletedAt: null },
-            include: { Joven: true, Unidad: true },
-            orderBy: { createdAt: 'desc' },
-        });
-    }
-
-    async findProgresionById(id: string) {
-        const progresion = await this.prisma.progresion.findFirst({
-            where: { id, deletedAt: null },
-            include: { Joven: true, Unidad: true },
-        });
-        if (!progresion) {
-            throw new NotFoundException('Progresión no encontrada');
-        }
-        return progresion;
-    }
-
-    async updateProgresion(id: string, data: any, userId: string) {
-        await this.findProgresionById(id);
-        return this.prisma.progresion.update({
-            where: { id },
-            data: {
-                ...data,
-                updatedAt: new Date(),
-                updatedBy: userId,
-            },
-        });
-    }
-
-    async removeProgresion(id: string, userId: string) {
-        await this.findProgresionById(id);
-        return this.prisma.progresion.update({
-            where: { id },
-            data: {
-                deletedAt: new Date(),
-                updatedBy: userId,
-            },
-        });
+        super(prisma, 'condecoracion');
     }
 
     async createCondecoracion(data: any, userId: string) {

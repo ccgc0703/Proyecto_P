@@ -12,12 +12,15 @@ import {
   Visibility,
   Edit,
   Delete,
+  TrendingUp,
 } from '@mui/icons-material';
-import { Dialog } from '@mui/material';
+import { Dialog, Tab, Tabs } from '@mui/material';
 import { miembrosApi, unidadesApi } from '../../api';
+import { usePermission } from '../../hooks/usePermission';
 import { Unidad } from '../../types/auth';
 import { Member, UnidadEntity } from '../../types/member';
 import { MemberProfile } from './MemberProfile';
+import { UnidadProgresionPanel } from '../../features/progresion/UnidadProgresionPanel';
 
 interface UnitDashboardProps {
   unitType: Unidad;
@@ -28,6 +31,7 @@ interface UnitDashboardProps {
 
 export const UnitDashboard = ({ unitType, label, icon, description }: UnitDashboardProps) => {
   const navigate = useNavigate();
+  const puedeVerProgresion = usePermission('progresion:view');
   const [members, setMembers] = useState<Member[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
@@ -35,6 +39,8 @@ export const UnitDashboard = ({ unitType, label, icon, description }: UnitDashbo
   const [selectedMember, setSelectedMember] = useState<Member | null>(null);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
+  const [unidadId, setUnidadId] = useState<string | null>(null);
+  const [pestana, setPestana] = useState(0);
 
   useEffect(() => {
     const fetchMembers = async () => {
@@ -44,6 +50,7 @@ export const UnitDashboard = ({ unitType, label, icon, description }: UnitDashbo
         const unidad = (unidades as UnidadEntity[]).find((u) =>
           u.nombre?.toLowerCase() === unitType.toLowerCase()
         );
+        setUnidadId(unidad?.id ?? null);
         const data = await miembrosApi.getAll(unidad?.id);
         setMembers(data);
       } catch (err) {
@@ -311,6 +318,46 @@ export const UnitDashboard = ({ unitType, label, icon, description }: UnitDashbo
         </div>
       </div>
 
+      {/* Tabs Miembros / Progresión */}
+      {puedeVerProgresion && (
+        <Tabs
+          value={pestana}
+          onChange={(_e, valor: number) => setPestana(valor)}
+          variant="fullWidth"
+          className="bg-surface-container-lowest rounded-[1.5rem] border border-outline-variant/10"
+          TabIndicatorProps={{ style: { background: 'var(--color-primary)', height: 3 } }}
+        >
+          <Tab
+            label={
+              <span className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest">
+                <Groups2 fontSize="small" /> Miembros
+              </span>
+            }
+            className="!text-primary"
+          />
+          <Tab
+            label={
+              <span className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest">
+                <TrendingUp fontSize="small" /> Progresión
+              </span>
+            }
+            className="!text-primary"
+          />
+        </Tabs>
+      )}
+
+      {puedeVerProgresion && pestana === 1 ? (
+        unidadId ? (
+          <UnidadProgresionPanel unidadId={unidadId} />
+        ) : (
+          <div className="bg-surface-container-lowest p-10 rounded-[2rem] border border-outline-variant/10 text-center">
+            <p className="text-xs font-bold text-outline uppercase tracking-widest">
+              Unidad no encontrada
+            </p>
+          </div>
+        )
+      ) : (
+        <>
       {/* Main Table */}
       <div className="bg-surface-container-lowest rounded-[2rem] shadow-sm border border-outline-variant/10 overflow-hidden">
         <div className="p-6 border-b border-surface-container-low flex flex-col md:flex-row justify-between items-center gap-4">
@@ -387,6 +434,8 @@ export const UnitDashboard = ({ unitType, label, icon, description }: UnitDashbo
           />
         </div>
       </div>
+        </>
+      )}
 
       {/* Unit Info Footer (moved from sidebar) */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">

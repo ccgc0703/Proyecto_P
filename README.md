@@ -35,6 +35,8 @@ npm run start:dev
 | `npm run start:dev` | Inicia en modo desarrollo |
 | `npm run test` | Ejecuta tests unitarios |
 | `npm run prisma:generate` | Genera cliente Prisma |
+| `npm run seed` | Carga datos base (unidades, roles, admin) — idempotente |
+| `npm run seed:masivo` | Crea ~1000 jóvenes de prueba — idempotente (`--limpiar` los elimina) |
 
 ## Arquitectura
 
@@ -125,10 +127,11 @@ El sistema implementa una jerarquía para evitar escalamiento de privilegios.
 | 3 | `GROUP_SUBLEADER` |
 | 4 | `ADULTO_MANADA` |
 | 5 | `ADULTO_TROPA` |
-| 6 | `ADULTO_CLAN` |
-| 7 | `SECRETARIO` |
-| 8 | `ADULTO_COLABORADOR` |
-| 9 | `CONSULTOR` |
+| 6 | `ADULTO_COMUNIDAD` |
+| 7 | `ADULTO_CLAN` |
+| 8 | `SECRETARIO` |
+| 9 | `ADULTO_COLABORADOR` |
+| 10 | `CONSULTOR` |
 
 **Reglas:**
 
@@ -147,6 +150,7 @@ Las unidades representan la estructura del grupo scout.
 |--------|
 | `MANADA` |
 | `TROPA` |
+| `COMUNIDAD` |
 | `CLAN` |
 
 **Reglas:**
@@ -220,6 +224,7 @@ El acceso a los jóvenes se restringe según la unidad del adulto.
 |-----|--------|
 | `ADULTO_MANADA` | Solo jóvenes de **Manada** |
 | `ADULTO_TROPA` | Solo jóvenes de **Tropa** |
+| `ADULTO_COMUNIDAD` | Solo jóvenes de **Comunidad** |
 | `ADULTO_CLAN` | Solo jóvenes de **Clan** |
 
 **Excepciones (acceso a todas las unidades):**
@@ -227,6 +232,15 @@ El acceso a los jóvenes se restringe según la unidad del adulto.
 - `SYSTEM_ADMIN`
 - `GROUP_LEADER`
 - `GROUP_SUBLEADER`
+
+**Observación (referencial, no se valida):**
+
+| Unidad | Rango de edad |
+|--------|---------------|
+| Manada | 6 – 10 |
+| Tropa | 10 – 15 |
+| Comunidad | 15 – 18 |
+| Clan | 18 – 21 |
 
 ---
 
@@ -242,6 +256,40 @@ El sistema utiliza autenticación basada en **JWT**.
 ```
 Authorization: Bearer <TOKEN>
 ```
+
+---
+
+### 🛡 Seguridad y salud del servicio
+
+**Cabeceras HTTP (`helmet`):** toda respuesta incluye `X-Content-Type-Options`, `X-Frame-Options`,
+`Strict-Transport-Security`, `Referrer-Policy` y `Cross-Origin-Resource-Policy`; se omite
+`X-Powered-By`. CSP y `Cross-Origin-Embedder-Policy` están desactivados porque la API solo sirve JSON.
+
+**Rate limit (`@nestjs/throttler`, por IP):**
+
+| Límite | Ventana | Aplica a |
+|--------|---------|----------|
+| 600 peticiones | 60 s | Todos los endpoints (`X-RateLimit-Limit`) |
+| 20 intentos | 60 s | `POST /api/v1/auth/login` (fuerza bruta) |
+
+Al superar el límite la API responde `429 Too Many Requests` con cabecera `Retry-After`.
+La ventana se reinicia automáticamente y también al reiniciar el servicio.
+
+El límite global se puede ajustar por variable de entorno (por defecto `600`); se usa sobre todo
+para pruebas de carga, donde debe medirse la capacidad del servicio sin el cortafuegos encima:
+
+```bash
+RATE_LIMIT_GLOBAL=1000000 node dist/src/main.js
+```
+
+**Health check:**
+
+```
+GET /api/v1/health      # sin autenticación
+```
+
+Respuesta `200` con `{ status: "ok", uptime, timestamp, checks: { database: "up" } }`;
+devuelve `503` con `status: "degraded"` si la base de datos no responde.
 
 ---
 
@@ -276,7 +324,11 @@ El sistema registra acciones críticas en la tabla `AuditLog`.
 **Reglas:**
 
 - Todas las acciones críticas deben ser registradas.
-- Los registros de auditoría **no pueden ser modificados ni eliminados**.
+- No existe endpoint para editar ni borrar registros individuales: la auditoría es **inmutable desde la API**.
+- **Retención:** un job programado (a las 03:00, diario) y el endpoint `POST /api/v1/audit/retencion`
+  (permiso `rbac:manage`) eliminan los registros anteriores al umbral configurable
+  `AUDIT_RETENTION_DAYS` (**365 días** por defecto; un valor `<= 0` desactiva la retención).
+  `?dias=N` permite forzar otra ventana en la ejecución manual.
 
 ---
 
@@ -325,7 +377,10 @@ unidad:create, unidad:view, unidad:update, unidad:delete
 representante:create, representante:view, representante:update, representante:delete
 
 // Progresiones
-progresion:create, progresion:view, progresion:update, progresion:delete
+progresion:create, progresion:view, progresion:update, progresion:delete, progresion:aprobar
+
+// Catálogo de progresión (áreas, etapas, indicadores, adelantos)
+catalogo:view, catalogo:manage
 
 // Condecoraciones
 condecoracion:create, condecoracion:view, condecoracion:update, condecoracion:delete, condecoracion:otorgar
@@ -363,9 +418,36 @@ src/
 
 ## Tests
 
+### Unitarios (backend)
+
 ```bash
 npm test
 ```
+
+### E2E del frontend (Playwright + Edge del sistema)
+
+Valida el flujo real en navegador: login, protección de rutas, recarga (F5),
+navegación del panel y control de acceso por rol. No descarga navegadores
+(`channel: 'msedge'`); arranca por sí solo el API y el dev server si no están corriendo.
+
+```bash
+cd frontend
+npm run test:e2e
+```
+
+Archivos en `frontend/e2e/`: `acceso.spec.ts` (rutas públicas/privadas, F5),
+`panel.spec.ts` (navegación admin completa) y `rbac.spec.ts` (portal del joven y denegación).
+
+### Prueba de carga (sin dependencias)
+
+```bash
+npm run load:test -- --scenario listado --concurrency 25 --duration 15
+```
+
+Escenarios: `health`, `listado`, `page100`, `busqueda`, `stats`, `progresion`, `login`, `mixto`.
+Reporta req/s, percentiles p50/p95/p99 y el reparto de códigos HTTP (incluidos los `429`
+del rate limit). Para medir capacidad sin el cortafuegos, reinicia el API con
+`RATE_LIMIT_GLOBAL` alto.
 
 ## Stack
 

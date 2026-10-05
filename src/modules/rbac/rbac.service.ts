@@ -2,29 +2,16 @@ import {
     Injectable,
     BadRequestException,
     ConflictException,
-    ForbiddenException,
     NotFoundException,
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { AuthService } from '../auth/auth.service';
 import { AssignRoleByNameDto } from './dto/assign-role.dto';
 import { AuditService } from '../audit/audit.service';
+import { verificarJerarquiaAsignacion } from '../../common/jerarquia';
 
 /** Nombre del rol que no puede quedar sin al menos un titular activo */
 const SYSTEM_ADMIN_ROLE = 'SYSTEM_ADMIN';
-
-/** Jerarquía de roles — nivel más alto = más privilegios */
-const ROLE_HIERARCHY: Record<string, number> = {
-    SYSTEM_ADMIN: 100,
-    GROUP_LEADER: 80,
-    GROUP_SUBLEADER: 70,
-    ADULTO_MANADA: 60,
-    ADULTO_TROPA: 60,
-    ADULTO_CLAN: 60,
-    SECRETARIO: 50,
-    ADULTO_COLABORADOR: 40,
-    CONSULTOR: 10,
-};
 
 @Injectable()
 export class RbacService {
@@ -55,6 +42,14 @@ export class RbacService {
     }
 
     /**
+     * Valida que el actor pueda asignar `rolNombre`: el nivel del rol objetivo
+     * debe ser estrictamente menor al nivel máximo del actor (sin autoascensión).
+     */
+    private async verificarJerarquia(rolNombre: string, actorId: string) {
+        await verificarJerarquiaAsignacion(this.prisma, rolNombre, actorId);
+    }
+
+    /**
      * Asigna un rol a un usuario.
      * - actorId viene del JWT (nunca del body → previene autoasignación)
      * - Incrementa tokenVersion del usuario → invalida JWT previo
@@ -73,6 +68,9 @@ export class RbacService {
             where: { id: rolId, deletedAt: null, activo: true },
         });
         if (!rol) throw new NotFoundException('Rol no encontrado o inactivo');
+
+        // ── Validación de jerarquía: prevenir escalación de privilegios ────
+        await this.verificarJerarquia(rol.nombre, actorId);
 
         // Verificar si ya tiene este rol activo (soft-delete aware)
         const existing = await this.prisma.usuarioRol.findFirst({
@@ -138,23 +136,7 @@ export class RbacService {
         if (!usuario) throw new NotFoundException('Usuario no encontrado');
 
         // ── Validación de jerarquía: prevenir escalación de privilegios ────
-        const targetLevel = ROLE_HIERARCHY[rol.nombre] ?? 0;
-
-        // Obtener el nivel más alto del actor
-        const actorRoles = await this.prisma.usuarioRol.findMany({
-            where: { usuarioId: actorId, deletedAt: null },
-            include: { Rol: true },
-        });
-        const actorMaxLevel = actorRoles.reduce(
-            (max, ur) => Math.max(max, ROLE_HIERARCHY[ur.Rol.nombre] ?? 0),
-            0,
-        );
-
-        if (targetLevel >= actorMaxLevel) {
-            throw new ForbiddenException(
-                'No puedes asignar un rol igual o superior al tuyo',
-            );
-        }
+        await this.verificarJerarquia(rol.nombre, actorId);
 
         // Verificar si ya tiene este rol activo
         const existing = await this.prisma.usuarioRol.findFirst({
