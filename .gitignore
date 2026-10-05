@@ -1,6 +1,7 @@
 node_modules
 # Keep environment variables out of version control
 .env
+login_response.json
 *.mjs
 /generated/prisma
 # Build artifacts
