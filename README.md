@@ -445,6 +445,19 @@ npm run test:e2e
 Archivos en `frontend/e2e/`: `acceso.spec.ts` (rutas públicas/privadas, F5),
 `panel.spec.ts` (navegación admin completa) y `rbac.spec.ts` (portal del joven y denegación).
 
+### Integración continua (GitHub Actions)
+
+`.github/workflows/ci.yml` corre en cada push y pull request con tres jobs paralelos:
+
+| Job | Qué verifica |
+|-----|--------------|
+| `backend` | `npm ci`, `prisma generate` + `migrate deploy` (valida migraciones), `npm run build` y `npm test` contra PostgreSQL 16 (servicio) |
+| `frontend` | `npm ci`, `npm run lint` y `npm run build` |
+| `e2e` | Semilla + build, arranque automático del API y de Vite, y `npx playwright test` con Chromium (`E2E_BROWSER=chromium`; local se usa `msedge`) |
+
+En CI el E2E usa Chromium instalado por Playwright porque las máquinas Linux no traen Edge;
+la semilla crea el usuario `joven.test@poseidon.com` que usa `rbac.spec.ts`.
+
 ### Prueba de carga (sin dependencias)
 
 ```bash

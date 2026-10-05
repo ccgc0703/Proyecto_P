@@ -432,6 +432,82 @@ async function main() {
         }
     });
 
+    // ── 4. Usuario joven de pruebas (portal E2E y docs) ─────────────────
+    // Cuenta mínima para los tests E2E del portal joven (frontend/e2e/rbac.spec.ts).
+    console.log('\n  👤 Usuario joven de pruebas...');
+    const emailJoven = 'joven.test@poseidon.com';
+    const unidadPruebas =
+        (await prisma.unidad.findFirst({ where: { nombre: 'Tropa', deletedAt: null } })) ??
+        (await prisma.unidad.findFirst({ where: { deletedAt: null } }));
+    if (!unidadPruebas) {
+        throw new Error('No hay unidades para vincular al usuario joven de pruebas');
+    }
+
+    const representantePruebas = await prisma.representante.upsert({
+        where: { cedula: '10970419' },
+        update: {},
+        create: { nombre: 'YOSELIN', cedula: '10970419' },
+    });
+
+    const miembroPruebas = await prisma.miembro.upsert({
+        where: { cedula: '77777777' },
+        update: {},
+        create: {
+            nombres: 'TEST',
+            apellidos: 'PORTALJOVEN',
+            cedula: '77777777',
+            fechaNacimiento: new Date('2014-03-15T00:00:00.000Z'),
+            genero: 'MASCULINO',
+            tipo: 'JOVEN',
+            estado: 'ACTIVO',
+            unidadId: unidadPruebas.id,
+        },
+    });
+
+    const usuarioJoven = await prisma.usuario.upsert({
+        where: { email: emailJoven },
+        update: {},
+        create: {
+            nombre: 'JOVEN TEST',
+            email: emailJoven,
+            password: await bcrypt.hash('joven456', 10),
+            activo: true,
+            unidadId: unidadPruebas.id,
+        },
+    });
+
+    const vinculoJoven = await prisma.joven.findFirst({ where: { miembroId: miembroPruebas.id } });
+    if (!vinculoJoven) {
+        await prisma.joven.create({
+            data: {
+                miembroId: miembroPruebas.id,
+                representanteId: representantePruebas.id,
+                usuarioId: usuarioJoven.id,
+            },
+        });
+        console.log('  ✓ Vínculo Joven creado');
+    } else if (vinculoJoven.usuarioId !== usuarioJoven.id) {
+        await prisma.joven.update({
+            where: { id: vinculoJoven.id },
+            data: { usuarioId: usuarioJoven.id },
+        });
+        console.log('  ↻ Vínculo Joven actualizado');
+    }
+
+    const rolJoven = await prisma.rol.findFirst({ where: { nombre: 'JOVEN' } });
+    if (rolJoven) {
+        const rolAsignado = await prisma.usuarioRol.findFirst({
+            where: { usuarioId: usuarioJoven.id, rolId: rolJoven.id },
+        });
+        if (!rolAsignado) {
+            await prisma.usuarioRol.create({
+                data: { usuarioId: usuarioJoven.id, rolId: rolJoven.id, asignadoPor: admin.id },
+            });
+            console.log('    ✓ Rol JOVEN asignado');
+        }
+    }
+    console.log(`  ✓ Usuario joven: ${emailJoven}`);
+
     console.log('\n✅ Seed finalizado con éxito.');
 }
 

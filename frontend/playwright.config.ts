@@ -3,6 +3,11 @@ import { defineConfig } from '@playwright/test';
 const FRONTEND_URL = process.env.E2E_BASE_URL ?? 'http://localhost:5173';
 const BACKEND_URL = process.env.E2E_API_URL ?? 'http://localhost:3000';
 
+// Navegador: Edge del sistema por defecto (no requiere descargas). En CI se
+// apunta al Chromium instalado por `playwright install --with-deps chromium`
+// mediante E2E_BROWSER=chromium.
+const channel = process.env.E2E_BROWSER ?? 'msedge';
+
 // E2E con Edge del sistema (channel: 'msedge'): no requiere descargar
 // navegadores. Los servidores se reutilizan si ya están corriendo.
 export default defineConfig({
@@ -17,7 +22,7 @@ export default defineConfig({
   reporter: [['list']],
   use: {
     baseURL: FRONTEND_URL,
-    channel: 'msedge',
+    channel,
     headless: true,
     trace: 'retain-on-failure',
     screenshot: 'only-on-failure',
