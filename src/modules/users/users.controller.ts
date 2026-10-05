@@ -3,6 +3,7 @@ import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { UpdateMeDto } from './dto/update-me.dto';
+import { ChangePasswordDto } from './dto/change-password.dto';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { PermissionsGuard } from '../../common/guards/permissions.guard';
 import { RequirePermission, SelfScope } from '../../common/decorators/permissions.decorator';
@@ -37,7 +38,7 @@ export class UsersController {
     @SelfScope()
     @Patch('me/password')
     async changeMyPassword(
-        @Body() body: { currentPassword: string; newPassword: string },
+        @Body() body: ChangePasswordDto,
         @Req() req: any,
     ) {
         const result = await this.usersService.changePassword(
@@ -137,7 +138,7 @@ export class UsersController {
     @Patch(':id/password')
     async changePassword(
         @Param('id') id: string,
-        @Body() body: { currentPassword: string; newPassword: string },
+        @Body() body: ChangePasswordDto,
         @Req() req: any,
     ) {
         // Ownership: solo la propia cuenta (o SYSTEM_ADMIN) puede cambiar la contraseña

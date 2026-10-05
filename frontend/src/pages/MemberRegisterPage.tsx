@@ -165,7 +165,7 @@ export const MemberRegisterPage = ({ unitType, unitLabel }: MemberRegisterPagePr
 
       // 4. Crear ficha médica básica
       try {
-        await administrativoApi.createFichaMedica({ jovenId: miembro.id });
+        await administrativoApi.createFichaMedica({ miembroId: miembro.id });
       } catch {
         // No bloqueante
       }

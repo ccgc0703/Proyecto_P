@@ -1,5 +1,7 @@
 import { Controller, Post, Get, Delete, Body, Param, UseGuards, Req } from '@nestjs/common';
 import { ScoutService } from './scout.service';
+import { CreateCondecoracionDto } from './dto/create-condecoracion.dto';
+import { OtorgarCondecoracionDto } from './dto/otorgar-condecoracion.dto';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { PermissionsGuard } from '../../common/guards/permissions.guard';
 import { RequirePermission } from '../../common/decorators/permissions.decorator';
@@ -12,8 +14,8 @@ export class ScoutController {
 
     @Post('condecoraciones')
     @RequirePermission(PERMISSIONS.CONDECORACION_CREATE)
-    async createCondecoracion(@Body() data: any, @Req() req: any) {
-        const condecoracion = await this.scoutService.createCondecoracion(data, req.user.id);
+    async createCondecoracion(@Body() dto: CreateCondecoracionDto, @Req() req: any) {
+        const condecoracion = await this.scoutService.createCondecoracion(dto, req.user.id);
         return { success: true, message: 'Condecoración creada en catálogo', data: condecoracion };
     }
 
@@ -33,8 +35,8 @@ export class ScoutController {
 
     @Post('otorgar-condecoracion')
     @RequirePermission(PERMISSIONS.CONDECORACION_OTORGAR)
-    async otorgarCondecoracion(@Body() data: { jovenId: string; condecoracionId: string }, @Req() req: any) {
-        const result = await this.scoutService.otorgarCondecoracion(data.jovenId, data.condecoracionId, req.user.id);
+    async otorgarCondecoracion(@Body() dto: OtorgarCondecoracionDto, @Req() req: any) {
+        const result = await this.scoutService.otorgarCondecoracion(dto.jovenId, dto.condecoracionId, req.user.id);
         return { success: true, message: 'Condecoración otorgada exitosamente', data: result };
     }
 

@@ -2,6 +2,7 @@ import { Controller, Get, Post, Patch, Body, Param, Delete, UseGuards, Req } fro
 import { AdministrativoService } from './administrativo.service';
 import { CreateRepresentanteDto } from './dto/create-representante.dto';
 import { UpdateRepresentanteDto } from './dto/update-representante.dto';
+import { CreateFichaMedicaDto } from './dto/create-ficha-medica.dto';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { PermissionsGuard } from '../../common/guards/permissions.guard';
 import { RequirePermission } from '../../common/decorators/permissions.decorator';
@@ -77,10 +78,10 @@ export class AdministrativoController {
 
     @Post('ficha-medica')
     @RequirePermission(PERMISSIONS.MEDICO_EDIT)
-    async createFichaMedica(@Body() data: any, @Req() req: any) {
+    async createFichaMedica(@Body() dto: CreateFichaMedicaDto, @Req() req: any) {
         // Self-scope: el rol JOVEN solo puede crear su propia ficha
-        this.selfScope.assertSelf(req.user, data?.miembroId);
-        const fichaMedica = await this.administrativoService.createFichaMedica(data, req.user.id);
+        this.selfScope.assertSelf(req.user, dto.miembroId);
+        const fichaMedica = await this.administrativoService.createFichaMedica(dto, req.user.id);
         return {
             success: true,
             message: 'Ficha médica registrada exitosamente',
