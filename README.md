@@ -17,6 +17,7 @@ npm install
 cp .env.example .env
 #   DATABASE_URL  -> conexión a PostgreSQL
 #   JWT_SECRET    -> obligatorio; sin él el servicio no arranca (32+ caracteres)
+#   CORS_ORIGIN   -> orígenes de navegador permitidos (por defecto Vite: 5173/4173)
 
 # Generar cliente Prisma
 npm run prisma:generate

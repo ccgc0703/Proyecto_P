@@ -49,10 +49,21 @@ async function bootstrap() {
     }),
   );
 
-  // Habilitar CORS para el frontend
-  app.enableCors();
+  // CORS: solo orígenes declarados (por defecto el dev/preview de Vite).
+  // Sin esta lista cualquier sitio podía leer la API desde un navegador.
+  // En despliegue real: CORS_ORIGIN=https://app.ejemplo.com
+  const origenesCors = (process.env.CORS_ORIGIN ?? 'http://localhost:5173,http://localhost:4173')
+    .split(',')
+    .map((origen) => origen.trim())
+    .filter(Boolean);
+  app.enableCors({
+    origin: origenesCors,
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+  });
 
   await app.listen(process.env.PORT || 3000, '0.0.0.0');
   console.log(`Application is running on: ${await app.getUrl()}`);
+  console.log(`CORS permitido: ${origenesCors.join(', ') || '(ninguno)'}`);
 }
 bootstrap();
