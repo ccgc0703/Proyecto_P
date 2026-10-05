@@ -138,6 +138,9 @@ export const PERMISSIONS = {
 } as const;
 
 // ─── JWT ─────────────────────────────────────────────────────────────────
-export const JWT_SECRET = process.env.JWT_SECRET || 'poseidon-secret-key-2024';
+// JWT: el secreto SIEMPRE viene del entorno (.env, cargado en main.ts antes de
+// que se evalúen los módulos). Sin fallback: un secreto hardcodeado en el
+// código fuente es un secreto público, y además hacía que .env se ignorara.
+export const JWT_SECRET = process.env.JWT_SECRET ?? '';
 export const JWT_EXPIRES_IN = '8h';
 export const REFRESH_TOKEN_EXPIRES_IN = '7d';

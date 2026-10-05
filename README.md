@@ -13,9 +13,10 @@ Backend profesional en **NestJS** con **Prisma** y **PostgreSQL** para la gesti�
 # Instalar dependencias
 npm install
 
-# Configurar .env
-DATABASE_URL="postgresql://postgres:tu_password@localhost:5432/poseidon"
-JWT_SECRET="tu_secret_key"
+# Configurar el entorno (variables documentadas en .env.example)
+cp .env.example .env
+#   DATABASE_URL  -> conexión a PostgreSQL
+#   JWT_SECRET    -> obligatorio; sin él el servicio no arranca (32+ caracteres)
 
 # Generar cliente Prisma
 npm run prisma:generate
@@ -32,11 +33,16 @@ npm run start:dev
 | Comando | Descripción |
 |---------|-------------|
 | `npm run build` | Compila TypeScript |
+| `npm run start` | Ejecuta `dist/src/main.js` |
 | `npm run start:dev` | Inicia en modo desarrollo |
-| `npm run test` | Ejecuta tests unitarios |
+| `npm test` | Tests unitarios (Jest) |
+| `npm run test:cov` | Tests con cobertura |
+| `npm run load:test` | Prueba de carga de la API (ver sección Tests) |
 | `npm run prisma:generate` | Genera cliente Prisma |
+| `npm run prisma:migrate` | Aplica migraciones pendientes |
 | `npm run seed` | Carga datos base (unidades, roles, admin) — idempotente |
 | `npm run seed:masivo` | Crea ~1000 jóvenes de prueba — idempotente (`--limpiar` los elimina) |
+| `npm run importar:indicadores` | Importa el catálogo de indicadores desde Excel |
 
 ## Arquitectura
 
