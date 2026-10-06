@@ -17,6 +17,7 @@ export class AdultosService {
 
     async findAll() {
         const adultos = await this.prisma.adulto.findMany({
+            where: { Miembro: { deletedAt: null } },
             include: { Miembro: { include: { Unidad: true } }, Usuario: { include: { UsuarioRoles: { include: { Rol: true } } } }, Formaciones: true }
         });
         
@@ -36,8 +37,8 @@ export class AdultosService {
     }
 
     async findOne(id: string) {
-        const a = await this.prisma.adulto.findUnique({
-            where: { id },
+        const a = await this.prisma.adulto.findFirst({
+            where: { id, Miembro: { deletedAt: null } },
             include: { Miembro: { include: { Unidad: true } }, Usuario: { include: { UsuarioRoles: { include: { Rol: true } } } }, Formaciones: true }
         });
         if (!a) throw new NotFoundException('Adulto no encontrado');
@@ -57,8 +58,8 @@ export class AdultosService {
 
     /** Resuelve el perfil de adulto vinculado a un usuario logueado. */
     async findByUsuarioId(usuarioId: string) {
-        const adulto = await this.prisma.adulto.findUnique({
-            where: { usuarioId },
+        const adulto = await this.prisma.adulto.findFirst({
+            where: { usuarioId, Miembro: { deletedAt: null } },
             include: { Miembro: { include: { Unidad: true, FichaMedica: true } } },
         });
         if (!adulto) {
@@ -68,7 +69,9 @@ export class AdultosService {
     }
 
     async create(dto: CreateAdultoDto, creatorId: string) {
-        const existing = await this.prisma.miembro.findUnique({ where: { cedula: dto.cedula } });
+        const existing = await this.prisma.miembro.findUnique({
+            where: { cedula: dto.cedula, deletedAt: undefined },
+        });
         if (existing) throw new ConflictException('Cédula ya registrada');
 
         let usuarioId: string | null = null;
@@ -136,7 +139,10 @@ export class AdultosService {
     }
 
     async update(id: string, dto: UpdateAdultoDto, actorId: string) {
-        const adulto = await this.prisma.adulto.findUnique({ where: { id }, include: { Miembro: true } });
+        const adulto = await this.prisma.adulto.findFirst({
+            where: { id, Miembro: { deletedAt: null } },
+            include: { Miembro: true }
+        });
         if (!adulto) throw new NotFoundException('Adulto no encontrado');
 
         const adultoData: any = {};
@@ -164,7 +170,10 @@ export class AdultosService {
     }
 
     async createAccount(id: string, dto: CreateAccountDto, creatorId: string) {
-        const adulto = await this.prisma.adulto.findUnique({ where: { id }, include: { Miembro: true } });
+        const adulto = await this.prisma.adulto.findFirst({
+            where: { id, Miembro: { deletedAt: null } },
+            include: { Miembro: true }
+        });
         if (!adulto) throw new NotFoundException('Adulto no encontrado');
         if (adulto.usuarioId) throw new ConflictException('Adulto ya tiene una cuenta de usuario vinculada');
 
@@ -210,7 +219,10 @@ export class AdultosService {
     }
 
     async remove(id: string, actorId: string) {
-        const adulto = await this.prisma.adulto.findUnique({ where: { id }, include: { Miembro: true } });
+        const adulto = await this.prisma.adulto.findFirst({
+            where: { id, Miembro: { deletedAt: null } },
+            include: { Miembro: true }
+        });
         if (!adulto) throw new NotFoundException('Adulto no encontrado');
 
         await this.prisma.miembro.update({

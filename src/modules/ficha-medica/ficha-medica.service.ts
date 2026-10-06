@@ -34,7 +34,7 @@ export class FichaMedicaService {
         }
 
         const existing = await this.prisma.fichaMedica.findUnique({
-            where: { miembroId: dto.miembroId },
+            where: { miembroId: dto.miembroId, deletedAt: undefined },
         });
         if (existing) {
             throw new ConflictException('El miembro ya tiene una ficha médica registrada');

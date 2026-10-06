@@ -12,8 +12,8 @@ describe('DatosScoutService', () => {
     beforeEach(async () => {
         mockPrisma = {
             datosScout: {
-                findMany: jest.fn(),
-                findUnique: jest.fn(),
+        findMany: jest.fn(),
+        findFirst: jest.fn(),
             },
         };
 
@@ -40,7 +40,9 @@ describe('DatosScoutService', () => {
             const result = await service.findAll();
 
             expect(result).toEqual(datos);
-            expect(prisma.datosScout.findMany).toHaveBeenCalledTimes(1);
+            expect(prisma.datosScout.findMany).toHaveBeenCalledWith({
+                where: { Miembro: { deletedAt: null } },
+            });
         });
 
         it('propaga el error de Prisma', async () => {
@@ -53,22 +55,24 @@ describe('DatosScoutService', () => {
     describe('findByMiembro', () => {
         it('devuelve los datos scout del miembro', async () => {
             const datos = { id: 'd1', miembroId: 'm1', agrupamiento: 'SCOUTS' };
-            prisma.datosScout.findUnique.mockResolvedValue(datos);
+            prisma.datosScout.findFirst.mockResolvedValue(datos);
 
             const result = await service.findByMiembro('m1');
 
             expect(result).toEqual(datos);
-            expect(prisma.datosScout.findUnique).toHaveBeenCalledWith({ where: { miembroId: 'm1' } });
+            expect(prisma.datosScout.findFirst).toHaveBeenCalledWith({
+                where: { miembroId: 'm1', Miembro: { deletedAt: null } },
+            });
         });
 
         it('lanza NotFoundException si el miembro no tiene datos scout', async () => {
-            prisma.datosScout.findUnique.mockResolvedValue(null);
+            prisma.datosScout.findFirst.mockResolvedValue(null);
 
             await expect(service.findByMiembro('m404')).rejects.toThrow(NotFoundException);
         });
 
         it('no convierte un error de Prisma en NotFound', async () => {
-            prisma.datosScout.findUnique.mockRejectedValue(new Error('timeout en la consulta'));
+            prisma.datosScout.findFirst.mockRejectedValue(new Error('timeout en la consulta'));
 
             await expect(service.findByMiembro('m1')).rejects.toThrow('timeout en la consulta');
         });

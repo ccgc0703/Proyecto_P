@@ -24,7 +24,7 @@ export class RolesService {
 
         // Verificar duplicado (activo o soft-deleted para evitar re-creación silenciosa)
         const existing = await this.prisma.rol.findFirst({
-            where: { nombre: { equals: normalizedNombre, mode: 'insensitive' } },
+            where: { nombre: { equals: normalizedNombre, mode: 'insensitive' }, deletedAt: undefined },
         });
 
         if (existing) {
@@ -143,7 +143,7 @@ export class RolesService {
 
             // 4b. Una sola consulta: qué registros ya existen para este rol (con o sin soft-delete)
             const existentes = await tx.rolPermiso.findMany({
-                where: { rolId: roleId, permisoId: { in: uniqueIds } },
+                where: { rolId: roleId, permisoId: { in: uniqueIds }, deletedAt: undefined },
                 select: { permisoId: true },
             });
             const existentesSet = new Set(existentes.map((e) => e.permisoId));

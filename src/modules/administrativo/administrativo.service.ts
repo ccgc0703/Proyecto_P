@@ -12,7 +12,7 @@ export class AdministrativoService extends BaseService<any> {
 
     async createRepresentante(dto: CreateRepresentanteDto, userId: string) {
         const existing = await this.prisma.representante.findUnique({
-            where: { cedula: dto.cedula },
+            where: { cedula: dto.cedula, deletedAt: undefined },
         });
 
         if (existing) {

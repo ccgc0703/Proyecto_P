@@ -11,7 +11,7 @@ describe('AdultosService', () => {
     const mockPrisma = {
         adulto: {
             findMany: jest.fn(),
-            findUnique: jest.fn(),
+            findFirst: jest.fn(),
             create: jest.fn(),
             update: jest.fn(),
         },
@@ -92,6 +92,7 @@ describe('AdultosService', () => {
 
             expect(mockPrisma.adulto.findMany).toHaveBeenCalledWith(
                 expect.objectContaining({
+                    where: { Miembro: { deletedAt: null } },
                     include: expect.objectContaining({ Formaciones: true }),
                 }),
             );
@@ -116,7 +117,7 @@ describe('AdultosService', () => {
 
     describe('findOne', () => {
         it('lanza NotFoundException cuando el adulto no existe', async () => {
-            mockPrisma.adulto.findUnique.mockResolvedValue(null);
+            mockPrisma.adulto.findFirst.mockResolvedValue(null);
 
             await expect(service.findOne('no-existe')).rejects.toThrow(NotFoundException);
             await expect(service.findOne('no-existe')).rejects.toThrow('Adulto no encontrado');
@@ -144,7 +145,7 @@ describe('AdultosService', () => {
             mockUsersService.create.mockResolvedValue({ id: 'u9' });
             mockPrisma.usuarioRol.create.mockResolvedValue({});
             mockPrisma.adulto.create.mockResolvedValue({ id: 'a9' });
-            mockPrisma.adulto.findUnique.mockResolvedValue(adultoCompleto);
+            mockPrisma.adulto.findFirst.mockResolvedValue(adultoCompleto);
 
             const result = await service.create(
                 {
@@ -215,7 +216,7 @@ describe('AdultosService', () => {
 
     describe('createAccount', () => {
         it('rechaza si el adulto ya tiene una cuenta vinculada', async () => {
-            mockPrisma.adulto.findUnique.mockResolvedValue({
+            mockPrisma.adulto.findFirst.mockResolvedValue({
                 id: 'a1',
                 usuarioId: 'u1',
                 Miembro: { id: 'm1', nombres: 'ANA', apellidos: 'PEREZ', unidadId: 'uni-1' },
@@ -228,7 +229,7 @@ describe('AdultosService', () => {
         });
 
         it('crea el usuario y vincula el adulto sin asignar rol', async () => {
-            mockPrisma.adulto.findUnique
+            mockPrisma.adulto.findFirst
                 .mockResolvedValueOnce({
                     id: 'a1',
                     usuarioId: null,
@@ -266,7 +267,7 @@ describe('AdultosService', () => {
 
     describe('remove', () => {
         it('hace soft delete del miembro y elimina la cuenta vinculada', async () => {
-            mockPrisma.adulto.findUnique.mockResolvedValue({
+            mockPrisma.adulto.findFirst.mockResolvedValue({
                 id: 'a1',
                 miembroId: 'm1',
                 usuarioId: 'u1',

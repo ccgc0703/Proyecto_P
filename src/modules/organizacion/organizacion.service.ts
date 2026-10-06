@@ -286,7 +286,7 @@ export class OrganizacionService {
         // Una sola consulta: todos los códigos existentes de ese prefijo (el más
         // alto en memoria) en lugar de una consulta por número candidato (N+1).
         const existentes = await this.prisma.organizacionNodo.findMany({
-            where: { codigo: { startsWith: `${prefijo}-` } },
+            where: { codigo: { startsWith: `${prefijo}-` }, deletedAt: undefined },
             select: { codigo: true },
         });
         let maximo = 0;
@@ -297,7 +297,7 @@ export class OrganizacionService {
 
         for (let numero = maximo + 1; numero <= 999; numero++) {
             const codigo = `${prefijo}-${String(numero).padStart(2, '0')}`;
-            const existe = await this.prisma.organizacionNodo.findFirst({ where: { codigo } });
+            const existe = await this.prisma.organizacionNodo.findFirst({ where: { codigo, deletedAt: undefined } });
             if (!existe) return codigo;
         }
         throw new ConflictException('No se pudo generar un código disponible para este tipo de nodo');

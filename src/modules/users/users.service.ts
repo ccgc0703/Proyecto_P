@@ -92,7 +92,7 @@ export class UsersService extends BaseService<any> {
 
     async create(createUserDto: CreateUserDto, creatorId?: string, ip?: string, userAgent?: string) {
         const existing = await this.prisma.usuario.findUnique({
-            where: { email: createUserDto.email },
+            where: { email: createUserDto.email, deletedAt: undefined },
         });
 
         if (existing) {
@@ -136,7 +136,7 @@ export class UsersService extends BaseService<any> {
         // Si cambia email, verificar que no esté en uso
         if (dto.email && dto.email !== existing.email) {
             const emailTaken = await this.prisma.usuario.findUnique({
-                where: { email: dto.email },
+                where: { email: dto.email, deletedAt: undefined },
             });
             if (emailTaken) {
                 throw new ConflictException('El email ya está registrado');
