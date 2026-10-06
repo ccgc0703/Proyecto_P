@@ -4,7 +4,10 @@ import {
     ParseUUIDPipe,
 } from '@nestjs/common';
 import { RbacService } from './rbac.service';
+import { RolesService } from './roles.service';
 import { AssignRoleDto, AssignRoleByNameDto } from './dto/assign-role.dto';
+import { CreateRoleDto } from './dto/create-role.dto';
+import { AssignPermissionsDto } from './dto/assign-permissions.dto';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { PermissionsGuard } from '../../common/guards/permissions.guard';
 import { RequirePermission } from '../../common/decorators/permissions.decorator';
@@ -15,18 +18,51 @@ import { PERMISSIONS } from '../../common/constantes';
  * Todos los endpoints requieren permiso `rbac:manage` (solo SYSTEM_ADMIN)
  * salvo los que tengan un override a nivel de método.
  * El actorId se extrae del JWT, nunca del body (previene autoasignación).
+ *
+ * Todo vive bajo /rbac: no existe un prefijo /roles paralelo (antes duplicaba
+ * el listado de roles y obligaba a dos permisos distintos para lo mismo).
  */
 @Controller('rbac')
 @UseGuards(JwtAuthGuard, PermissionsGuard)
 @RequirePermission(PERMISSIONS.RBAC_MANAGE)
 export class RbacController {
-    constructor(private readonly rbacService: RbacService) { }
+    constructor(
+        private readonly rbacService: RbacService,
+        private readonly rolesService: RolesService,
+    ) { }
 
     @Get('roles')
     @RequirePermission(PERMISSIONS.RBAC_VIEW)
     async listRoles() {
         const data = await this.rbacService.listRoles();
         return { success: true, message: 'Roles del sistema', data };
+    }
+
+    /**
+     * POST /rbac/roles
+     * Crea un rol: 409 si el nombre ya existe, restaura si estaba soft-deleted.
+     */
+    @Post('roles')
+    async createRole(@Body() dto: CreateRoleDto) {
+        const rol = await this.rolesService.createRole(dto);
+        return { success: true, message: `Rol "${rol.nombre}" creado exitosamente`, data: rol };
+    }
+
+    /**
+     * POST /rbac/roles/:id/permisos
+     * Reemplaza el conjunto de permisos de un rol (transaccional, sin estados parciales).
+     */
+    @Post('roles/:id/permisos')
+    async assignPermissions(
+        @Param('id', ParseUUIDPipe) roleId: string,
+        @Body() dto: AssignPermissionsDto,
+    ) {
+        const result = await this.rolesService.assignPermissions(roleId, dto.permisos);
+        return {
+            success: true,
+            message: `Permisos actualizados para el rol "${result.rolNombre}"`,
+            data: result,
+        };
     }
 
     @Get('permisos')
