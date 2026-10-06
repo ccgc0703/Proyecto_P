@@ -508,6 +508,87 @@ async function main() {
     }
     console.log(`  ✓ Usuario joven: ${emailJoven}`);
 
+    // ── 5. Usuario adulto de pruebas (staff / portal del adulto) ────────
+    // Cuenta con perfil de staff vinculado: /adultos/mi-perfil resuelve el
+    // Adulto por usuarioId y devuelve 404 sin ese vínculo.
+    console.log('\n  👤 Usuario adulto de pruebas...');
+    const emailAdulto = 'comunidad@test.com';
+    const unidadAdulto =
+        (await prisma.unidad.findFirst({ where: { nombre: 'Comunidad', deletedAt: null } })) ??
+        (await prisma.unidad.findFirst({ where: { deletedAt: null } }));
+    if (!unidadAdulto) {
+        throw new Error('No hay unidades para vincular al usuario adulto de pruebas');
+    }
+
+    const miembroAdulto = await prisma.miembro.upsert({
+        where: { cedula: 'V-20123456' },
+        update: {},
+        create: {
+            nombres: 'CARLOS',
+            apellidos: 'MENDOZA',
+            cedula: 'V-20123456',
+            fechaNacimiento: new Date('1985-07-20T00:00:00.000Z'),
+            genero: 'MASCULINO',
+            tipo: 'ADULTO',
+            estado: 'ACTIVO',
+            unidadId: unidadAdulto.id,
+        },
+    });
+
+    const usuarioAdulto = await prisma.usuario.upsert({
+        where: { email: emailAdulto },
+        update: {},
+        create: {
+            nombre: 'CARLOS MENDOZA',
+            email: emailAdulto,
+            password: await bcrypt.hash('test123', 10),
+            activo: true,
+            unidadId: unidadAdulto.id,
+        },
+    });
+
+    const adultoPorUsuario = await prisma.adulto.findFirst({
+        where: { usuarioId: usuarioAdulto.id },
+    });
+    const adultoPorMiembro = await prisma.adulto.findFirst({
+        where: { miembroId: miembroAdulto.id },
+    });
+    if (adultoPorUsuario) {
+        console.log('  — Vínculo Adulto ya existe');
+    } else if (adultoPorMiembro) {
+        if (adultoPorMiembro.usuarioId !== usuarioAdulto.id) {
+            await prisma.adulto.update({
+                where: { id: adultoPorMiembro.id },
+                data: { usuarioId: usuarioAdulto.id },
+            });
+            console.log('  ↻ Vínculo Adulto actualizado');
+        }
+    } else {
+        await prisma.adulto.create({
+            data: {
+                miembroId: miembroAdulto.id,
+                usuarioId: usuarioAdulto.id,
+                ocupacion: 'Instructor Scout',
+                telefono: '0412-1234567',
+            },
+        });
+        console.log('  ✓ Vínculo Adulto creado');
+    }
+
+    const rolAdulto = await prisma.rol.findFirst({ where: { nombre: 'ADULTO_COMUNIDAD' } });
+    if (rolAdulto) {
+        const rolAsignado = await prisma.usuarioRol.findFirst({
+            where: { usuarioId: usuarioAdulto.id, rolId: rolAdulto.id },
+        });
+        if (!rolAsignado) {
+            await prisma.usuarioRol.create({
+                data: { usuarioId: usuarioAdulto.id, rolId: rolAdulto.id, asignadoPor: admin.id },
+            });
+            console.log('    ✓ Rol ADULTO_COMUNIDAD asignado');
+        }
+    }
+    console.log(`  ✓ Usuario adulto: ${emailAdulto}`);
+
     console.log('\n✅ Seed finalizado con éxito.');
 }
 
