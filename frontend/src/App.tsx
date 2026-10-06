@@ -13,7 +13,6 @@ import { theme } from './theme/theme';
 import { MainLayout } from './components/layout/MainLayout';
 import { LoginPage } from './pages/LoginPage';
 import { useAuthStore } from './stores/authStore';
-import { PERMISSIONS } from './types/auth';
 
 // ── F4.4 · Code-splitting ──────────────────────────────────────────────────
 // Cada página de /app se importa bajo demanda: genera un chunk por ruta y
@@ -39,30 +38,17 @@ const EstructuraPage = lazyRouteComponent(() => import('./pages/EstructuraPage')
 
 const exigirProgresion = () => {
   const { user } = useAuthStore.getState();
-  // Los jóvenes solo ven su propia progresión (portal del joven)
+  // Los jóvenes solo ven su propia progresión (portal del joven).
+  // La falta de permisos ya no redirige en silencio: MainLayout pinta
+  // "Acceso Denegado" vía RequierePermiso.
   if (user?.roles?.includes('JOVEN')) {
     throw redirect({ to: '/app/mi-progresion' });
-  }
-  const permisos = user?.permissions ?? [];
-  const puede =
-    permisos.includes(PERMISSIONS.PROGRESION_VIEW) ||
-    permisos.includes(PERMISSIONS.RBAC_MANAGE);
-  if (!puede) {
-    throw redirect({ to: '/app' });
   }
 };
 
 const exigirMiProgresion = () => {
   const { user } = useAuthStore.getState();
   if (!user?.roles?.includes('JOVEN')) {
-    throw redirect({ to: '/app' });
-  }
-};
-
-const exigirOrganizacion = () => {
-  const { user } = useAuthStore.getState();
-  const permisos = user?.permissions ?? [];
-  if (!permisos.includes(PERMISSIONS.ORGANIZACION_VIEW)) {
     throw redirect({ to: '/app' });
   }
 };
@@ -266,7 +252,6 @@ const miProgresionRoute = createRoute({
 const estructuraRoute = createRoute({
   getParentRoute: () => layoutRoute,
   path: '/estructura',
-  beforeLoad: exigirOrganizacion,
   component: EstructuraPage,
 });
 

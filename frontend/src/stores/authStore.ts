@@ -72,7 +72,9 @@ export const useAuthStore = create<AuthStateWithHydration>()(
       checkAuth: async () => {
         const token = get().token;
         if (!token) {
-          set({ isAuthenticated: false });
+          // Sin token no hay sesión: limpia también el usuario en memoria
+          // para no dejar datos de un login anterior a medias.
+          set({ isAuthenticated: false, user: null });
           return;
         }
 

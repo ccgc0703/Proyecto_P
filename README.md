@@ -431,6 +431,16 @@ src/
 npm test
 ```
 
+### Unitarios (frontend)
+
+```bash
+cd frontend
+npm test
+```
+
+Vitest + jsdom: guards de ruta (`RequierePermiso`, `permisosDeRuta`) y
+comportamiento del store de sesión (login/logout/checkAuth).
+
 ### E2E del frontend (Playwright + Edge del sistema)
 
 Valida el flujo real en navegador: login, protección de rutas, recarga (F5),
@@ -452,7 +462,7 @@ Archivos en `frontend/e2e/`: `acceso.spec.ts` (rutas públicas/privadas, F5),
 | Job | Qué verifica |
 |-----|--------------|
 | `backend` | `npm ci`, `prisma generate` + `migrate deploy` (valida migraciones), `npm run build` y `npm test` contra PostgreSQL 16 (servicio) |
-| `frontend` | `npm ci`, `npm run lint` y `npm run build` |
+| `frontend` | `npm ci`, `npm run lint`, `npm test` (vitest) y `npm run build` |
 | `e2e` | Semilla + build, arranque automático del API y de Vite, y `npx playwright test` con Chromium (`E2E_BROWSER=chromium`; local se usa `msedge`) |
 
 En CI el E2E usa Chromium instalado por Playwright porque las máquinas Linux no traen Edge;

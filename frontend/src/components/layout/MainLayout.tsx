@@ -3,6 +3,8 @@ import { useState } from 'react';
 import { useAuth } from '../../hooks/useAuth';
 import { useNavigate } from '@tanstack/react-router';
 import { Sidebar, DRAWER_WIDTH_EXPANDED, DRAWER_WIDTH_COLLAPSED } from './Sidebar';
+import { RequierePermiso } from '../common/RequierePermiso';
+import { permisosDeRuta } from '../common/rutaPermisos';
 import { 
   KeyboardArrowDown, 
   Logout, 
@@ -40,6 +42,7 @@ export const MainLayout = () => {
     return 'Sistema Scout';
   };
   const pageTitle = getPageTitle();
+  const permisosRuta = permisosDeRuta(currentPath);
 
   const drawerWidth = sidebarOpen ? DRAWER_WIDTH_EXPANDED : DRAWER_WIDTH_COLLAPSED;
 
@@ -146,7 +149,13 @@ export const MainLayout = () => {
 
         {/* Content Area */}
         <section className="flex-1 p-6 overflow-y-auto animate-fade-in">
-          <Outlet />
+          {permisosRuta ? (
+            <RequierePermiso permisos={permisosRuta}>
+              <Outlet />
+            </RequierePermiso>
+          ) : (
+            <Outlet />
+          )}
         </section>
 
         {/* Footer Meta */}
