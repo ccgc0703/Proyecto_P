@@ -37,6 +37,7 @@ npm run start:dev
 | `npm run start` | Ejecuta `dist/src/main.js` |
 | `npm run start:dev` | Inicia en modo desarrollo |
 | `npm test` | Tests unitarios (Jest) |
+| `npm run test:integration` | Tests de integracion contra PostgreSQL |
 | `npm run test:cov` | Tests con cobertura |
 | `npm run load:test` | Prueba de carga de la API (ver sección Tests) |
 | `npm run prisma:generate` | Genera cliente Prisma |
@@ -431,6 +432,17 @@ src/
 npm test
 ```
 
+### Integracion (backend, requiere PostgreSQL)
+
+```bash
+npm run test:integration
+```
+
+Validan el soft-delete centralizado (extension de Prisma) contra la base real:
+filtrado automatico, escape hatch `deletedAt: undefined`, alta y borrado de
+adultos y reasignacion/restauracion de permisos de roles. Los datos de prueba
+se crean y se eliminan en cada corrida.
+
 ### Unitarios (frontend)
 
 ```bash
@@ -461,7 +473,7 @@ Archivos en `frontend/e2e/`: `acceso.spec.ts` (rutas públicas/privadas, F5),
 
 | Job | Qué verifica |
 |-----|--------------|
-| `backend` | `npm ci`, `prisma generate` + `migrate deploy` (valida migraciones), `npm run build` y `npm test` contra PostgreSQL 16 (servicio) |
+| `backend` | `npm ci`, `prisma generate` + `migrate deploy` (valida migraciones), `npm run build`, `npm test` y `npm run test:integration` contra PostgreSQL 16 (servicio) |
 | `frontend` | `npm ci`, `npm run lint`, `npm test` (vitest) y `npm run build` |
 | `e2e` | Semilla + build, arranque automático del API y de Vite, y `npx playwright test` con Chromium (`E2E_BROWSER=chromium`; local se usa `msedge`) |
 

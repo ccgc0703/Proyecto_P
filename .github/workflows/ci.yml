@@ -53,6 +53,9 @@ jobs:
       - name: Tests unitarios
         run: npm test
 
+      - name: Tests de integracion
+        run: npm run test:integration
+
   frontend:
     name: "Frontend: lint + build"
     runs-on: ubuntu-latest

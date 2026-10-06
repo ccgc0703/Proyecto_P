@@ -8,6 +8,7 @@ login_response.json
 dist/
 frontend/dist/
 *.tsbuildinfo
+coverage/
 
 # E2E (Playwright)
 frontend/e2e/output/
