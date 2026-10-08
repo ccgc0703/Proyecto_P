@@ -500,5 +500,35 @@ del rate limit). Para medir capacidad sin el cortafuegos, reinicia el API con
 - **Testing:** Jest + ts-jest
 
 ---
+## 🎨 Mejoras de UI/UX (v2.1)
+
+### Panel de Unidades
+- **Estados de carga optimizados**: Indicadores visuales mejorados durante la carga de datos
+- **Estado vacío responsive**: Mensajes motivacionales cuando no hay unidades registradas
+- **Filtro de búsqueda en tiempo real**: Filtrado client-side con retroalimentación visual
+- **Acceso directo desde sidebar**: Navegación rápida desde el menú lateral con permisos RBAC
+
+### Panel de Usuarios
+- **Empty state interactivo**: Botón de "Inscribir Primer Agente" visible cuando no hay usuarios
+- **Validaciones en tiempo real**: Feedback inmediato en formularios con Zod
+- **Estado de activo/inactivo**: Indicadores visuales claros en la tabla
+- **Acceso RBAC controlado**: Permisos de view/create/update/delete por rol
+
+### Navegación y Enrutamiento
+- **UnidadesPage y UsuariosPage**: Enrutamiento lazy-loaded en App.tsx
+- **Sidebar coherente**: Íconos y permisos alineados con el sistema RBAC
+- **Redirección inteligente**: Según rol del usuario (ADULTO_*, JOVEN, ADMIN)
+
+### Accesibilidad Mejorada
+- Headers semánticos en DataGrids para lectores de pantalla
+- Contraste de colores mejorado cumpliendo WCAG AA
+- Navegación completa por teclado
+- Estados de foco visibles en todos los componentes interactivos
+
+### Diseño Visual
+- Tema consistente con colores sentinel-gradient
+- Transiciones suaves en estados hover y active
+- Grid responsivo que se adapta mobile-first
+- Diálogos modales con animaciones fade-in-up
 
 Desarrollado para la gestión profesional de grupos scouts.

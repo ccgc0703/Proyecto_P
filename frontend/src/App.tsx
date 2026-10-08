@@ -35,6 +35,8 @@ const ProgresionPage = lazyRouteComponent(() => import('./pages/ProgresionPage')
 const ProgresionFichaPage = lazyRouteComponent(() => import('./pages/ProgresionFichaPage'), 'ProgresionFichaPage');
 const MiProgresionPage = lazyRouteComponent(() => import('./pages/MiProgresionPage'), 'MiProgresionPage');
 const EstructuraPage = lazyRouteComponent(() => import('./pages/EstructuraPage'), 'EstructuraPage');
+const UnidadesPage = lazyRouteComponent(() => import('./pages/UnidadesPage'), 'UnidadesPage');
+const UsuariosPage = lazyRouteComponent(() => import('./pages/UsuariosPage'), 'UsuariosPage');
 
 const exigirProgresion = () => {
   const { user } = useAuthStore.getState();
@@ -255,6 +257,18 @@ const estructuraRoute = createRoute({
   component: EstructuraPage,
 });
 
+const unidadesRoute = createRoute({
+  getParentRoute: () => layoutRoute,
+  path: '/unidades',
+  component: UnidadesPage,
+});
+
+const usuariosRoute = createRoute({
+  getParentRoute: () => layoutRoute,
+  path: '/usuarios',
+  component: UsuariosPage,
+});
+
 // Index redirect
 const indexRoute = createRoute({
   getParentRoute: () => rootRoute,
@@ -292,6 +306,8 @@ const routeTree = rootRoute.addChildren([
     progresionFichaRoute,
     miProgresionRoute,
     estructuraRoute,
+    unidadesRoute,
+    usuariosRoute,
   ]),
 ]);
 

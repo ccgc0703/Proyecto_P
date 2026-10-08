@@ -46,18 +46,21 @@ export const UnidadesPage = () => {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-
-  const { register, handleSubmit, reset, formState: { errors } } = useForm<UnidadFormData>({
-    resolver: zodResolver(unidadSchema),
-  });
+  const [emptyMessage, setEmptyMessage] = useState('');
 
   const fetchUnidades = async () => {
     try {
       setLoading(true);
       const response = await api.get('/unidades');
       setUnidades(response.data);
+      if (response.data.length === 0) {
+        setEmptyMessage('No hay unidades registradas. ¡Sé el primero en crear una!');
+      } else {
+        setEmptyMessage('');
+      }
     } catch {
       setError('Error al cargar unidades');
+      setEmptyMessage('');
     } finally {
       setLoading(false);
     }
@@ -129,14 +132,14 @@ export const UnidadesPage = () => {
           </div>
         );
       },
-    },
+    }, 
     { 
       field: 'adultoAcargo', 
       headerName: 'Oficial al Cargo', 
       flex: 1,
       renderCell: (p) => <span className="text-xs font-bold text-outline uppercase tracking-tighter">{p.value || 'Sin asignar'}</span>
     },
-    {
+    { 
       field: 'actions', headerName: 'Acciones', width: 110, sortable: false,
       renderCell: (p) => (
         <div className="flex items-center gap-1">
@@ -213,6 +216,24 @@ export const UnidadesPage = () => {
         </div>
       )}
 
+      {/* Empty state */}
+      {unidades.length === 0 && !loading && (
+        <div className="p-8 text-center animate-fade-in-up">
+          <Shield className="text-error text-5xl opacity-20" fontSize="large" />
+          <h3 className="text-xl font-black text-error mt-4">Sin unidades registradas</h3>
+          <p className="text-base text-outline/60 mb-6">{emptyMessage}</p>
+          {canCreate && (
+            <button 
+              onClick={() => handleOpenDialog()}
+              className="sentinel-gradient px-6 py-3 rounded-xl text-on-primary font-bold tracking-tight shadow-lg shadow-primary/20 hover:shadow-xl transition-all"
+            >
+              <Add fontSize="small" />
+              <span>Crear Primera Unidad</span>
+            </button>
+          )}
+        </div>
+      )}
+
       {/* Control Bar */}
       <section className="bg-surface-container-low p-4 rounded-2xl shadow-sm flex flex-col md:flex-row gap-4 items-center">
         <div className="relative flex-1 w-full">
@@ -265,7 +286,7 @@ export const UnidadesPage = () => {
             },
             '& .MuiDataGrid-row:hover': {
               backgroundColor: 'var(--color-surface-container-high) !important',
-            }
+            },
           }}
         />
       </div>

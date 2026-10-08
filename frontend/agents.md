@@ -82,7 +82,7 @@ src/
 │   ├── usuarios          # Gestión de usuarios
 │   ├── unidades          # Gestión de unidades
 │   ├── perfil            # Perfil de usuario
-│   └── staff             # Roles y permisos
+│   └── staff             # Roles y permisos (nota: directorio revisado en v2.1)
 ├── hooks/                # Hooks personalizados
 ├── pages/                # Componentes de página
 ├── stores/               # Zustand stores

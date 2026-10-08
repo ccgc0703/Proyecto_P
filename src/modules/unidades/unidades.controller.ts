@@ -1,6 +1,7 @@
 import { Controller, Get, Post, Body, Param, Delete, UseGuards, Req, Query } from '@nestjs/common';
 import { UnidadesService } from './unidades.service';
 import { CreateUnidadDto } from './dto/create-unidad.dto';
+import { UpdateUnidadDto } from './dto/update-unidad.dto';
 import { CreatePatrullaDto } from './dto/create-patrulla.dto';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { PermissionsGuard } from '../../common/guards/permissions.guard';
@@ -145,6 +146,20 @@ export class UnidadesController {
             success: true,
             message: 'Unidad eliminada exitosamente',
             data: null,
+        };
+    }
+
+    @Patch(':id')
+    @RequirePermission(PERMISSIONS.UNIDAD_UPDATE)
+    async update(@Param('id') id: string, @Body() updateUnidadDto: UpdateUnidadDto, @Req() req: any) {
+        // ABAC: Validar acceso antes de actualizar
+        await this.unitPolicy.assertCanManageUnit(req.user, id);
+
+        const unidad = await this.unidadesService.update(id, updateUnidadDto);
+        return {
+            success: true,
+            message: 'Unidad actualizada exitosamente',
+            data: unidad,
         };
     }
 }

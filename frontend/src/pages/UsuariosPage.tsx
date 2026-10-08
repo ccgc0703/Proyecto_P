@@ -32,18 +32,21 @@ export const UsuariosPage = () => {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-
-  const { register, handleSubmit, reset, formState: { errors } } = useForm<UserFormData>({
-    resolver: zodResolver(userSchema),
-  });
+  const [emptyMessage, setEmptyMessage] = useState('');
 
   const fetchUsuarios = async () => {
     try {
       setLoading(true);
       const data = await usuariosApi.getAll();
       setUsuarios(data);
+      if (data.length === 0) {
+        setEmptyMessage('No hay usuarios registrados. ¡Sé el primero en inscribir un agente!');
+      } else {
+        setEmptyMessage('');
+      }
     } catch {
       setError('Error al cargar usuarios');
+      setEmptyMessage('');
     } finally {
       setLoading(false);
     }
@@ -136,7 +139,7 @@ export const UsuariosPage = () => {
       renderCell: (p) => (
         <div className="flex items-center gap-1">
           {canUpdate && (
-            <button 
+            <button
               onClick={() => handleOpenDialog(p.row)}
               className="p-1.5 rounded-lg hover:bg-primary/10 text-primary transition-all"
             >
@@ -144,7 +147,7 @@ export const UsuariosPage = () => {
             </button>
           )}
           {canDelete && (
-            <button 
+            <button
               onClick={() => setDeleteConfirm(p.row.id)}
               className="p-1.5 rounded-lg hover:bg-error/10 text-error transition-all"
             >
@@ -206,6 +209,24 @@ export const UsuariosPage = () => {
         </div>
       )}
 
+      {/* Empty state */}
+      {usuarios.length === 0 && !loading && (
+        <div className="p-8 text-center animate-fade-in-up">
+          <Shield className="text-error text-5xl opacity-20" fontSize="large" />
+          <h3 className="text-xl font-black text-error mt-4">Sin usuarios registrados</h3>
+          <p className="text-base text-outline/60 mb-6">{emptyMessage}</p>
+          {canCreate && (
+            <button 
+              onClick={() => handleOpenDialog()}
+              className="sentinel-gradient px-6 py-3 rounded-xl text-on-primary font-bold tracking-tight shadow-lg shadow-primary/20 hover:shadow-xl transition-all"
+            >
+              <Add fontSize="small" />
+              <span>Inscribir Primer Agente</span>
+            </button>
+          )}
+        </div>
+      )}
+
       {/* Control Bar */}
       <section className="bg-surface-container-low p-4 rounded-2xl shadow-sm flex flex-col md:flex-row gap-4 items-center">
         <div className="relative flex-1 w-full">
@@ -258,7 +279,7 @@ export const UsuariosPage = () => {
             },
             '& .MuiDataGrid-row:hover': {
               backgroundColor: 'var(--color-surface-container-high) !important',
-            }
+            },
           }}
         />
       </div>

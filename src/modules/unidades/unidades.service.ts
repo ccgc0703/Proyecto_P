@@ -88,4 +88,12 @@ export class UnidadesService extends BaseService<any> {
             data: { deletedAt: new Date(), createdBy: userId },
         });
     }
+
+    /** Actualiza una unidad (solo campos proporcionados) */
+    async update(id: string, data: any) {
+        return this.prisma.unidad.update({
+            where: { id },
+            data,
+        });
+    }
 }

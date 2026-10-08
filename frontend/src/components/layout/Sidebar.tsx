@@ -42,6 +42,13 @@ export const Sidebar = ({ open, onToggle }: SidebarProps) => {
   const canViewJovenes = usePermission('joven:view');
   const canViewRBAC = usePermission('rbac:view');
   const canViewUnidades = usePermission('unidad:view');
+  const canCreateUnidades = usePermission('unidad:create');
+  const canUpdateUnidades = usePermission('unidad:update');
+  const canDeleteUnidades = usePermission('unidad:delete');
+  const canViewUsuarios = usePermission('user:view');
+  const canCreateUsuarios = usePermission('user:create');
+  const canUpdateUsuarios = usePermission('user:update');
+  const canDeleteUsuarios = usePermission('user:delete');
   const canViewProgresion = usePermission('progresion:view');
   const canViewOrganizacion = usePermission('organizacion:view');
   const esJoven = user?.roles?.includes('JOVEN') ?? false;
@@ -93,6 +100,8 @@ export const Sidebar = ({ open, onToggle }: SidebarProps) => {
       path: esJoven ? '/app/mi-progresion' : '/app/progresion',
       permission: canViewProgresion,
     },
+    { text: 'Unidades', icon: <ChildCare />, path: '/app/unidades', permission: canViewUnidades },
+    { text: 'Usuarios', icon: <PeopleAlt />, path: '/app/usuarios', permission: canViewUsuarios },
     { text: 'Estructura', icon: <AccountTree />, path: '/app/estructura', permission: canViewOrganizacion && !esJoven },
     { text: 'Staff', icon: <ManageAccounts />, path: '/app/staff', permission: canViewRBAC },
   ].filter((i) => i.permission);
