@@ -15,7 +15,8 @@ import {
   Route,
   MenuOpen,
   TrendingUp,
-  AccountTree
+  AccountTree,
+  PeopleAlt
 } from '@mui/icons-material';
 
 export const DRAWER_WIDTH_EXPANDED = 260;
@@ -42,13 +43,7 @@ export const Sidebar = ({ open, onToggle }: SidebarProps) => {
   const canViewJovenes = usePermission('joven:view');
   const canViewRBAC = usePermission('rbac:view');
   const canViewUnidades = usePermission('unidad:view');
-  const canCreateUnidades = usePermission('unidad:create');
-  const canUpdateUnidades = usePermission('unidad:update');
-  const canDeleteUnidades = usePermission('unidad:delete');
   const canViewUsuarios = usePermission('user:view');
-  const canCreateUsuarios = usePermission('user:create');
-  const canUpdateUsuarios = usePermission('user:update');
-  const canDeleteUsuarios = usePermission('user:delete');
   const canViewProgresion = usePermission('progresion:view');
   const canViewOrganizacion = usePermission('organizacion:view');
   const esJoven = user?.roles?.includes('JOVEN') ?? false;

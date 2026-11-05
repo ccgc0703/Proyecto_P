@@ -39,6 +39,10 @@ export const UnidadesPage = () => {
   const canUpdate = usePermission('unidad:update');
   const canDelete = usePermission('unidad:delete');
 
+  const { register, handleSubmit, reset, formState: { errors } } = useForm<UnidadFormData>({
+    resolver: zodResolver(unidadSchema),
+  });
+
   const [unidades, setUnidades] = useState<UnidadData[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');

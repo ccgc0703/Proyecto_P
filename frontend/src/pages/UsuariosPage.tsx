@@ -25,6 +25,10 @@ export const UsuariosPage = () => {
   const canUpdate = usePermission('user:update');
   const canDelete = usePermission('user:delete');
 
+  const { register, handleSubmit, reset, formState: { errors } } = useForm<UserFormData>({
+    resolver: zodResolver(userSchema),
+  });
+
   const [usuarios, setUsuarios] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
@@ -183,7 +187,7 @@ export const UsuariosPage = () => {
       <header className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div className="flex items-center gap-4">
           <div className="w-12 h-12 bg-secondary/10 rounded-2xl flex items-center justify-center text-secondary">
-            <PeopleAlt fontSize="medium" />
+            <PeopleAlt sx={{ fontSize: 32 }} />
           </div>
           <div>
             <h2 className="text-2xl font-black tracking-tight text-primary">Directorio de Agentes</h2>
