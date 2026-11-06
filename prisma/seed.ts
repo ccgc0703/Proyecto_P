@@ -1,4 +1,4 @@
-import { PrismaClient, TipoNodoOrganizacion } from '@prisma/client';
+import { PrismaClient, TipoNodoOrganizacion, TipoUnidad } from '@prisma/client';
 import { PrismaPg } from '@prisma/adapter-pg';
 import { Pool } from 'pg';
 import * as bcrypt from 'bcryptjs';
@@ -264,11 +264,11 @@ async function main() {
     }
 
     // ── 1. Unidades (usando findFirst + create en lugar de upsert por nombre) ──
-    const unidades = [
-        { nombre: 'Manada', tipo: 'MANADA', descripcion: 'Rama para niños de 6 a 10 años' },
-        { nombre: 'Tropa', tipo: 'TROPA', descripcion: 'Rama para jóvenes de 10 a 15 años' },
-        { nombre: 'Comunidad', tipo: 'COMUNIDAD', descripcion: 'Comunidad de jóvenes de 15 a 18 años' },
-        { nombre: 'Clan', tipo: 'CLAN', descripcion: 'Rama para jóvenes de 18 a 21 años' },
+    const unidades: Array<{ nombre: string; tipo: TipoUnidad; descripcion: string }> = [
+        { nombre: 'Manada', tipo: 'MANADA', descripcion: 'Unidad para niños de 6 a 10 años' },
+        { nombre: 'Tropa', tipo: 'TROPA', descripcion: 'Unidad para jóvenes de 10 a 15 años' },
+        { nombre: 'Comunidad', tipo: 'COMUNIDAD', descripcion: 'Unidad para jóvenes de 15 a 18 años' },
+        { nombre: 'Clan', tipo: 'CLAN', descripcion: 'Unidad para jóvenes de 18 a 21 años' },
     ];
 
     for (const u of unidades) {

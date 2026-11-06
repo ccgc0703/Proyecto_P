@@ -13,7 +13,7 @@ import { TipoNodoOrganizacion } from '@prisma/client';
 
 /**
  * Árbol organizacional nacional:
- * Consejo Nacional → Dirección Ejecutiva → Regiones → Distritos → Grupos → Unidades (ramas).
+ * Consejo Nacional → Dirección Ejecutiva → Regiones → Distritos → Grupos → Unidades.
  *
  * Lectura: cualquier rol con `organizacion:view`.
  * Escritura (nodos y cargos): SYSTEM_ADMIN, NATIONAL_BOARD, NATIONAL_EXECUTIVE

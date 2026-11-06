@@ -1,6 +1,6 @@
 import { IsBoolean, IsEnum, IsInt, IsOptional, IsString, IsUUID, Matches, Max, MaxLength, Min, MinLength } from 'class-validator';
 import { Transform } from 'class-transformer';
-import { RamaUnidad } from '@prisma/client';
+import { TipoUnidad } from '@prisma/client';
 
 export class CreateIndicadorDto {
     @IsString({ message: 'El codigo es requerido' })
@@ -22,8 +22,8 @@ export class CreateIndicadorDto {
     @IsUUID(undefined, { message: 'areaId debe ser un UUID valido' })
     areaId: string;
 
-    @IsEnum(RamaUnidad, { message: 'rama debe ser MANADA, TROPA, COMUNIDAD o CLAN' })
-    rama: RamaUnidad;
+    @IsEnum(TipoUnidad, { message: 'unidad debe ser MANADA, TROPA, COMUNIDAD o CLAN' })
+    unidad: TipoUnidad;
 
     @IsInt({ message: 'El orden debe ser un numero entero' })
     @Min(1, { message: 'El orden minimo es 1' })

@@ -20,7 +20,8 @@ describe('AdultosService (integracion con PostgreSQL)', () => {
 
     beforeAll(async () => {
         const unidad = await prisma.unidad.create({
-            data: { nombre: `U-ADULTOS-${Date.now()}`, tipo: `INTE-${Date.now()}` },
+            // `tipo` es un enum canónico (TipoUnidad); no hace falta para este test.
+            data: { nombre: `U-ADULTOS-${Date.now()}` },
         });
         unidadId = unidad.id;
 

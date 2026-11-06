@@ -134,7 +134,7 @@ export interface AdelantoCatalogo {
   activo: boolean;
   umbralPorcentaje: number | null;
   edadMinima: number | null;
-  rama: 'MANADA' | 'TROPA' | 'COMUNIDAD' | 'CLAN';
+  unidad: 'MANADA' | 'TROPA' | 'COMUNIDAD' | 'CLAN';
 }
 
 export interface AprobacionResultado {

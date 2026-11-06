@@ -1,8 +1,7 @@
 import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
-import { RamaUnidad } from '@prisma/client';
+import { TipoUnidad } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { AuditService } from '../audit/audit.service';
-import { esRama } from '../../common/ramas';
 import { CreateAreaDto } from './dto/create-area.dto';
 import { UpdateAreaDto } from './dto/update-area.dto';
 import { UpdateEtapaDto } from './dto/update-etapa.dto';
@@ -55,25 +54,25 @@ export class CatalogoService {
         return area;
     }
 
-    // Resuelve el filtro de catálogo: unidadId (legacy) -> rama canonica de la unidad.
-    // Si la unidad no existe o no tiene rama valida, `vacio` obliga a responder lista vacia
+    // Resuelve el filtro de catálogo: unidadId (legacy) -> tipo canónico de la unidad.
+    // Si la unidad no existe o no tiene tipo, `vacio` obliga a responder lista vacia
     // (mismo comportamiento que antes: un unidadId sin filas devolvia []).
-    private async resolverRamaQuery(query: { unidadId?: string; rama?: RamaUnidad }): Promise<{ rama?: RamaUnidad; vacio: boolean }> {
+    private async resolverUnidadQuery(query: { unidadId?: string; unidad?: TipoUnidad }): Promise<{ unidad?: TipoUnidad; vacio: boolean }> {
         if (query.unidadId) {
             const unidad = await this.prisma.unidad.findFirst({ where: { id: query.unidadId, deletedAt: null } });
-            if (!unidad || !esRama(unidad.tipo)) return { vacio: true };
-            return { rama: unidad.tipo, vacio: false };
+            if (!unidad || !unidad.tipo) return { vacio: true };
+            return { unidad: unidad.tipo, vacio: false };
         }
-        if (query.rama) return { rama: query.rama, vacio: false };
+        if (query.unidad) return { unidad: query.unidad, vacio: false };
         return { vacio: false };
     }
 
-    private async assertPruebaAisladaUnica(rama: RamaUnidad, umbral: number | null | undefined, excluirId?: string) {
+    private async assertPruebaAisladaUnica(unidad: TipoUnidad, umbral: number | null | undefined, excluirId?: string) {
         if (umbral !== null && umbral !== undefined) return;
 
         const otra = await this.prisma.adelanto.findFirst({
             where: {
-                rama,
+                unidad,
                 umbralPorcentaje: null,
                 deletedAt: null,
                 ...(excluirId ? { id: { not: excluirId } } : {}),
@@ -82,7 +81,7 @@ export class CatalogoService {
 
         if (otra) {
             throw new ConflictException(
-                `La rama ya tiene una prueba aislada ("${otra.nombre}"). Solo puede haber un adelanto sin umbralPorcentaje por rama.`,
+                `La unidad ya tiene una prueba aislada ("${otra.nombre}"). Solo puede haber un adelanto sin umbralPorcentaje por unidad.`,
             );
         }
     }
@@ -113,7 +112,7 @@ export class CatalogoService {
                 tipo: dto.tipo,
                 orden: dto.orden,
                 activo: dto.activo,
-                rama: dto.rama,
+                unidad: dto.unidad,
                 createdBy: userId,
             },
             include: AREA_INCLUDE,
@@ -155,12 +154,12 @@ export class CatalogoService {
     // ── Etapas ─────────────────────────────────
 
     async findEtapas(query: QueryEtapasDto) {
-        const filtro = await this.resolverRamaQuery(query);
+        const filtro = await this.resolverUnidadQuery(query);
         if (filtro.vacio) return [];
         return this.prisma.etapa.findMany({
             where: {
                 deletedAt: null,
-                ...(filtro.rama ? { rama: filtro.rama } : {}),
+                ...(filtro.unidad ? { unidad: filtro.unidad } : {}),
             },
             orderBy: { numero: 'asc' },
         });
@@ -186,11 +185,11 @@ export class CatalogoService {
     // ── Indicadores ────────────────────────────
 
     async findIndicadores(query: QueryIndicadoresDto) {
-        const filtro = await this.resolverRamaQuery(query);
+        const filtro = await this.resolverUnidadQuery(query);
         const where: any = { deletedAt: null };
 
         if (filtro.vacio) return [];
-        if (filtro.rama) where.rama = filtro.rama;
+        if (filtro.unidad) where.unidad = filtro.unidad;
         if (query.etapaId) where.etapaId = query.etapaId;
         if (query.areaId) where.areaId = query.areaId;
         if (query.search) {
@@ -234,7 +233,7 @@ export class CatalogoService {
                 texto: dto.texto,
                 etapaId: dto.etapaId,
                 areaId: dto.areaId,
-                rama: dto.rama,
+                unidad: dto.unidad,
                 orden: dto.orden,
                 activo: dto.activo,
                 createdBy: userId,
@@ -280,14 +279,14 @@ export class CatalogoService {
     // ── Adelantos ──────────────────────────────
 
     async findAdelantos(query: QueryAdelantosDto) {
-        const filtro = await this.resolverRamaQuery(query);
+        const filtro = await this.resolverUnidadQuery(query);
         if (filtro.vacio) return [];
         return this.prisma.adelanto.findMany({
             where: {
                 deletedAt: null,
-                ...(filtro.rama ? { rama: filtro.rama } : {}),
+                ...(filtro.unidad ? { unidad: filtro.unidad } : {}),
             },
-            orderBy: [{ rama: 'asc' }, { orden: 'asc' }],
+            orderBy: [{ unidad: 'asc' }, { orden: 'asc' }],
         });
     }
 
@@ -298,12 +297,12 @@ export class CatalogoService {
     }
 
     async createAdelanto(dto: CreateAdelantoDto, userId: string) {
-        await this.assertPruebaAisladaUnica(dto.rama, dto.umbralPorcentaje);
+        await this.assertPruebaAisladaUnica(dto.unidad, dto.umbralPorcentaje);
 
         const adelanto = await this.prisma.adelanto.create({
             data: {
                 nombre: dto.nombre,
-                rama: dto.rama,
+                unidad: dto.unidad,
                 orden: dto.orden,
                 edadMinima: dto.edadMinima,
                 umbralPorcentaje: dto.umbralPorcentaje,
@@ -318,10 +317,10 @@ export class CatalogoService {
     async updateAdelanto(id: string, dto: UpdateAdelantoDto, userId: string) {
         const actual = await this.findOneAdelanto(id);
 
-        const rama = dto.rama ?? actual.rama;
+        const unidad = dto.unidad ?? actual.unidad;
         const umbral = dto.umbralPorcentaje !== undefined ? dto.umbralPorcentaje : actual.umbralPorcentaje;
 
-        await this.assertPruebaAisladaUnica(rama, umbral, id);
+        await this.assertPruebaAisladaUnica(unidad, umbral, id);
 
         const adelanto = await this.prisma.adelanto.update({
             where: { id },

@@ -1,5 +1,6 @@
-import { IsString, IsOptional, IsBoolean } from 'class-validator';
+import { IsBoolean, IsEnum, IsOptional, IsString } from 'class-validator';
 import { Transform } from 'class-transformer';
+import { TipoUnidad } from '@prisma/client';
 
 export class UpdateUnidadDto {
   @IsOptional()
@@ -8,8 +9,9 @@ export class UpdateUnidadDto {
   nombre?: string;
 
   @IsOptional()
-  @IsString()
-  tipo?: string;
+  @IsEnum(TipoUnidad, { message: 'tipo debe ser MANADA, TROPA, COMUNIDAD o CLAN' })
+  @Transform(({ value }) => (typeof value === 'string' ? value.toUpperCase().trim() : value))
+  tipo?: TipoUnidad;
 
   @IsOptional()
   @IsString()

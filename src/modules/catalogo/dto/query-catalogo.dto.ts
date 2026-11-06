@@ -1,5 +1,5 @@
 import { IsEnum, IsOptional, IsString, IsUUID, MaxLength } from 'class-validator';
-import { RamaUnidad } from '@prisma/client';
+import { TipoUnidad } from '@prisma/client';
 
 export class QueryEtapasDto {
     @IsOptional()
@@ -7,8 +7,8 @@ export class QueryEtapasDto {
     unidadId?: string;
 
     @IsOptional()
-    @IsEnum(RamaUnidad, { message: 'rama debe ser MANADA, TROPA, COMUNIDAD o CLAN' })
-    rama?: RamaUnidad;
+    @IsEnum(TipoUnidad, { message: 'unidad debe ser MANADA, TROPA, COMUNIDAD o CLAN' })
+    unidad?: TipoUnidad;
 }
 
 export class QueryIndicadoresDto {
@@ -25,8 +25,8 @@ export class QueryIndicadoresDto {
     unidadId?: string;
 
     @IsOptional()
-    @IsEnum(RamaUnidad, { message: 'rama debe ser MANADA, TROPA, COMUNIDAD o CLAN' })
-    rama?: RamaUnidad;
+    @IsEnum(TipoUnidad, { message: 'unidad debe ser MANADA, TROPA, COMUNIDAD o CLAN' })
+    unidad?: TipoUnidad;
 
     @IsOptional()
     @IsString({ message: 'search debe ser texto' })
@@ -40,6 +40,6 @@ export class QueryAdelantosDto {
     unidadId?: string;
 
     @IsOptional()
-    @IsEnum(RamaUnidad, { message: 'rama debe ser MANADA, TROPA, COMUNIDAD o CLAN' })
-    rama?: RamaUnidad;
+    @IsEnum(TipoUnidad, { message: 'unidad debe ser MANADA, TROPA, COMUNIDAD o CLAN' })
+    unidad?: TipoUnidad;
 }

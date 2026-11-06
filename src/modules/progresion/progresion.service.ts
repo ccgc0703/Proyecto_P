@@ -1,9 +1,8 @@
 import { BadRequestException, ConflictException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
-import { RamaUnidad } from '@prisma/client';
+import { TipoUnidad } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { AuditService } from '../audit/audit.service';
 import { UnitAccessPolicy, UNIT_BYPASS_ROLES } from '../../common/policies/unit-access.policy';
-import { esRama } from '../../common/ramas';
 import { OpcionesLista, hayPaginacion, rangoLista, filtroBusqueda } from '../../common/paginacion';
 import { ActualizarEstadoIndicadorDto } from './dto/actualizar-estado-indicador.dto';
 import { RechazarProgresionDto } from './dto/rechazar-progresion.dto';
@@ -34,7 +33,7 @@ interface ContextoJoven {
     joven: any;
     unidadId: string;
     unidadNombre: string;
-    unidadRama: RamaUnidad | null;
+    unidadTipo: TipoUnidad | null;
 }
 
 const AREA_CRECIMIENTO_INCLUDE = {
@@ -80,7 +79,7 @@ export class ProgresionService {
             joven: miembro.Joven,
             unidadId: miembro.unidadId,
             unidadNombre: miembro.Unidad.nombre,
-            unidadRama: esRama(miembro.Unidad.tipo) ? miembro.Unidad.tipo : null,
+            unidadTipo: miembro.Unidad.tipo,
         };
     }
 
@@ -90,11 +89,11 @@ export class ProgresionService {
 
     // ── Pool e items ──────────────────────────────────────────────────────
 
-    private async getPool(rama: RamaUnidad | null) {
-        if (!rama) return [];
+    private async getPool(unidad: TipoUnidad | null) {
+        if (!unidad) return [];
         return this.prisma.indicadorLogro.findMany({
             where: {
-                rama,
+                unidad,
                 deletedAt: null,
                 activo: true,
                 Area: { is: { tipo: 'AREA_CRECIMIENTO', deletedAt: null } },
@@ -104,11 +103,11 @@ export class ProgresionService {
         });
     }
 
-    private async getItemsPrueba(rama: RamaUnidad | null) {
-        if (!rama) return [];
+    private async getItemsPrueba(unidad: TipoUnidad | null) {
+        if (!unidad) return [];
         return this.prisma.indicadorLogro.findMany({
             where: {
-                rama,
+                unidad,
                 deletedAt: null,
                 activo: true,
                 Area: { is: { tipo: 'PRUEBA_ADELANTO', deletedAt: null } },
@@ -146,8 +145,8 @@ export class ProgresionService {
 
     private async evaluar(adelanto: any, jovenId: string): Promise<Evaluacion> {
         const [pool, items] = await Promise.all([
-            this.getPool(adelanto.rama),
-            this.getItemsPrueba(adelanto.rama),
+            this.getPool(adelanto.unidad),
+            this.getItemsPrueba(adelanto.unidad),
         ]);
         const estados = await this.getEstados(jovenId);
         return this.evaluarConListas(adelanto, pool, items, estados);
@@ -207,11 +206,11 @@ export class ProgresionService {
         await this.assertAcceso(actor, ctx.unidadId);
 
         const [pool, items, progresiones, areas] = await Promise.all([
-            this.getPool(ctx.unidadRama),
-            this.getItemsPrueba(ctx.unidadRama),
+            this.getPool(ctx.unidadTipo),
+            this.getItemsPrueba(ctx.unidadTipo),
             this.getProgresiones(ctx.joven.id),
             this.prisma.areaCrecimiento.findMany({
-                where: { tipo: 'AREA_CRECIMIENTO', deletedAt: null, OR: [{ rama: null }, { rama: ctx.unidadRama }] },
+                where: { tipo: 'AREA_CRECIMIENTO', deletedAt: null, OR: [{ unidad: null }, { unidad: ctx.unidadTipo }] },
                 orderBy: { orden: 'asc' },
             }),
         ]);
@@ -304,8 +303,8 @@ export class ProgresionService {
         await this.assertAcceso(actor, ctx.unidadId);
 
         const [pool, items, estados] = await Promise.all([
-            this.getPool(ctx.unidadRama),
-            this.getItemsPrueba(ctx.unidadRama),
+            this.getPool(ctx.unidadTipo),
+            this.getItemsPrueba(ctx.unidadTipo),
             this.getEstados(ctx.joven.id),
         ]);
 
@@ -358,7 +357,7 @@ export class ProgresionService {
             include: { Area: { select: { id: true, nombre: true, tipo: true } } },
         });
         if (!indicador) throw new NotFoundException(`Indicador con ID ${indicadorId} no encontrado`);
-        if (indicador.rama !== ctx.unidadRama) {
+        if (indicador.unidad !== ctx.unidadTipo) {
             throw new BadRequestException('El indicador no pertenece a la unidad del joven');
         }
 
@@ -408,7 +407,7 @@ export class ProgresionService {
             where: { id: adelantoId, deletedAt: null },
         });
         if (!adelanto) throw new NotFoundException(`Adelanto con ID ${adelantoId} no encontrado`);
-        if (adelanto.rama !== ctx.unidadRama) {
+        if (adelanto.unidad !== ctx.unidadTipo) {
             throw new BadRequestException('El adelanto no pertenece a la unidad del joven');
         }
         if (!adelanto.activo) throw new BadRequestException(`El adelanto "${adelanto.nombre}" está inactivo`);
@@ -527,7 +526,7 @@ export class ProgresionService {
 
         const siguiente = await this.prisma.adelanto.findFirst({
             where: {
-                rama: progresion.Adelanto.rama,
+                unidad: progresion.Adelanto.unidad,
                 orden: progresion.Adelanto.orden + 1,
                 activo: true,
                 deletedAt: null,
@@ -598,7 +597,7 @@ export class ProgresionService {
 
         await this.assertAcceso(actor, unidadId);
 
-        const rama = esRama(unidad.tipo) ? unidad.tipo : null;
+        const tipoUnidad = unidad.tipo;
 
         const whereMiembro = {
             unidadId,
@@ -624,8 +623,8 @@ export class ProgresionService {
                 orderBy: [{ apellidos: 'asc' }, { nombres: 'asc' }],
                 ...(hayPaginacion(opts ?? {}) ? rangoLista(opts!) : {}),
             }),
-            this.getPool(rama),
-            this.getItemsPrueba(rama),
+            this.getPool(tipoUnidad),
+            this.getItemsPrueba(tipoUnidad),
         ]);
 
         const jovenIds = miembros.filter((m) => m.Joven).map((m) => m.Joven.id);
@@ -682,16 +681,16 @@ export class ProgresionService {
 
     // ── Export (§10.3) ───────────────────────────────────────────────────
 
-    private async getCatalogoExport(rama: RamaUnidad | null) {
+    private async getCatalogoExport(unidad: TipoUnidad | null) {
         const [pool, items, areas, etapas] = await Promise.all([
-            this.getPool(rama),
-            this.getItemsPrueba(rama),
+            this.getPool(unidad),
+            this.getItemsPrueba(unidad),
             this.prisma.areaCrecimiento.findMany({
-                where: { tipo: 'AREA_CRECIMIENTO', deletedAt: null, OR: [{ rama: null }, { rama }] },
+                where: { tipo: 'AREA_CRECIMIENTO', deletedAt: null, OR: [{ unidad: null }, { unidad }] },
                 orderBy: { orden: 'asc' },
             }),
             this.prisma.etapa.findMany({
-                where: { deletedAt: null, ...(rama ? { rama } : { id: { in: [] } }) },
+                where: { deletedAt: null, ...(unidad ? { unidad } : { id: { in: [] } }) },
                 orderBy: { numero: 'asc' },
             }),
         ]);
@@ -791,7 +790,7 @@ export class ProgresionService {
         const [progresiones, estados, catalogo] = await Promise.all([
             this.getProgresiones(ctx.joven.id),
             this.getEstados(ctx.joven.id),
-            this.getCatalogoExport(ctx.unidadRama),
+            this.getCatalogoExport(ctx.unidadTipo),
         ]);
 
         return this.armarJovenExport(
@@ -814,7 +813,7 @@ export class ProgresionService {
 
         await this.assertAcceso(actor, unidadId);
 
-        const rama = esRama(unidad.tipo) ? unidad.tipo : null;
+        const tipoUnidad = unidad.tipo;
 
         const [miembros, adelantos, catalogo] = await Promise.all([
             this.prisma.miembro.findMany({
@@ -833,10 +832,10 @@ export class ProgresionService {
                 orderBy: [{ apellidos: 'asc' }, { nombres: 'asc' }],
             }),
             this.prisma.adelanto.findMany({
-                where: { deletedAt: null, activo: true, ...(rama ? { rama } : { id: { in: [] } }) },
+                where: { deletedAt: null, activo: true, ...(tipoUnidad ? { unidad: tipoUnidad } : { id: { in: [] } }) },
                 orderBy: { orden: 'asc' },
             }),
-            this.getCatalogoExport(rama),
+            this.getCatalogoExport(tipoUnidad),
         ]);
 
         const jovenIds = miembros.filter((m) => m.Joven).map((m) => m.Joven.id);

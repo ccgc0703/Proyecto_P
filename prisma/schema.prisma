@@ -103,8 +103,8 @@ enum TipoArea {
   PRUEBA_ADELANTO
 }
 
-// Rama del catálogo de progresión (nacional, compartido por todos los grupos)
-enum RamaUnidad {
+// Unidad del catálogo de progresión (nacional, compartido por todos los grupos)
+enum TipoUnidad {
   MANADA
   TROPA
   COMUNIDAD
@@ -207,13 +207,13 @@ model Usuario {
 }
 
 model Unidad {
-  id          String    @id @default(uuid())
+  id          String       @id @default(uuid())
   nombre      String // Manada, Tropa, Comunidad, Clan
-  tipo        String?
+  tipo        TipoUnidad? // Tipo canónico de la unidad (null = sin tipo)
   descripcion String?
   grupoId     String? // Nodo GRUPO al que pertenece
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
   deletedAt   DateTime?
   createdBy   String?
   updatedBy   String?
@@ -224,7 +224,7 @@ model Unidad {
   Patrullas       Patrulla[]
   Planificaciones Planificacion[]
 
-  @@unique([grupoId, tipo]) // Una instancia de rama por grupo
+  @@unique([grupoId, tipo]) // Una instancia de unidad por grupo
   @@index([grupoId])
 }
 
@@ -497,7 +497,7 @@ model AreaCrecimiento {
   tipo      TipoArea    @default(AREA_CRECIMIENTO)
   orden     Int
   activo    Boolean     @default(true)
-  rama      RamaUnidad? // null = aplica a todas las ramas
+  unidad    TipoUnidad? // null = aplica a todas las unidades
   createdAt DateTime    @default(now())
   updatedAt DateTime    @updatedAt
   deletedAt DateTime?
@@ -511,7 +511,7 @@ model Etapa {
   id        String     @id @default(uuid())
   numero    Int        @unique
   nombre    String
-  rama      RamaUnidad
+  unidad    TipoUnidad
   activo    Boolean    @default(true)
   createdAt DateTime   @default(now())
   updatedAt DateTime   @updatedAt
@@ -528,7 +528,7 @@ model IndicadorLogro {
   texto     String
   etapaId   String
   areaId    String
-  rama      RamaUnidad
+  unidad    TipoUnidad
   orden     Int
   activo    Boolean    @default(true)
   createdAt DateTime   @default(now())
@@ -544,12 +544,12 @@ model IndicadorLogro {
   @@unique([etapaId, areaId, codigo])
   @@index([etapaId])
   @@index([areaId])
-  @@index([rama])
+  @@index([unidad])
 }
 
 model Adelanto {
   id               String     @id @default(uuid())
-  rama             RamaUnidad
+  unidad           TipoUnidad
   orden            Int
   nombre           String
   edadMinima       Int?
@@ -563,7 +563,7 @@ model Adelanto {
 
   Progresiones Progresion[]
 
-  @@unique([rama, orden])
+  @@unique([unidad, orden])
 }
 
 model Progresion {
@@ -645,8 +645,18 @@ model MiembroProgramaMundial {
 
 // ─────────────────────────────────────────────
 // Auditoría
+// Tres tablas con responsabilidades distintas:
+//  · AuditLog       → fuente canónica de auditoría de negocio (los endpoints la
+//                     escriben vía AuditService.logAction); es la que consulta
+//                     el módulo audit y la retención AUDIT_RETENTION_DAYS.
+//  · BitacoraAuditoria → legacy de la v1 (tabla/registroId/datosAntes-datosDespues).
+//                      No se escribe desde los endpoints actuales; se conserva
+//                      por los datos históricos que contiene.
+//  · AuditRBAC      → legacy de la v1 específico de RBAC. Igual que la anterior:
+//                      solo lectura histórica, los cambios de roles usan AuditLog.
 // ─────────────────────────────────────────────
 
+// LEGACY (v1): no se escribe desde los endpoints actuales; conserva historial.
 model BitacoraAuditoria {
   id           String    @id @default(uuid())
   usuarioId    String?
@@ -669,6 +679,7 @@ model BitacoraAuditoria {
   @@index([createdAt])
 }
 
+// Fuente canónica de auditoría (escrita por AuditService.logAction).
 model AuditLog {
   id          String   @id @default(uuid())
   actorId     String?
@@ -747,6 +758,7 @@ model RolPermiso {
   @@index([rolId])
 }
 
+// LEGACY (v1): auditoría de RBAC; los cambios de roles usan AuditLog.
 model AuditRBAC {
   id             String   @id @default(uuid())
   accion         String
@@ -760,7 +772,7 @@ model AuditRBAC {
 }
 
 // ─────────────────────────────────────────────
-// Patrullas / Seisenas
+// Patrullas / Secciones
 // ─────────────────────────────────────────────
 
 model Patrulla {

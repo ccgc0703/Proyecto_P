@@ -7,7 +7,9 @@ describe('soft-delete centralizado (integracion con PostgreSQL)', () => {
     let unidadId: string;
 
     beforeAll(async () => {
-        const unidad = await prisma.unidad.create({ data: { nombre: marca, tipo: marca } });
+        // `tipo` es ahora un enum canónico (TipoUnidad); el test no lo usa,
+        // así que se omite (campo opcional).
+        const unidad = await prisma.unidad.create({ data: { nombre: marca } });
         unidadId = unidad.id;
     });
 

@@ -151,7 +151,7 @@ describe('CatalogoService', () => {
     });
 
     describe('findEtapas', () => {
-        it('resuelve la rama de la unidad cuando se envia unidadId', async () => {
+        it('resuelve el tipo de la unidad cuando se envia unidadId', async () => {
             mockPrisma.unidad.findFirst.mockResolvedValue({ id: 'u-clan', tipo: 'CLAN' });
             mockPrisma.etapa.findMany.mockResolvedValue([]);
 
@@ -159,7 +159,7 @@ describe('CatalogoService', () => {
 
             expect(mockPrisma.etapa.findMany).toHaveBeenCalledWith(
                 expect.objectContaining({
-                    where: { deletedAt: null, rama: 'CLAN' },
+                    where: { deletedAt: null, unidad: 'CLAN' },
                     orderBy: { numero: 'asc' },
                 }),
             );
@@ -174,14 +174,14 @@ describe('CatalogoService', () => {
             expect(mockPrisma.etapa.findMany).not.toHaveBeenCalled();
         });
 
-        it('filtra por rama directa cuando se envia rama', async () => {
+        it('filtra por unidad directa cuando se envia unidad', async () => {
             mockPrisma.etapa.findMany.mockResolvedValue([]);
 
-            await service.findEtapas({ rama: 'MANADA' });
+            await service.findEtapas({ unidad: 'MANADA' });
 
             expect(mockPrisma.etapa.findMany).toHaveBeenCalledWith(
                 expect.objectContaining({
-                    where: { deletedAt: null, rama: 'MANADA' },
+                    where: { deletedAt: null, unidad: 'MANADA' },
                 }),
             );
         });
@@ -241,7 +241,7 @@ describe('CatalogoService', () => {
             expect(mockPrisma.indicadorLogro.findMany).not.toHaveBeenCalled();
         });
 
-        it('resuelve rama desde unidadId y aplica el resto de filtros', async () => {
+        it('resuelve la unidad desde unidadId y aplica el resto de filtros', async () => {
             const lista = [{ id: 'i1', codigo: 'a' }];
             mockPrisma.unidad.findFirst.mockResolvedValue({ id: 'u1', tipo: 'TROPA' });
             mockPrisma.indicadorLogro.findMany.mockResolvedValue(lista);
@@ -258,7 +258,7 @@ describe('CatalogoService', () => {
                 expect.objectContaining({
                     where: {
                         deletedAt: null,
-                        rama: 'TROPA',
+                        unidad: 'TROPA',
                         etapaId: 'e1',
                         areaId: 'a1',
                         OR: [
@@ -287,7 +287,7 @@ describe('CatalogoService', () => {
             texto: 'Presta atencion en las reuniones',
             etapaId: 'e1',
             areaId: 'a1',
-            rama: 'MANADA' as const,
+            unidad: 'MANADA' as const,
             orden: 1,
         };
 
@@ -298,7 +298,7 @@ describe('CatalogoService', () => {
             expect(mockPrisma.indicadorLogro.create).not.toHaveBeenCalled();
         });
 
-        it('crea el indicador con etapa y area validadas y su rama', async () => {
+        it('crea el indicador con etapa y area validadas y su unidad', async () => {
             mockPrisma.etapa.findFirst.mockResolvedValue({ id: 'e1' });
             mockPrisma.areaCrecimiento.findFirst.mockResolvedValue({ id: 'a1' });
             mockPrisma.indicadorLogro.create.mockResolvedValue({ id: 'i1', codigo: 'a' });
@@ -310,7 +310,7 @@ describe('CatalogoService', () => {
             expect(mockPrisma.areaCrecimiento.findFirst).toHaveBeenCalled();
             expect(mockPrisma.indicadorLogro.create).toHaveBeenCalledWith(
                 expect.objectContaining({
-                    data: expect.objectContaining({ codigo: 'a', rama: 'MANADA', createdBy: 'user-1' }),
+                    data: expect.objectContaining({ codigo: 'a', unidad: 'MANADA', createdBy: 'user-1' }),
                 }),
             );
         });
@@ -341,7 +341,7 @@ describe('CatalogoService', () => {
     });
 
     describe('createAdelanto', () => {
-        const base = { nombre: 'Lobo Mayor', orden: 2, rama: 'MANADA' as const };
+        const base = { nombre: 'Lobo Mayor', orden: 2, unidad: 'MANADA' as const };
 
         it('permite un adelanto con umbral sin comprobar prueba aislada', async () => {
             mockPrisma.adelanto.create.mockResolvedValue({ id: 'ad1' });
@@ -352,7 +352,7 @@ describe('CatalogoService', () => {
             expect(mockPrisma.adelanto.create).toHaveBeenCalled();
         });
 
-        it('permite crear la prueba aislada cuando la rama no tiene otra', async () => {
+        it('permite crear la prueba aislada cuando la unidad no tiene otra', async () => {
             mockPrisma.adelanto.findFirst.mockResolvedValue(null);
             mockPrisma.adelanto.create.mockResolvedValue({ id: 'ad1', nombre: 'Huella Fresca' });
 
@@ -360,13 +360,13 @@ describe('CatalogoService', () => {
 
             expect(mockPrisma.adelanto.findFirst).toHaveBeenCalledWith(
                 expect.objectContaining({
-                    where: expect.objectContaining({ rama: 'MANADA', umbralPorcentaje: null }),
+                    where: expect.objectContaining({ unidad: 'MANADA', umbralPorcentaje: null }),
                 }),
             );
             expect(mockPrisma.adelanto.create).toHaveBeenCalled();
         });
 
-        it('bloquea una segunda prueba aislada en la misma rama', async () => {
+        it('bloquea una segunda prueba aislada en la misma unidad', async () => {
             mockPrisma.adelanto.findFirst.mockResolvedValue({ id: 'ad0', nombre: 'Huella Fresca' });
 
             await expect(service.createAdelanto(base, 'user-1')).rejects.toThrow(ConflictException);
@@ -376,7 +376,7 @@ describe('CatalogoService', () => {
 
     describe('updateAdelanto', () => {
         it('bloquea si al cambiar a prueba aislada ya existe otra', async () => {
-            mockPrisma.adelanto.findFirst.mockResolvedValueOnce({ id: 'ad1', rama: 'MANADA', umbralPorcentaje: 70 });
+            mockPrisma.adelanto.findFirst.mockResolvedValueOnce({ id: 'ad1', unidad: 'MANADA', umbralPorcentaje: 70 });
             mockPrisma.adelanto.findFirst.mockResolvedValueOnce({ id: 'ad0', nombre: 'Existente' });
 
             await expect(

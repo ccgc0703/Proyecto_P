@@ -1,6 +1,6 @@
 /**
  * F4.6 · Seed masivo: crea ~1000 jóvenes (Miembro + Joven + Representante + DatosScout)
- * distribuidos entre las unidades activas, respetando el rango de edad de cada rama.
+ * distribuidos entre las unidades activas, respetando el rango de edad de cada unidad.
  *
  * Uso:
  *   npm run seed:masivo                 # crea hasta 1000 (idempotente: completa lo que falte)
@@ -24,7 +24,7 @@ const OBJETIVO_DEFECTO = 1000;
 const JOVENES_POR_REPRESENTANTE = 4;
 const TAMANO_LOTE = 200;
 
-/** Rangos de edad por rama (misma regla que JovenesService). */
+/** Rangos de edad por unidad (misma regla que JovenesService). */
 const RANGOS: Record<string, { min: number; max: number }> = {
     Manada: { min: 6, max: 10 },
     Tropa: { min: 10, max: 15 },

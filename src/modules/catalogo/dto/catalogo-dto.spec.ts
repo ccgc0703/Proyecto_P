@@ -32,6 +32,13 @@ describe('CreateAreaDto', () => {
         );
         expect(properties(errors)).toContain('isEnum');
     });
+
+    it('rechaza una unidad desconocida', async () => {
+        const errors = await validate(
+            plainToInstance(CreateAreaDto, { nombre: 'Corporalidad', orden: 1, unidad: 'OTRA' }),
+        );
+        expect(properties(errors)).toContain('isEnum');
+    });
 });
 
 describe('CreateIndicadorDto', () => {
@@ -40,7 +47,7 @@ describe('CreateIndicadorDto', () => {
         texto: 'Presta atencion en las reuniones',
         etapaId: UUID_OK,
         areaId: UUID_OK,
-        rama: 'MANADA',
+        unidad: 'MANADA',
         orden: 1,
     };
 
@@ -57,8 +64,8 @@ describe('CreateIndicadorDto', () => {
         expect(properties(errors)).toContain('matches');
     });
 
-    it('rechaza una rama desconocida', async () => {
-        const errors = await validate(plainToInstance(CreateIndicadorDto, { ...base, rama: 'OTRA' }));
+    it('rechaza una unidad desconocida', async () => {
+        const errors = await validate(plainToInstance(CreateIndicadorDto, { ...base, unidad: 'OTRA' }));
         expect(properties(errors)).toContain('isEnum');
     });
 
@@ -69,7 +76,7 @@ describe('CreateIndicadorDto', () => {
 });
 
 describe('CreateAdelantoDto', () => {
-    const base = { nombre: 'Lobo Mayor', orden: 2, rama: 'MANADA' };
+    const base = { nombre: 'Lobo Mayor', orden: 2, unidad: 'MANADA' };
 
     it('acepta un adelanto con umbral', async () => {
         expect(
@@ -81,8 +88,8 @@ describe('CreateAdelantoDto', () => {
         expect(await validate(plainToInstance(CreateAdelantoDto, base))).toHaveLength(0);
     });
 
-    it('rechaza una rama desconocida', async () => {
-        const errors = await validate(plainToInstance(CreateAdelantoDto, { ...base, rama: 'OTRA' }));
+    it('rechaza una unidad desconocida', async () => {
+        const errors = await validate(plainToInstance(CreateAdelantoDto, { ...base, unidad: 'OTRA' }));
         expect(properties(errors)).toContain('isEnum');
     });
 
@@ -107,7 +114,7 @@ describe('QueryIndicadoresDto', () => {
             etapaId: UUID_OK,
             areaId: UUID_OK,
             unidadId: UUID_OK,
-            rama: 'CLAN',
+            unidad: 'CLAN',
             search: 'sirviente',
         });
         expect(await validate(dto)).toHaveLength(0);
@@ -118,8 +125,8 @@ describe('QueryIndicadoresDto', () => {
         expect(properties(errors)).toContain('isUuid');
     });
 
-    it('rechaza una rama desconocida', async () => {
-        const errors = await validate(plainToInstance(QueryIndicadoresDto, { rama: 'RAMA' }));
+    it('rechaza una unidad desconocida', async () => {
+        const errors = await validate(plainToInstance(QueryIndicadoresDto, { unidad: 'OTRA' }));
         expect(properties(errors)).toContain('isEnum');
     });
 

@@ -1,6 +1,6 @@
 import { IsBoolean, IsEnum, IsInt, IsOptional, IsString, Max, MaxLength, Min, MinLength } from 'class-validator';
 import { Transform } from 'class-transformer';
-import { RamaUnidad } from '@prisma/client';
+import { TipoUnidad } from '@prisma/client';
 
 export class CreateAdelantoDto {
     @IsString({ message: 'El nombre del adelanto es requerido' })
@@ -9,8 +9,8 @@ export class CreateAdelantoDto {
     @MaxLength(80, { message: 'El nombre del adelanto no puede exceder 80 caracteres' })
     nombre: string;
 
-    @IsEnum(RamaUnidad, { message: 'rama debe ser MANADA, TROPA, COMUNIDAD o CLAN' })
-    rama: RamaUnidad;
+    @IsEnum(TipoUnidad, { message: 'unidad debe ser MANADA, TROPA, COMUNIDAD o CLAN' })
+    unidad: TipoUnidad;
 
     @IsInt({ message: 'El orden debe ser un numero entero' })
     @Min(1, { message: 'El orden minimo es 1' })

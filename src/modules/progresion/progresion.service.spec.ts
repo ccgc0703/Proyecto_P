@@ -19,7 +19,7 @@ const indicadorPool = (n: number) => ({
     orden: n,
     areaId: 'ac1',
     etapaId: 'e1',
-    rama: 'TROPA',
+    unidad: 'TROPA',
     Area: areaCrecimiento(1, 1),
 });
 
@@ -30,7 +30,7 @@ const indicadorPrueba = (n: number) => ({
     orden: n,
     areaId: 'acPrueba',
     etapaId: 'e1',
-    rama: 'TROPA',
+    unidad: 'TROPA',
     Area: { id: 'acPrueba', nombre: 'Prueba de Adelanto', orden: 7, tipo: 'PRUEBA_ADELANTO' },
 });
 
@@ -81,7 +81,7 @@ describe('ProgresionService', () => {
 
     const adelantoPorcentaje = {
         id: 'ad1',
-        rama: 'TROPA',
+        unidad: 'TROPA',
         orden: 2,
         nombre: 'Explorador',
         umbralPorcentaje: 50,
@@ -254,9 +254,9 @@ describe('ProgresionService', () => {
     });
 
     describe('actualizarEstado', () => {
-        it('rechaza un indicador de otra rama', async () => {
+        it('rechaza un indicador de otra unidad', async () => {
             mockPrisma.miembro.findFirst.mockResolvedValue(miembroJoven);
-            mockPrisma.indicadorLogro.findFirst.mockResolvedValue({ id: 'ix', codigo: 'a', rama: 'MANADA' });
+            mockPrisma.indicadorLogro.findFirst.mockResolvedValue({ id: 'ix', codigo: 'a', unidad: 'MANADA' });
 
             await expect(
                 service.actualizarEstado('m1', 'ix', { estado: 'EN_PROCESO' }, actor),
@@ -265,7 +265,7 @@ describe('ProgresionService', () => {
 
         it('crea el estado y audita el cambio', async () => {
             mockPrisma.miembro.findFirst.mockResolvedValue(miembroJoven);
-            mockPrisma.indicadorLogro.findFirst.mockResolvedValue({ id: 'p1', codigo: 'c1', rama: 'TROPA' });
+            mockPrisma.indicadorLogro.findFirst.mockResolvedValue({ id: 'p1', codigo: 'c1', unidad: 'TROPA' });
             mockPrisma.estadoLogroJoven.findFirst.mockResolvedValue(null);
             mockPrisma.estadoLogroJoven.create.mockResolvedValue({ id: 'est1' });
 
@@ -294,7 +294,7 @@ describe('ProgresionService', () => {
 
         it('no audita si el estado no cambia', async () => {
             mockPrisma.miembro.findFirst.mockResolvedValue(miembroJoven);
-            mockPrisma.indicadorLogro.findFirst.mockResolvedValue({ id: 'p1', codigo: 'c1', rama: 'TROPA' });
+            mockPrisma.indicadorLogro.findFirst.mockResolvedValue({ id: 'p1', codigo: 'c1', unidad: 'TROPA' });
             mockPrisma.estadoLogroJoven.findFirst.mockResolvedValue({ id: 'est1', estado: 'EN_PROCESO' });
             mockPrisma.estadoLogroJoven.update.mockResolvedValue({ id: 'est1' });
 
@@ -310,9 +310,9 @@ describe('ProgresionService', () => {
     });
 
     describe('iniciarAdelanto', () => {
-        it('rechaza un adelanto de otra rama', async () => {
+        it('rechaza un adelanto de otra unidad', async () => {
             mockPrisma.miembro.findFirst.mockResolvedValue(miembroJoven);
-            mockPrisma.adelanto.findFirst.mockResolvedValue({ id: 'ad2', rama: 'MANADA', nombre: 'X', activo: true });
+            mockPrisma.adelanto.findFirst.mockResolvedValue({ id: 'ad2', unidad: 'MANADA', nombre: 'X', activo: true });
 
             await expect(service.iniciarAdelanto('m1', 'ad2', actor)).rejects.toThrow(BadRequestException);
         });

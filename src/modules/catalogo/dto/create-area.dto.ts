@@ -1,6 +1,6 @@
 import { IsBoolean, IsEnum, IsInt, IsOptional, IsString, Max, MaxLength, Min, MinLength } from 'class-validator';
 import { Transform } from 'class-transformer';
-import { RamaUnidad, TipoArea } from '@prisma/client';
+import { TipoUnidad, TipoArea } from '@prisma/client';
 
 export class CreateAreaDto {
     @IsString({ message: 'El nombre del area es requerido' })
@@ -23,6 +23,6 @@ export class CreateAreaDto {
     activo?: boolean;
 
     @IsOptional()
-    @IsEnum(RamaUnidad, { message: 'rama debe ser MANADA, TROPA, COMUNIDAD o CLAN (omitir para todas)' })
-    rama?: RamaUnidad;
+    @IsEnum(TipoUnidad, { message: 'unidad debe ser MANADA, TROPA, COMUNIDAD o CLAN (omitir para todas)' })
+    unidad?: TipoUnidad;
 }

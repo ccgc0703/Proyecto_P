@@ -2,7 +2,7 @@ import 'dotenv/config';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as XLSX from 'xlsx';
-import { PrismaClient, RamaUnidad, TipoArea } from '@prisma/client';
+import { PrismaClient, TipoUnidad, TipoArea } from '@prisma/client';
 import { PrismaPg } from '@prisma/adapter-pg';
 import { Pool } from 'pg';
 
@@ -29,16 +29,16 @@ const AREAS: AreaDef[] = [
 ];
 
 const ETAPAS = [
-    { numero: 1, nombre: '1ª Etapa', rama: 'MANADA' as RamaUnidad },
-    { numero: 2, nombre: '2ª Etapa', rama: 'MANADA' as RamaUnidad },
-    { numero: 3, nombre: '3ª Etapa', rama: 'TROPA' as RamaUnidad },
-    { numero: 4, nombre: '4ª Etapa', rama: 'TROPA' as RamaUnidad },
-    { numero: 5, nombre: '5ª Etapa', rama: 'COMUNIDAD' as RamaUnidad },
-    { numero: 6, nombre: '6ª Etapa', rama: 'CLAN' as RamaUnidad },
+    { numero: 1, nombre: '1ª Etapa', unidad: 'MANADA' as TipoUnidad },
+    { numero: 2, nombre: '2ª Etapa', unidad: 'MANADA' as TipoUnidad },
+    { numero: 3, nombre: '3ª Etapa', unidad: 'TROPA' as TipoUnidad },
+    { numero: 4, nombre: '4ª Etapa', unidad: 'TROPA' as TipoUnidad },
+    { numero: 5, nombre: '5ª Etapa', unidad: 'COMUNIDAD' as TipoUnidad },
+    { numero: 6, nombre: '6ª Etapa', unidad: 'CLAN' as TipoUnidad },
 ];
 
-/** Ramas que heredan el pool completo de cada etapa. */
-const ETAPA_RAMA: Record<number, RamaUnidad> = {
+/** Unidades que heredan el pool completo de cada etapa. */
+const ETAPA_UNIDAD: Record<number, TipoUnidad> = {
     1: 'MANADA',
     2: 'MANADA',
     3: 'TROPA',
@@ -73,7 +73,7 @@ interface AdelantoDef {
     umbral: number | null;
 }
 
-const ADELANTOS: Record<RamaUnidad, AdelantoDef[]> = {
+const ADELANTOS: Record<TipoUnidad, AdelantoDef[]> = {
     MANADA: [
         { orden: 1, nombre: 'Huella Fresca', umbral: null },
         { orden: 2, nombre: 'Huella Alerta', umbral: 50 },
@@ -103,7 +103,7 @@ const ADELANTOS: Record<RamaUnidad, AdelantoDef[]> = {
 
 /** Pruebas aisladas (adelanto #1): hojas especiales del Excel. */
 interface PruebaDef {
-    rama: RamaUnidad;
+    unidad: TipoUnidad;
     etapa: number;
     hoja: string;
     columnas: number[];
@@ -112,28 +112,28 @@ interface PruebaDef {
 }
 
 const PRUEBAS: PruebaDef[] = [
-    { rama: 'MANADA', etapa: 1, hoja: 'Lobato(a)', columnas: [0], archivo: 'Manada' },
-    { rama: 'TROPA', etapa: 3, hoja: 'Aventurero', columnas: [0], archivo: 'Tropa' },
-    { rama: 'CLAN', etapa: 6, hoja: 'Precursor', columnas: [0, 12], archivo: 'Clan' },
+    { unidad: 'MANADA', etapa: 1, hoja: 'Lobato(a)', columnas: [0], archivo: 'Manada' },
+    { unidad: 'TROPA', etapa: 3, hoja: 'Aventurero', columnas: [0], archivo: 'Tropa' },
+    { unidad: 'CLAN', etapa: 6, hoja: 'Precursor', columnas: [0, 12], archivo: 'Clan' },
     // Peregrino (Comunidad) reutiliza los 6 ítems de la hoja "Precursor" del Excel del Clan.
-    { rama: 'COMUNIDAD', etapa: 5, hoja: 'Precursor', columnas: [0, 12], archivo: 'Clan' },
+    { unidad: 'COMUNIDAD', etapa: 5, hoja: 'Precursor', columnas: [0, 12], archivo: 'Clan' },
 ];
 
-const ESPERADO_POOL: Record<RamaUnidad, number> = {
+const ESPERADO_POOL: Record<TipoUnidad, number> = {
     MANADA: 181,
     TROPA: 197,
     COMUNIDAD: 84,
     CLAN: 59,
 };
 
-const ESPERADO_PRUEBA: Record<RamaUnidad, number> = {
+const ESPERADO_PRUEBA: Record<TipoUnidad, number> = {
     MANADA: 13,
     TROPA: 9,
     COMUNIDAD: 6,
     CLAN: 6,
 };
 
-const ESPERADO_ADELANTOS: Record<RamaUnidad, number> = {
+const ESPERADO_ADELANTOS: Record<TipoUnidad, number> = {
     MANADA: 5,
     TROPA: 4,
     COMUNIDAD: 4,
@@ -177,7 +177,7 @@ function buscarExcel(prefijo: string): string {
 interface IndicadorPendiente {
     etapa: number;
     area: string;
-    rama: RamaUnidad;
+    unidad: TipoUnidad;
     codigo: string;
     texto: string;
     orden: number;
@@ -218,7 +218,7 @@ function leerIndicadores(): IndicadorPendiente[] {
                     out.push({
                         etapa: col.etapa,
                         area: area.nombre,
-                        rama: ETAPA_RAMA[col.etapa],
+                        unidad: ETAPA_UNIDAD[col.etapa],
                         codigo,
                         texto,
                         orden,
@@ -278,11 +278,11 @@ async function main() {
     for (const e of ETAPAS) {
         const row = await prisma.etapa.upsert({
             where: { numero: e.numero },
-            update: { nombre: e.nombre, rama: e.rama, activo: true, deletedAt: null, updatedBy: ACTOR },
+            update: { nombre: e.nombre, unidad: e.unidad, activo: true, deletedAt: null, updatedBy: ACTOR },
             create: {
                 numero: e.numero,
                 nombre: e.nombre,
-                rama: e.rama,
+                unidad: e.unidad,
                 createdBy: ACTOR,
             },
         });
@@ -299,19 +299,19 @@ async function main() {
         if (p.etapa !== 5) continue;
         const quota = COMUNIDAD_QUOTA[p.area];
         if (quota === undefined) throw new Error(`Sin cuota para el área "${p.area}"`);
-        p.rama = p.orden <= quota ? 'COMUNIDAD' : 'CLAN';
+        p.unidad = p.orden <= quota ? 'COMUNIDAD' : 'CLAN';
     }
 
     // 5. Pruebas aisladas → área "Prueba de Adelanto"
     const pruebas: IndicadorPendiente[] = [];
     for (const p of PRUEBAS) {
         const items = leerPrueba(p);
-        console.log(`   🔹 Prueba ${p.rama} (${p.hoja}): ${items.length} ítems`);
+        console.log(`   🔹 Prueba ${p.unidad} (${p.hoja}): ${items.length} ítems`);
         items.forEach((texto, i) => {
             pruebas.push({
                 etapa: p.etapa,
                 area: 'Prueba de Adelanto',
-                rama: p.rama,
+                unidad: p.unidad,
                 codigo: String(i + 1),
                 texto,
                 orden: i + 1,
@@ -331,7 +331,7 @@ async function main() {
             update: {
                 texto: t.texto,
                 orden: t.orden,
-                rama: t.rama,
+                unidad: t.unidad,
                 activo: true,
                 deletedAt: null,
                 updatedBy: ACTOR,
@@ -341,7 +341,7 @@ async function main() {
                 texto: t.texto,
                 etapaId: etapas[t.etapa],
                 areaId: areas[t.area],
-                rama: t.rama,
+                unidad: t.unidad,
                 orden: t.orden,
                 createdBy: ACTOR,
             },
@@ -365,10 +365,10 @@ async function main() {
     console.log(`✅ ${todos.length} indicadores importados (${aDarDeBaja.length} dados de baja)`);
 
     // 7. Adelantos
-    for (const [rama, lista] of Object.entries(ADELANTOS) as [RamaUnidad, AdelantoDef[]][]) {
+    for (const [unidad, lista] of Object.entries(ADELANTOS) as [TipoUnidad, AdelantoDef[]][]) {
         for (const a of lista) {
             await prisma.adelanto.upsert({
-                where: { rama_orden: { rama, orden: a.orden } },
+                where: { unidad_orden: { unidad, orden: a.orden } },
                 update: {
                     nombre: a.nombre,
                     umbralPorcentaje: a.umbral,
@@ -378,7 +378,7 @@ async function main() {
                     updatedBy: ACTOR,
                 },
                 create: {
-                    rama,
+                    unidad,
                     orden: a.orden,
                     nombre: a.nombre,
                     umbralPorcentaje: a.umbral,
@@ -394,7 +394,7 @@ async function main() {
 
     const filas = await prisma.indicadorLogro.findMany({
         where: { deletedAt: null },
-        select: { rama: true, areaId: true, Area: { select: { tipo: true } } },
+        select: { unidad: true, areaId: true, Area: { select: { tipo: true } } },
     });
 
     const totalIndicadores = filas.length;
@@ -405,41 +405,41 @@ async function main() {
         `Total de indicadores = ${totalIndicadores} (esperado ${poolEsperadoTotal} de pool + ${pruebaEsperadaTotal} de prueba = ${poolEsperadoTotal + pruebaEsperadaTotal})`,
     );
 
-    const poolDe = (rama: RamaUnidad, tipo: TipoArea) =>
-        filas.filter((f) => f.rama === rama && f.Area.tipo === tipo);
+    const poolDe = (unidad: TipoUnidad, tipo: TipoArea) =>
+        filas.filter((f) => f.unidad === unidad && f.Area.tipo === tipo);
 
-    for (const [rama, esperado] of Object.entries(ESPERADO_POOL) as [RamaUnidad, number][]) {
-        const n = poolDe(rama, 'AREA_CRECIMIENTO').length;
-        check(n === esperado, `Pool ${rama} = ${n} (esperado ${esperado})`);
+    for (const [unidad, esperado] of Object.entries(ESPERADO_POOL) as [TipoUnidad, number][]) {
+        const n = poolDe(unidad, 'AREA_CRECIMIENTO').length;
+        check(n === esperado, `Pool ${unidad} = ${n} (esperado ${esperado})`);
     }
 
     const poolSuma = Object.values(ESPERADO_POOL).reduce((a, b) => a + b, 0);
     check(poolSuma === 521, `Suma de pools = ${poolSuma} (esperado 521)`);
 
-    for (const [rama, esperado] of Object.entries(ESPERADO_PRUEBA) as [RamaUnidad, number][]) {
-        const n = poolDe(rama, 'PRUEBA_ADELANTO').length;
-        check(n === esperado, `Prueba aislada ${rama} = ${n} (esperado ${esperado})`);
+    for (const [unidad, esperado] of Object.entries(ESPERADO_PRUEBA) as [TipoUnidad, number][]) {
+        const n = poolDe(unidad, 'PRUEBA_ADELANTO').length;
+        check(n === esperado, `Prueba aislada ${unidad} = ${n} (esperado ${esperado})`);
     }
 
-    for (const [rama, esperado] of Object.entries(ESPERADO_ADELANTOS) as [RamaUnidad, number][]) {
-        const n = await prisma.adelanto.count({ where: { rama, deletedAt: null } });
-        check(n === esperado, `Adelantos ${rama} = ${n} (esperado ${esperado})`);
+    for (const [unidad, esperado] of Object.entries(ESPERADO_ADELANTOS) as [TipoUnidad, number][]) {
+        const n = await prisma.adelanto.count({ where: { unidad, deletedAt: null } });
+        check(n === esperado, `Adelantos ${unidad} = ${n} (esperado ${esperado})`);
     }
 
-    // Cada rama tiene indicadores de las 6 áreas de crecimiento
-    for (const rama of Object.keys(ESPERADO_POOL) as RamaUnidad[]) {
-        const areasCon = new Set(poolDe(rama, 'AREA_CRECIMIENTO').map((f) => f.areaId));
-        check(areasCon.size === 6, `${rama}: ${areasCon.size} áreas de crecimiento con indicadores (esperado 6)`);
+    // Cada unidad tiene indicadores de las 6 áreas de crecimiento
+    for (const unidad of Object.keys(ESPERADO_POOL) as TipoUnidad[]) {
+        const areasCon = new Set(poolDe(unidad, 'AREA_CRECIMIENTO').map((f) => f.areaId));
+        check(areasCon.size === 6, `${unidad}: ${areasCon.size} áreas de crecimiento con indicadores (esperado 6)`);
     }
 
     // Umbrales calculados con floor
     console.log('\n📐 Umbrales (floor(pool × pct / 100))');
-    for (const [rama, lista] of Object.entries(ADELANTOS) as [RamaUnidad, AdelantoDef[]][]) {
-        const pool = ESPERADO_POOL[rama];
+    for (const [unidad, lista] of Object.entries(ADELANTOS) as [TipoUnidad, AdelantoDef[]][]) {
+        const pool = ESPERADO_POOL[unidad];
         const umbrales = lista
             .map((a) => (a.umbral === null ? `${a.nombre} (prueba aislada)` : `${a.nombre} → ${Math.floor((pool * a.umbral) / 100)}`))
             .join(' · ');
-        console.log(`   ${rama} (pool ${pool}): ${umbrales}`);
+        console.log(`   ${unidad} (pool ${pool}): ${umbrales}`);
     }
 
     await prisma.$disconnect();
