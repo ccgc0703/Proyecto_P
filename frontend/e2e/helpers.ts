@@ -8,7 +8,7 @@ export async function login(page: Page, creds: { email: string; password: string
   await page.goto('/login');
   await page.locator('input[name="email"]').fill(creds.email);
   await page.locator('input[name="password"]').fill(creds.password);
-  await page.getByRole('button', { name: /Autenticar Acceso/ }).click();
+  await page.getByRole('button', { name: /autenticar acceso/i }).click();
   await page.waitForURL('**/app**', { timeout: 20_000 });
   await expect(page.locator('header h1').first()).toBeVisible();
 }

@@ -40,6 +40,7 @@ export const MODELOS_SOFT_DELETE = [
     'Patrulla',
     'Planificacion',
     'Actividad',
+    'Asistencia',
 ] as const;
 
 export const OPERACIONES_LECTURA = [

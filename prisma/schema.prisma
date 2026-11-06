@@ -64,6 +64,12 @@ enum EstadoActividad {
   CANCELADA
 }
 
+enum EstadoAsistencia {
+  PRESENTE
+  AUSENTE
+  JUSTIFICADO
+}
+
 enum TipoSangre {
   A_POSITIVO
   A_NEGATIVO
@@ -255,6 +261,7 @@ model Miembro {
   FichaMedica        FichaMedica?
   Condecoraciones    MiembroCondecoracion[]
   ProgramasMundiales MiembroProgramaMundial[]
+  Asistencias        Asistencia[]
 
   @@index([tipo, deletedAt])
   @@index([unidadId, tipo, deletedAt])
@@ -834,7 +841,31 @@ model Actividad {
   createdBy       String?
 
   Planificacion Planificacion @relation(fields: [planificacionId], references: [id])
+  Asistencias  Asistencia[]
 
   @@index([planificacionId])
   @@index([fecha])
+}
+
+// Registro de asistencia de un miembro a una actividad (1 fila por miembro
+// por actividad: ver @@unique). El ámbito de grupo se deriva de
+// Actividad -> Planificacion -> Unidad.grupoId (no se duplica grupoId aqui).
+model Asistencia {
+  id           String           @id @default(uuid())
+  actividadId  String
+  miembroId    String
+  estado       EstadoAsistencia @default(PRESENTE)
+  observacion  String?
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
+  deletedAt    DateTime?
+  createdBy    String?
+  updatedBy    String?
+
+  Actividad Actividad @relation(fields: [actividadId], references: [id])
+  Miembro   Miembro   @relation(fields: [miembroId], references: [id])
+
+  @@unique([actividadId, miembroId])
+  @@index([actividadId])
+  @@index([miembroId])
 }

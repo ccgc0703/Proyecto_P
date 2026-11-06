@@ -122,6 +122,7 @@ const ROL_PERMISOS_SEED: Record<string, string[]> = {
         'rbac:view', 'rbac:manage', 'rbac:assign-role',
         'organizacion:view', 'organizacion:create', 'organizacion:update', 'organizacion:delete',
         'formacion:view', 'formacion:manage',
+        'evento:view', 'evento:create', 'asistencia:view', 'asistencia:manage',
     ],
     'GROUP_LEADER': [
         'user:create', 'user:view', 'user:update',
@@ -133,6 +134,7 @@ const ROL_PERMISOS_SEED: Record<string, string[]> = {
         'condecoracion:create', 'condecoracion:otorgar',
         'rbac:view', 'rbac:assign-role',
         'organizacion:view',
+        'evento:view', 'evento:create', 'asistencia:view', 'asistencia:manage',
     ],
     'GROUP_SUBLEADER': [
         'user:view',
@@ -141,6 +143,7 @@ const ROL_PERMISOS_SEED: Record<string, string[]> = {
         'representante:view',
         'catalogo:view',
         'organizacion:view',
+        'evento:view', 'evento:create', 'asistencia:view', 'asistencia:manage',
     ],
     // ── Nacional ──
     'NATIONAL_BOARD': [
@@ -194,6 +197,7 @@ const ROL_PERMISOS_SEED: Record<string, string[]> = {
         'catalogo:view',
         'unidad:view',
         'representante:create', 'representante:view', 'representante:update',
+        'evento:view', 'evento:create', 'asistencia:view', 'asistencia:manage',
     ],
     'ADULTO_TROPA': [
         'joven:create', 'joven:view', 'joven:update',
@@ -201,6 +205,7 @@ const ROL_PERMISOS_SEED: Record<string, string[]> = {
         'catalogo:view',
         'unidad:view',
         'representante:create', 'representante:view', 'representante:update',
+        'evento:view', 'evento:create', 'asistencia:view', 'asistencia:manage',
     ],
     'ADULTO_CLAN': [
         'joven:create', 'joven:view', 'joven:update',
@@ -208,6 +213,7 @@ const ROL_PERMISOS_SEED: Record<string, string[]> = {
         'catalogo:view',
         'unidad:view',
         'representante:create', 'representante:view', 'representante:update',
+        'evento:view', 'evento:create', 'asistencia:view', 'asistencia:manage',
     ],
     'ADULTO_COMUNIDAD': [
         'joven:create', 'joven:view', 'joven:update',
@@ -215,6 +221,7 @@ const ROL_PERMISOS_SEED: Record<string, string[]> = {
         'catalogo:view',
         'unidad:view',
         'representante:create', 'representante:view', 'representante:update',
+        'evento:view', 'evento:create', 'asistencia:view', 'asistencia:manage',
     ],
     'REPRESENTANTE_UNIDAD': [
         'representante:create', 'representante:view', 'representante:update',

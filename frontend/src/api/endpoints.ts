@@ -137,6 +137,38 @@ export const organizacionApi = {
   deleteCargo: (id: string) => api.delete(`/organizacion/cargos/${id}`).then(r => r.data.data),
 };
 
+export const eventosApi = {
+  getPlanificaciones: (params?: { unidadId?: string; estado?: string }) =>
+    api.get('/eventos/planificaciones', { params }).then((r) => r.data.data),
+  getPlanificacion: (id: string) =>
+    api.get(`/eventos/planificaciones/${id}`).then((r) => r.data.data),
+  createPlanificacion: (data: unknown) =>
+    api.post('/eventos/planificaciones', data).then((r) => r.data.data),
+  updatePlanificacion: (id: string, data: unknown) =>
+    api.patch(`/eventos/planificaciones/${id}`, data).then((r) => r.data.data),
+  deletePlanificacion: (id: string) =>
+    api.delete(`/eventos/planificaciones/${id}`).then((r) => r.data.data),
+  getActividades: (params?: { planificacionId?: string; unidadId?: string; estado?: string; tipo?: string }) =>
+    api.get('/eventos/actividades', { params }).then((r) => r.data.data),
+  getActividad: (id: string) => api.get(`/eventos/actividades/${id}`).then((r) => r.data.data),
+  createActividad: (planificacionId: string, data: unknown) =>
+    api.post(`/eventos/planificaciones/${planificacionId}/actividades`, data).then((r) => r.data.data),
+  updateActividad: (id: string, data: unknown) =>
+    api.patch(`/eventos/actividades/${id}`, data).then((r) => r.data.data),
+  deleteActividad: (id: string) =>
+    api.delete(`/eventos/actividades/${id}`).then((r) => r.data.data),
+  getPlanilla: (actividadId: string) =>
+    api.get(`/eventos/actividades/${actividadId}/asistencias`).then((r) => r.data.data),
+  guardarAsistencias: (actividadId: string, registros: unknown[]) =>
+    api
+      .post(`/eventos/actividades/${actividadId}/asistencias`, { registros })
+      .then((r) => r.data.data),
+  updateAsistencia: (asistenciaId: string, data: unknown) =>
+    api.patch(`/eventos/asistencias/${asistenciaId}`, data).then((r) => r.data.data),
+  getAsistenciasUnidad: (unidadId: string, params?: { desde?: string; hasta?: string }) =>
+    api.get(`/eventos/unidades/${unidadId}/asistencias`, { params }).then((r) => r.data.data),
+};
+
 export const descargarArchivo = (nombre: string, blob: Blob) => {
   const url = window.URL.createObjectURL(blob);
   const enlace = document.createElement('a');

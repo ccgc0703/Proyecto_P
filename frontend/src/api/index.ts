@@ -11,5 +11,6 @@ export {
   catalogoApi,
   progresionApi,
   organizacionApi,
+  eventosApi,
   descargarArchivo,
 } from './endpoints';

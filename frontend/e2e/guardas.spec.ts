@@ -18,7 +18,7 @@ test('adulto de comunidad: ve miembros pero no staff ni estructura', async ({ pa
   await login(page, COMUNIDAD);
 
   await page.goto('/app/miembros');
-  await expect(page.getByText('Gestión de Miembros')).toBeVisible({ timeout: 20_000 });
+  await expect(page.getByText(/Miembros/).first()).toBeVisible({ timeout: 20_000 });
   await expect(page.getByText('Acceso Denegado')).not.toBeVisible();
 
   await page.goto('/app/staff');

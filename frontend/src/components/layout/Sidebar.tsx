@@ -16,7 +16,8 @@ import {
   MenuOpen,
   TrendingUp,
   AccountTree,
-  PeopleAlt
+  PeopleAlt,
+  CalendarMonth,
 } from '@mui/icons-material';
 
 export const DRAWER_WIDTH_EXPANDED = 260;
@@ -46,6 +47,7 @@ export const Sidebar = ({ open, onToggle }: SidebarProps) => {
   const canViewUsuarios = usePermission('user:view');
   const canViewProgresion = usePermission('progresion:view');
   const canViewOrganizacion = usePermission('organizacion:view');
+  const canViewEventos = usePermission('evento:view');
   const esJoven = user?.roles?.includes('JOVEN') ?? false;
 
   const handleLogout = () => {
@@ -96,6 +98,7 @@ export const Sidebar = ({ open, onToggle }: SidebarProps) => {
       permission: canViewProgresion,
     },
     { text: 'Unidades', icon: <ChildCare />, path: '/app/unidades', permission: canViewUnidades },
+    { text: 'Eventos', icon: <CalendarMonth />, path: '/app/eventos', permission: canViewEventos },
     { text: 'Usuarios', icon: <PeopleAlt />, path: '/app/usuarios', permission: canViewUsuarios },
     { text: 'Estructura', icon: <AccountTree />, path: '/app/estructura', permission: canViewOrganizacion && !esJoven },
     { text: 'Staff', icon: <ManageAccounts />, path: '/app/staff', permission: canViewRBAC },

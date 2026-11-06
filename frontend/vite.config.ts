@@ -16,6 +16,11 @@ export default defineConfig({
     rollupOptions: {
       output: {
         manualChunks(id: string) {
+          // src/api/index.ts re-exporta endpoints.ts: si Rollup los reparte en
+          // chunks distintos emite una circular ("...will end up in different
+          // chunks"). Se fuerzan juntos al chunk "api".
+          const norm = id.replace(/\\/g, '/');
+          if (norm.includes('/src/api/')) return 'api';
           if (!id.includes('node_modules')) return undefined;
           // DataGrid es pesado y solo lo usan algunas páginas: que siga
           // repartido con sus chunks de ruta.

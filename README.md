@@ -66,6 +66,7 @@ npm run start:dev
 | **formacion** | Formación de adultos |
 | **programas-mundiales** | Programas mundiales y su estado por miembro |
 | **organizacion** | Árbol organizacional y cargos |
+| **eventos** | CRUD planificaciones y actividades, planilla de asistencia y asistencias por unidad |
 | **rbac** | Gestión de roles y permisos |
 | **audit** | Logs de auditoría y retención |
 | **health** | Estado del servicio (uptime, checks) |
@@ -448,12 +449,14 @@ self:view, self:update
 // Estructura organizacional
 organizacion:view, organizacion:create, organizacion:update, organizacion:delete
 
+// Eventos y asistencias (módulo `eventos`: planificaciones, actividades y planillas)
+evento:view, evento:create
+asistencia:view, asistencia:manage
+
 // Módulos futuros (claves definidas, sin implementar aún)
 normativa:view, normativa:manage
 finanza:view, finanza:manage
-evento:view, evento:create
 inventario:view, inventario:manage
-asistencia:view, asistencia:manage
 formacion:view, formacion:manage
 ```
 

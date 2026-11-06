@@ -9,7 +9,7 @@ test('admin: navega dashboard, miembros, progresión, estructura y staff', async
     timeout: 20_000,
   });
 
-  await navegar(page, 'Miembros', '/app/miembros', 'Gestión de Miembros');
+  await navegar(page, 'Miembros', '/app/miembros', 'Miembros');
   // DataGrid: fila de cabecera + al menos una fila de datos
   await expect(page.locator('[role="row"]').nth(1)).toBeVisible({ timeout: 30_000 });
 

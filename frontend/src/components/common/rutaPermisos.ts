@@ -45,6 +45,7 @@ export const REGLAS_RUTA: ReglaRuta[] = [
   { ruta: '/app/staff', permisos: [PERMISSIONS.RBAC_VIEW] },
   { ruta: '/app/progresion', permisos: [PERMISSIONS.PROGRESION_VIEW] },
   { ruta: '/app/estructura', permisos: [PERMISSIONS.ORGANIZACION_VIEW] },
+  { ruta: '/app/eventos', permisos: [PERMISSIONS.EVENTO_VIEW] },
 ];
 
 export const permisosDeRuta = (pathname: string): string[] | null => {
