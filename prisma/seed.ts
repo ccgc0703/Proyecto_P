@@ -43,11 +43,12 @@ const PERMISOS_SEED = [
     // Condecoraciones
     { accion: 'condecoracion:create', modulo: 'scout', descripcion: 'Crear condecoraciones en catálogo' },
     { accion: 'condecoracion:view', modulo: 'scout', descripcion: 'Ver condecoraciones' },
+    { accion: 'condecoracion:update', modulo: 'scout', descripcion: 'Actualizar condecoraciones del catálogo' },
+    { accion: 'condecoracion:delete', modulo: 'scout', descripcion: 'Eliminar condecoraciones del catálogo' },
     { accion: 'condecoracion:otorgar', modulo: 'scout', descripcion: 'Otorgar condecoración a joven' },
     // Médico
     { accion: 'medico:view', modulo: 'medico', descripcion: 'Ver ficha médica' },
-    { accion: 'medico:edit', modulo: 'medico', descripcion: 'Editar ficha médica (legacy)' },
-    { accion: 'medico:update', modulo: 'medico', descripcion: 'Actualizar ficha médica' },
+    { accion: 'medico:update', modulo: 'medico', descripcion: 'Crear y actualizar ficha médica' },
     // RBAC
     { accion: 'rbac:view', modulo: 'rbac', descripcion: 'Ver roles y permisos' },
     { accion: 'rbac:manage', modulo: 'rbac', descripcion: 'Administrar roles y permisos' },
@@ -117,7 +118,7 @@ const ROL_PERMISOS_SEED: Record<string, string[]> = {
         'catalogo:view', 'catalogo:manage',
         'condecoracion:create', 'condecoracion:view', 'condecoracion:update',
         'condecoracion:delete', 'condecoracion:otorgar',
-        'medico:view', 'medico:edit', 'medico:update',
+        'medico:view', 'medico:update',
         'rbac:view', 'rbac:manage', 'rbac:assign-role',
         'organizacion:view', 'organizacion:create', 'organizacion:update', 'organizacion:delete',
         'formacion:view', 'formacion:manage',
@@ -229,7 +230,7 @@ const ROL_PERMISOS_SEED: Record<string, string[]> = {
     'JOVEN': [
         'self:view', 'self:update',
         'progresion:view', 'progresion:create', 'progresion:update',
-        'medico:view', 'medico:edit', 'medico:update',
+        'medico:view', 'medico:update',
         // Lecturas necesarias para ver y iniciar adelantos propios
         'unidad:view', 'catalogo:view',
     ],
@@ -413,6 +414,18 @@ async function main() {
                 }
             }
             console.log(`    ✓ Permisos asignados a: ${rolNombre}`);
+        }
+
+        // 3c-bis. Retirar permisos legacy eliminados del catálogo (idempotente).
+        //   · medico:edit     → migrado a medico:update
+        //   · progresion:delete → nunca tuvo endpoint (se rechaza con update)
+        const PERMISOS_RETIRADOS = ['medico:edit', 'progresion:delete'];
+        for (const accion of PERMISOS_RETIRADOS) {
+            const hueco = await tx.permiso.findUnique({ where: { accion } });
+            if (!hueco) continue;
+            const quitados = await tx.rolPermiso.deleteMany({ where: { permisoId: hueco.id } });
+            await tx.permiso.delete({ where: { accion } });
+            console.log(`    ↻ Permiso retirado: ${accion} (${quitados.count} asignacion(es) borrada(s))`);
         }
 
         // 3d. Mapear usuario admin al rol SYSTEM_ADMIN

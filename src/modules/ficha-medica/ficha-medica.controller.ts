@@ -17,7 +17,7 @@ export class FichaMedicaController {
     ) {}
 
     @Post()
-    @RequirePermission(PERMISSIONS.MEDICO_EDIT)
+    @RequirePermission(PERMISSIONS.MEDICO_UPDATE)
     async create(@Body() dto: CreateFichaMedicaDto, @Req() req: any) {
         // Self-scope: el rol JOVEN solo puede crear su propia ficha
         this.selfScope.assertSelf(req.user, dto.miembroId);
@@ -61,7 +61,7 @@ export class FichaMedicaController {
     }
 
     @Delete(':id')
-    @RequirePermission(PERMISSIONS.MEDICO_EDIT)
+    @RequirePermission(PERMISSIONS.MEDICO_UPDATE)
     async remove(@Param('id') id: string, @Req() req: any) {
         // El rol JOVEN no elimina fichas (solo lectura/edición de la propia)
         this.selfScope.assertNotJoven(req.user);

@@ -76,10 +76,11 @@ export const PERMISSIONS = {
   REPRESENTANTE_VIEW: 'representante:view',
   REPRESENTANTE_UPDATE: 'representante:update',
   REPRESENTANTE_DELETE: 'representante:delete',
+  // Nota: no existe `progresion:delete` — las progresiones se rechazan con
+  // progresion:update (rechazar), nunca se borran.
   PROGRESION_CREATE: 'progresion:create',
   PROGRESION_VIEW: 'progresion:view',
   PROGRESION_UPDATE: 'progresion:update',
-  PROGRESION_DELETE: 'progresion:delete',
   PROGRESION_APROBAR: 'progresion:aprobar',
   CATALOGO_VIEW: 'catalogo:view',
   CATALOGO_MANAGE: 'catalogo:manage',
@@ -88,8 +89,8 @@ export const PERMISSIONS = {
   CONDECORACION_UPDATE: 'condecoracion:update',
   CONDECORACION_DELETE: 'condecoracion:delete',
   CONDECORACION_OTORGAR: 'condecoracion:otorgar',
+  // Médico: un único permiso de escritura (medico:edit fue eliminado)
   MEDICO_VIEW: 'medico:view',
-  MEDICO_EDIT: 'medico:edit',
   MEDICO_UPDATE: 'medico:update',
   RBAC_VIEW: 'rbac:view',
   RBAC_MANAGE: 'rbac:manage',
@@ -100,6 +101,19 @@ export const PERMISSIONS = {
   ORGANIZACION_CREATE: 'organizacion:create',
   ORGANIZACION_UPDATE: 'organizacion:update',
   ORGANIZACION_DELETE: 'organizacion:delete',
+  // Módulos futuros (claves alineadas con el backend)
+  NORMATIVA_VIEW: 'normativa:view',
+  NORMATIVA_MANAGE: 'normativa:manage',
+  FINANZA_VIEW: 'finanza:view',
+  FINANZA_MANAGE: 'finanza:manage',
+  EVENTO_VIEW: 'evento:view',
+  EVENTO_CREATE: 'evento:create',
+  INVENTARIO_VIEW: 'inventario:view',
+  INVENTARIO_MANAGE: 'inventario:manage',
+  ASISTENCIA_VIEW: 'asistencia:view',
+  ASISTENCIA_MANAGE: 'asistencia:manage',
+  FORMACION_VIEW: 'formacion:view',
+  FORMACION_MANAGE: 'formacion:manage',
 } as const;
 
 /** Jerarquía de roles: 1 = más privilegio. Un usuario solo asigna roles de nivel MAYOR. */

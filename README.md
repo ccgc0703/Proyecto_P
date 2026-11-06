@@ -56,11 +56,19 @@ npm run start:dev
 | **users** | CRUD completo |
 | **unidades** | CRUD completo |
 | **jovenes** | CRUD con políticas ABAC por unidad |
-| **administrativo** | CRUD representantes |
-| **scout** | Progresiones y condecoraciones |
-| **ficha-médica** | CRUD completo |
+| **adultos** | CRUD de adultos vinculados al grupo |
+| **administrativo** | CRUD representantes y ficha médica |
+| **scout** | Condecoraciones y otorgamientos |
+| **progresion** | Progresiones, estados de indicador y export |
+| **catalogo** | Áreas, etapas, indicadores y adelantos |
+| **ficha-médica** | CRUD completo (incluye tablas hijas) |
+| **datos-scout** | Datos scout complementarios |
+| **formacion** | Formación de adultos |
+| **programas-mundiales** | Programas mundiales y su estado por miembro |
+| **organizacion** | Árbol organizacional y cargos |
 | **rbac** | Gestión de roles y permisos |
-| **audit** | Logs de auditoría |
+| **audit** | Logs de auditoría y retención |
+| **health** | Estado del servicio (uptime, checks) |
 
 ---
 
@@ -128,23 +136,34 @@ El sistema implementa una jerarquía para evitar escalamiento de privilegios.
 
 **Orden jerárquico (de mayor a menor autoridad):**
 
+Fuente canónica: `RBAC_ROLES` en `src/common/constantes.ts`; la comparación de
+niveles para asignación vive en `ROL_HIERARCHY` (`frontend/src/types/auth.ts`).
+
 | Nivel | Rol |
 |-------|-----|
 | 1 | `SYSTEM_ADMIN` |
-| 2 | `GROUP_LEADER` |
-| 3 | `GROUP_SUBLEADER` |
-| 4 | `ADULTO_MANADA` |
-| 5 | `ADULTO_TROPA` |
-| 6 | `ADULTO_COMUNIDAD` |
-| 7 | `ADULTO_CLAN` |
-| 8 | `SECRETARIO` |
-| 9 | `ADULTO_COLABORADOR` |
-| 10 | `CONSULTOR` |
+| 2 | `NATIONAL_BOARD` |
+| 3 | `NATIONAL_EXECUTIVE` |
+| 4 | `NATIONAL_DIR_JOVENES` / `NATIONAL_DIR_ADULTOS` / `NATIONAL_DIR_DESARROLLO` |
+| 5 | `NATIONAL_COLABORADOR` |
+| 6 | `REGION_COMMISSIONER` |
+| 7 | `REGION_ASSISTANT` |
+| 8 | `REGION_COLABORADOR` |
+| 9 | `DISTRICT_COMMISSIONER` |
+| 10 | `DISTRICT_ASSISTANT` |
+| 11 | `DISTRICT_COLABORADOR` |
+| 12 | `GROUP_LEADER` |
+| 13 | `GROUP_SUBLEADER` |
+| 14 | `REPRESENTANTE_UNIDAD` |
+| 15 | `ADULTO_MANADA` / `ADULTO_TROPA` / `ADULTO_COMUNIDAD` / `ADULTO_CLAN` |
+| 16 | `ADULTO_COLABORADOR` |
+| 17 | `CONSULTOR` |
+| 18 | `JOVEN` |
 
 **Reglas:**
 
-- Un usuario solo puede asignar roles inferiores al suyo.
-- Los roles superiores poseen mayor nivel de autoridad.
+- Un usuario solo puede asignar roles de nivel **estrictamente mayor** (es decir, de menor privilegio) que su propio nivel máximo.
+- Los niveles menores poseen mayor nivel de autoridad. Los roles en el mismo nivel (p. ej. los cuatro `ADULTO_*`) son equivalentes.
 
 ---
 
@@ -208,7 +227,7 @@ Cada miembro posee **una única** ficha médica (relación 1:1 con el miembro).
 **Reglas de negocio:**
 
 - Un miembro solo puede tener **una** ficha médica.
-- Ver y crear/editar requiere los permisos `medico:view`, `medico:edit` y `medico:update`.
+- Ver requiere `medico:view`; crear, actualizar o eliminar requiere `medico:update`.
 - Las acciones de crear/actualizar/eliminar quedan registradas en auditoría (`FICHA_MEDICA_CREATED`, `FICHA_MEDICA_UPDATED`, `FICHA_MEDICA_DELETED`).
 - La eliminación es **lógica (soft delete)**, no se borran datos físicamente.
 - Si se registra consentimiento sin fecha, se asigna automáticamente la fecha actual.
@@ -217,7 +236,7 @@ Cada miembro posee **una única** ficha médica (relación 1:1 con el miembro).
 **Permisos necesarios:**
 
 ```
-medico:view, medico:edit, medico:update
+medico:view, medico:update
 ```
 
 ---
@@ -303,19 +322,43 @@ devuelve `503` con `status: "degraded"` si la base de datos no responde.
 
 ### 📜 Auditoría del sistema
 
-El sistema registra acciones críticas en la tabla `AuditLog`.
+El sistema registra acciones críticas en la tabla **`AuditLog`** (fuente canónica).
 
 **Eventos auditados:**
 
-| Evento |
-|--------|
-| `USER_CREATED` |
-| `USER_UPDATED` |
-| `USER_DELETED` |
-| `ROLE_ASSIGNED` |
-| `JOVEN_CREATED` |
-| `JOVEN_UPDATED` |
-| `JOVEN_DELETED` |
+| Evento | Módulo |
+|--------|--------|
+| `USER_CREATED` | users |
+| `USER_UPDATED` | users |
+| `PASSWORD_CHANGED` | users |
+| `USER_DELETED` | users |
+| `JOVEN_CREATED` | jovenes |
+| `JOVEN_UPDATED` | jovenes |
+| `JOVEN_DELETED` | jovenes |
+| `JOVEN_ACCOUNT_CREATED` | jovenes |
+| `ADULTO_CREATED` | adultos |
+| `ROLE_ASSIGNED` | rbac |
+| `FICHA_MEDICA_CREATED` | ficha-medica |
+| `FICHA_MEDICA_UPDATED` | ficha-medica |
+| `FICHA_MEDICA_DELETED` | ficha-medica |
+| `CATALOGO_CREATED` | catalogo |
+| `CATALOGO_UPDATED` | catalogo |
+| `CATALOGO_DELETED` | catalogo |
+| `INDICADOR_ESTADO_CHANGED` | progresion |
+| `PROGRESION_SOLICITADA` | progresion |
+| `PROGRESION_APROBADA` | progresion |
+| `PROGRESION_RECHAZADA` | progresion |
+
+**Tablas de auditoría (⚠️ son tres, con responsabilidades distintas):**
+
+| Tabla | Rol | ¿Se escribe hoy? |
+|-------|-----|-------------------|
+| `AuditLog` | Fuente canónica de auditoría de negocio. La escriben los endpoints vía `AuditService.logAction`; es la que consulta el módulo `audit` y la que aplica la retención `AUDIT_RETENTION_DAYS`. | **Sí** |
+| `BitacoraAuditoria` | Legacy de la v1 (modelo `tabla` / `registroId` / `datosAntes`-`datosDespues`). Ningún endpoint actual la escribe; se conserva por los datos históricos que contiene. | No (solo lectura histórica) |
+| `AuditRBAC` | Legacy de la v1 específico de RBAC. Ídem: los cambios de roles actuales se registran en `AuditLog`. | No (solo lectura histórica) |
+
+> Las dos tablas legacy **no se migran ni se eliminan**: documentarlas es el
+> tratamiento acordado (glosario §10.8).
 
 **Información almacenada:**
 
@@ -384,8 +427,8 @@ unidad:create, unidad:view, unidad:update, unidad:delete
 // Representantes
 representante:create, representante:view, representante:update, representante:delete
 
-// Progresiones
-progresion:create, progresion:view, progresion:update, progresion:delete, progresion:aprobar
+// Progresiones (no existe `progresion:delete`: se rechazan con progresion:update)
+progresion:create, progresion:view, progresion:update, progresion:aprobar
 
 // Catálogo de progresión (áreas, etapas, indicadores, adelantos)
 catalogo:view, catalogo:manage
@@ -393,12 +436,30 @@ catalogo:view, catalogo:manage
 // Condecoraciones
 condecoracion:create, condecoracion:view, condecoracion:update, condecoracion:delete, condecoracion:otorgar
 
-// Ficha médica
-medico:view, medico:edit, medico:update
+// Ficha médica (no existe `medico:edit`: se unificó en medico:update)
+medico:view, medico:update
 
 // RBAC
 rbac:view, rbac:manage, rbac:assign-role
+
+// Perfil propio
+self:view, self:update
+
+// Estructura organizacional
+organizacion:view, organizacion:create, organizacion:update, organizacion:delete
+
+// Módulos futuros (claves definidas, sin implementar aún)
+normativa:view, normativa:manage
+finanza:view, finanza:manage
+evento:view, evento:create
+inventario:view, inventario:manage
+asistencia:view, asistencia:manage
+formacion:view, formacion:manage
 ```
+
+> Fuente canónica: `PERMISSIONS` en `src/common/constantes.ts` (backend).
+> El frontend replica este catálogo en `frontend/src/types/auth.ts`; la paridad
+> está cubierta por `src/common/permisos-paridad.spec.ts`.
 
 ## Estructura del proyecto
 

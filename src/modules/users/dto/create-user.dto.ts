@@ -1,6 +1,5 @@
 import { IsEmail, IsString, IsOptional, IsBoolean, IsEnum, IsUUID } from 'class-validator';
 import { Transform } from 'class-transformer';
-import { ROLES } from '../../../common/constantes';
 
 export class CreateUserDto {
     @IsString({ message: 'El nombre es requerido' })

@@ -77,7 +77,7 @@ export class AdministrativoController {
     }
 
     @Post('ficha-medica')
-    @RequirePermission(PERMISSIONS.MEDICO_EDIT)
+    @RequirePermission(PERMISSIONS.MEDICO_UPDATE)
     async createFichaMedica(@Body() dto: CreateFichaMedicaDto, @Req() req: any) {
         // Self-scope: el rol JOVEN solo puede crear su propia ficha
         this.selfScope.assertSelf(req.user, dto.miembroId);

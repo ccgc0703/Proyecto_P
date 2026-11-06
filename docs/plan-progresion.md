@@ -1,8 +1,15 @@
 # Plan de Implementación — Progresión Personal de Jóvenes
 
 > **Estado:** Fase 0 ✅ · Fase 1 ✅ · Fase 2 ✅ · Fase 3 ✅ · Fase 4 ✅ · **Fase 5 ✅ ejecutada y verificada** · proyecto completo. Observaciones de revisión 1 ✅ y 2 ✅ aplicadas.
-> **Última actualización:** 2026-09-26
+> **Última actualización:** 2026-11-05
 > **Regla de oro:** no se ejecuta código sin aprobación previa de cada fase.
+>
+> ⚠️ **Documento histórico.** Refleja el estado del proyecto en el momento de su
+> redacción y **no se reescribe** para no perder el registro. La terminología se
+> unificó después: el sistema usa **UNIDAD** como único término (antes "rama") —
+> ver `docs/glosario-terminos.md`. Las tablas de permisos/roles que aparecen más
+> abajo (p. ej. `progresion:delete`, `medico:edit`, roles legacy) son el
+> catálogo de esa época, ya sustituido por el de `src/common/constantes.ts`.
 
 ---
 
@@ -48,7 +55,7 @@ Hay **dos conceptos distintos** que en las conversaciones iniciales se mezclaron
 | **Área de crecimiento** | Categoría de indicadores | **6**: Corporalidad, Creatividad, Carácter, Afectividad, Sociabilidad, Espiritualidad |
 | **Indicador de logro** | Comportamiento observable a evaluar | ~521 en total |
 | **Adelanto** | Nivel/rango alcanzable **dentro** de una unidad | 4 o 5 por unidad |
-| **Unidad** | Rama scout donde vive el joven | Manada, Tropa, Comunidad, Clan |
+| **Unidad** | Unidad scout donde vive el joven (Manada, Tropa, Comunidad, Clan) | Manada, Tropa, Comunidad, Clan |
 
 ### 2.1 Etapa ↔ Unidad
 

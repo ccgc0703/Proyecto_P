@@ -11,9 +11,8 @@ interface FichaMedicaPanelProps {
 
 export const FichaMedicaPanel = ({ miembroId, miembroNombre }: FichaMedicaPanelProps) => {
   const canViewMedico = usePermission('medico:view');
-  const canEditMedico = usePermission('medico:edit');
   const canUpdateMedico = usePermission('medico:update');
-  const canEdit = canEditMedico || canUpdateMedico;
+  const canEdit = canUpdateMedico;
   const { ficha, loading, reload } = useFichaMedica(miembroId || '');
   const [dialogOpen, setDialogOpen] = useState(false);
 

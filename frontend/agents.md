@@ -34,12 +34,23 @@ Desarrollar el frontend del Sistema de Gestión Scout utilizando React + TypeScr
   joven:create, joven:view, joven:update, joven:delete
   unidad:create, unidad:view, unidad:update, unidad:delete
   representante:create, representante:view, representante:update, representante:delete
-  progresion:create, progresion:view, progresion:update, progresion:delete, progresion:aprobar
+  progresion:create, progresion:view, progresion:update, progresion:aprobar
   catalogo:view, catalogo:manage
   condecoracion:create, condecoracion:view, condecoracion:update, condecoracion:delete, condecoracion:otorgar
-  medico:view, medico:edit, medico:update
+  medico:view, medico:update
   rbac:view, rbac:manage, rbac:assign-role
+  self:view, self:update
+  organizacion:view, organizacion:create, organizacion:update, organizacion:delete
+  normativa:view, normativa:manage
+  finanza:view, finanza:manage
+  evento:view, evento:create
+  inventario:view, inventario:manage
+  asistencia:view, asistencia:manage
+  formacion:view, formacion:manage
   ```
+  > Fuente canónica: `src/common/constantes.ts` (backend). Verificado por
+  > `src/common/permisos-paridad.spec.ts`. No existen `progresion:delete` ni
+  > `medico:edit` (retirados; ver glosario §10).
 
 ### 🏕️ Control de Acceso por Unidad
 - **ADULTO_MANADA**: Solo puede ver/gestionar jóvenes de **Manada**
@@ -49,20 +60,30 @@ Desarrollar el frontend del Sistema de Gestión Scout utilizando React + TypeScr
 - **SYSTEM_ADMIN, GROUP_LEADER, GROUP_SUBLEADER**: Acceso a todas las unidades
 
 ### 👥 Jerarquía de Roles
+Niveles de 1 (más privilegio) a 18. Un usuario solo asigna roles de nivel **estrictamente mayor** (menor privilegio).
+
 | Nivel | Rol |
 |-------|-----|
 | 1 | SYSTEM_ADMIN |
-| 2 | GROUP_LEADER |
-| 3 | GROUP_SUBLEADER |
-| 4 | ADULTO_MANADA |
-| 5 | ADULTO_TROPA |
-| 6 | ADULTO_COMUNIDAD |
-| 7 | ADULTO_CLAN |
-| 8 | SECRETARIO |
-| 9 | ADULTO_COLABORADOR |
-| 10 | CONSULTOR |
+| 2 | NATIONAL_BOARD |
+| 3 | NATIONAL_EXECUTIVE |
+| 4 | NATIONAL_DIR_JOVENES / NATIONAL_DIR_ADULTOS / NATIONAL_DIR_DESARROLLO |
+| 5 | NATIONAL_COLABORADOR |
+| 6 | REGION_COMMISSIONER |
+| 7 | REGION_ASSISTANT |
+| 8 | REGION_COLABORADOR |
+| 9 | DISTRICT_COMMISSIONER |
+| 10 | DISTRICT_ASSISTANT |
+| 11 | DISTRICT_COLABORADOR |
+| 12 | GROUP_LEADER |
+| 13 | GROUP_SUBLEADER |
+| 14 | REPRESENTANTE_UNIDAD |
+| 15 | ADULTO_MANADA / ADULTO_TROPA / ADULTO_COMUNIDAD / ADULTO_CLAN |
+| 16 | ADULTO_COLABORADOR |
+| 17 | CONSULTOR |
+| 18 | JOVEN |
 
-Un usuario no puede asignar roles iguales o superiores al suyo.
+Fuente canónica: `ROL_HIERARCHY` en `frontend/src/types/auth.ts` (refleja la validación del backend).
 
 ---
 

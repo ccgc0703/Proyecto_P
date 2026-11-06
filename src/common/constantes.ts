@@ -1,15 +1,6 @@
-export const ROLES = {
-    ADMIN: 'ADMINISTRADOR DEL SISTEMA',
-    JEFE_GRUPO: 'JEFE DE GRUPO',
-    SUBJEFE_GRUPO: 'SUBJEFE DE GRUPO',
-    ADULTO_MANADA: 'ADULTO MANADA',
-    ADULTO_TROPA: 'ADULTO TROPA',
-    ADULTO_CLAN: 'ADULTO CLAN',
-    ADULTO_COMUNIDAD: 'ADULTO COMUNIDAD',
-    ADULTO_COLABORADOR: 'ADULTO COLABORADOR',
-};
-
 // ─── RBAC: Nombres canónicos de roles en nueva tabla ───────────────────────
+// (Antes existía aquí un mapa `ROLES` legacy en español + `LEGACY_TO_RBAC_ROLE`
+//  y un `RolesGuard` paralelo; se eliminaron: sin usos y duplicaba PermissionsGuard.)
 export const RBAC_ROLES = {
     SYSTEM_ADMIN: 'SYSTEM_ADMIN',
     // Nacional
@@ -47,18 +38,6 @@ export const ROLES_EDITORES_ORGANIZACION: readonly string[] = [
     RBAC_ROLES.NATIONAL_EXECUTIVE,
 ];
 
-// Mapeo de rol legacy → nombre RBAC
-export const LEGACY_TO_RBAC_ROLE: Record<string, string> = {
-    [ROLES.ADMIN]: RBAC_ROLES.SYSTEM_ADMIN,
-    [ROLES.JEFE_GRUPO]: RBAC_ROLES.GROUP_LEADER,
-    [ROLES.SUBJEFE_GRUPO]: RBAC_ROLES.GROUP_SUBLEADER,
-    [ROLES.ADULTO_MANADA]: RBAC_ROLES.ADULTO_MANADA,
-    [ROLES.ADULTO_TROPA]: RBAC_ROLES.ADULTO_TROPA,
-    [ROLES.ADULTO_CLAN]: RBAC_ROLES.ADULTO_CLAN,
-    [ROLES.ADULTO_COMUNIDAD]: RBAC_ROLES.ADULTO_COMUNIDAD,
-    [ROLES.ADULTO_COLABORADOR]: RBAC_ROLES.ADULTO_COLABORADOR,
-};
-
 // ─── RBAC: Permisos atómicos por módulo ───────────────────────────────────
 export const PERMISSIONS = {
     // Usuarios
@@ -86,10 +65,11 @@ export const PERMISSIONS = {
     REPRESENTANTE_DELETE: 'representante:delete',
 
     // Scout (progresión, condecoraciones)
+    // Nota: no existe `progresion:delete` — las progresiones se rechazan con
+    // progresion:update (rechazar), nunca se borran.
     PROGRESION_CREATE: 'progresion:create',
     PROGRESION_VIEW: 'progresion:view',
     PROGRESION_UPDATE: 'progresion:update',
-    PROGRESION_DELETE: 'progresion:delete',
     PROGRESION_APROBAR: 'progresion:aprobar',
 
     // Catálogo de progresión (áreas, etapas, indicadores, adelantos)
@@ -102,9 +82,9 @@ export const PERMISSIONS = {
     CONDECORACION_DELETE: 'condecoracion:delete',
     CONDECORACION_OTORGAR: 'condecoracion:otorgar',
 
-    // Médico
+    // Médico (un único permiso de escritura: medico:update — antes convivía con
+    // el legacy medico:edit, ya eliminado)
     MEDICO_VIEW: 'medico:view',
-    MEDICO_EDIT: 'medico:edit',       // Legacy — mantener para compatibilidad
     MEDICO_UPDATE: 'medico:update',
 
     // RBAC administration
