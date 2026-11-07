@@ -169,6 +169,10 @@ export const eventosApi = {
     api.get(`/eventos/unidades/${unidadId}/asistencias`, { params }).then((r) => r.data.data),
 };
 
+export const dashboardApi = {
+  getResumen: () => api.get('/dashboard/resumen').then((r) => r.data.data),
+};
+
 export const descargarArchivo = (nombre: string, blob: Blob) => {
   const url = window.URL.createObjectURL(blob);
   const enlace = document.createElement('a');

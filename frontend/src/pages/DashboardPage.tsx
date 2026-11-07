@@ -1,24 +1,14 @@
-import { useEffect, useState } from 'react';
 import { useNavigate } from '@tanstack/react-router';
 import { useAuth } from '../hooks/useAuth';
-import { useCanViewAllUnidades } from '../hooks/useUnidad';
-import { api } from '../api';
+import { useResumenDashboard } from '../hooks/useDashboard';
 import { Card, KpiCard, PageHeader, Pill, StateBlock } from '../components/ui';
 import {
   Groups2,
-  HomeWork,
+  EventAvailable,
   TrendingUp,
   Place,
   ArrowForward,
 } from '@mui/icons-material';
-
-interface Stats {
-  totalJovenes: number;
-  manada: number;
-  tropa: number;
-  comunidad: number;
-  clan: number;
-}
 
 interface Actividad {
   id: number;
@@ -47,65 +37,83 @@ const ALCANCE_COLOR: Record<Actividad['alcance'], string> = {
 const CIRC = 251.2;
 const COLORES_UNIDAD = ['var(--color-primary)', 'var(--color-secondary)', 'var(--color-accent)', 'var(--color-outline)'];
 
+/** Color de barra según el porcentaje (semáforo suave). */
+const colorBarra = (pct: number): string =>
+  pct >= 70 ? 'var(--color-success)' : pct >= 40 ? 'var(--color-secondary)' : 'var(--color-warning)';
+
 export const DashboardPage = () => {
-  const { user, token } = useAuth();
+  const { user } = useAuth();
   const navigate = useNavigate();
-  const canViewAll = useCanViewAllUnidades();
-  const [stats, setStats] = useState<Stats | null>(null);
-  const [loading, setLoading] = useState(true);
+  const { data: resumen, loading, error, status, reload } = useResumenDashboard();
 
-  useEffect(() => {
-    if (!token) return;
+  const poblacion = resumen?.poblacion;
+  const progresion = resumen?.progresion;
+  const asistencia = resumen?.asistencia;
+  const alertas = resumen?.alertas ?? [];
 
-    const fetchStats = async () => {
-      try {
-        const response = await api.get('/jovenes/stats');
-        setStats(response.data.data);
-      } catch {
-        setStats({ totalJovenes: 0, manada: 0, tropa: 0, comunidad: 0, clan: 0 });
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchStats();
-  }, [token]);
-
-  const total = stats?.totalJovenes ?? 0;
-  const unidades: Array<{ nombre: string; valor: number }> = [
-    { nombre: 'Manada', valor: stats?.manada ?? 0 },
-    { nombre: 'Tropa', valor: stats?.tropa ?? 0 },
-    { nombre: 'Comunidad', valor: stats?.comunidad ?? 0 },
-    { nombre: 'Clan', valor: stats?.clan ?? 0 },
-  ];
-  const unidadesActivas = canViewAll ? 4 : 1;
+  const total = poblacion?.total ?? 0;
+  const varMes = poblacion?.varMensual ?? 0;
+  const unidades = poblacion?.porUnidad ?? [];
+  const solicitudes = progresion?.solicitudesPendientes ?? 0;
 
   /* Acumula el desplazamiento de cada arco del donut. */
   let acumulado = 0;
   const segmentos = unidades.map((u, i) => {
-    const largo = total > 0 ? (u.valor / total) * CIRC : 0;
-    const seg = { ...u, offset: acumulado, color: COLORES_UNIDAD[i] };
+    const largo = total > 0 ? (u.total / total) * CIRC : 0;
+    const seg = { ...u, offset: acumulado, color: COLORES_UNIDAD[i % COLORES_UNIDAD.length] };
     acumulado += largo;
     return seg;
   });
 
+  const cabecera = (
+    <PageHeader
+      titulo="Dashboard de inicio"
+      subtitulo={
+        <>
+          Bienvenido de nuevo al centro de comando, <b>{user?.nombre?.split(' ')[0]}</b>.
+        </>
+      }
+      acciones={
+        <>
+          <button type="button" className="btn btn-soft btn-sm">
+            <TrendingUp /> Generar Reporte
+          </button>
+          {/* La ruta /calendario llega en Fase 3c; hasta entonces no se enlaza. */}
+        </>
+      }
+    />
+  );
+
+  /* Fallo total sin datos: 403 → vista restringida (reintentar no ayuda);
+     cualquier otro fallo → estado de error con reintento. */
+  if (error && !resumen) {
+    const denegado = status === 403;
+    return (
+      <div className="animate-fade-in-up pb-12">
+        {cabecera}
+        <StateBlock
+          estado={denegado ? 'empty' : 'error'}
+          titulo={denegado ? 'Vista restringida' : undefined}
+          mensaje={
+            denegado
+              ? 'Tu rol no tiene acceso a las métricas del grupo. Pide a tu jefatura los permisos que necesites.'
+              : error
+          }
+          accion={
+            denegado ? undefined : (
+              <button type="button" className="btn btn-soft btn-sm" onClick={reload}>
+                Reintentar
+              </button>
+            )
+          }
+        />
+      </div>
+    );
+  }
+
   return (
     <div className="animate-fade-in-up pb-12">
-      <PageHeader
-        titulo="Dashboard de inicio"
-        subtitulo={
-          <>
-            Bienvenido de nuevo al centro de comando, <b>{user?.nombre?.split(' ')[0]}</b>.
-          </>
-        }
-        acciones={
-          <>
-            <button type="button" className="btn btn-soft btn-sm">
-              <TrendingUp /> Generar Reporte
-            </button>
-            {/* La ruta /calendario llega en Fase 3c; hasta entonces no se enlaza. */}
-          </>
-        }
-      />
+      {cabecera}
 
       {/* ── KPIs ─────────────────────────────────────────────────── */}
       <div className="kpis">
@@ -114,22 +122,31 @@ export const DashboardPage = () => {
           etiqueta="Total miembros"
           icono={<Groups2 />}
           valor={loading ? '—' : total}
-          nota={<Pill variante="blue" dot>Global</Pill>}
+          nota={
+            <Pill variante={varMes > 0 ? 'green' : varMes < 0 ? 'red' : 'grey'} dot>
+              {varMes > 0 ? `+${varMes}` : varMes} este mes
+            </Pill>
+          }
         />
         <KpiCard
           tono="distrito"
-          etiqueta="Unidades activas"
-          icono={<HomeWork />}
-          valor={unidadesActivas}
-          nota={<Pill variante="green" dot>Operativas</Pill>}
+          etiqueta="Asistencia 30 días"
+          icono={<EventAvailable />}
+          valor={loading ? '—' : asistencia?.promedio30d ?? 0}
+          sufijo="%"
+          nota={<Pill variante="blue" dot>Promedio móvil</Pill>}
         />
         <KpiCard
           tono="accent"
-          etiqueta="Tasa de crecimiento"
+          etiqueta="Progresión"
           icono={<TrendingUp />}
-          valor="+12"
+          valor={loading ? '—' : progresion?.promedioPorcentaje ?? 0}
           sufijo="%"
-          nota={<Pill variante="green" dot>+2 este mes</Pill>}
+          nota={
+            <Pill variante={solicitudes > 0 ? 'gold' : 'green'} dot>
+              {solicitudes > 0 ? `${solicitudes} solicitud(es)` : 'Sin solicitudes'}
+            </Pill>
+          }
         />
       </div>
 
@@ -154,16 +171,16 @@ export const DashboardPage = () => {
                     <circle cx="50" cy="50" r="40" fill="transparent" stroke="var(--color-surface-container-highest)" strokeWidth="12" />
                     {segmentos.map(
                       (s) =>
-                        s.valor > 0 && (
+                        s.total > 0 && (
                           <circle
-                            key={s.nombre}
+                            key={s.unidadId}
                             cx="50"
                             cy="50"
                             r="40"
                             fill="transparent"
                             stroke={s.color}
                             strokeWidth="12"
-                            strokeDasharray={`${(s.valor / total) * CIRC} ${CIRC}`}
+                            strokeDasharray={`${(s.total / total) * CIRC} ${CIRC}`}
                             strokeDashoffset={-s.offset}
                             strokeLinecap="round"
                           />
@@ -178,18 +195,116 @@ export const DashboardPage = () => {
 
                 <div className="dlegend">
                   {segmentos.map((s) => (
-                    <div className="li" key={s.nombre}>
+                    <div className="li" key={s.unidadId}>
                       <div className="top">
                         <i style={{ background: s.color }} />
                         <span>{s.nombre}</span>
                       </div>
                       <b>
-                        {s.valor}
-                        <em>{total > 0 ? `${Math.round((s.valor / total) * 100)}%` : '0%'}</em>
+                        {s.total}
+                        <em>{total > 0 ? `${Math.round((s.total / total) * 100)}%` : '0%'}</em>
                       </b>
                     </div>
                   ))}
                 </div>
+              </div>
+            )}
+          </Card>
+
+          {/* Asistencia: promedio, tendencia semanal y última actividad */}
+          <Card size="lg">
+            <div className="card-head">
+              <h3>Asistencia</h3>
+              {asistencia?.ultimaActividad && (
+                <span className="micro">Última: {asistencia.ultimaActividad.titulo}</span>
+              )}
+            </div>
+
+            {loading ? (
+              <StateBlock estado="loading" filas={3} />
+            ) : (
+              <div className="flex flex-col gap-4">
+                <div className="flex items-baseline gap-2">
+                  <b style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 34, letterSpacing: '-0.03em' }}>
+                    {asistencia?.promedio30d ?? 0}
+                  </b>
+                  <small className="micro">% promedio · últimos 30 días</small>
+                </div>
+
+                <div>
+                  <span className="micro">Tendencia semanal · 8 semanas</span>
+                  <div
+                    className="flex items-end gap-1.5 mt-2"
+                    style={{ height: 116 }}
+                    role="img"
+                    aria-label="Tendencia semanal de asistencia"
+                  >
+                    {(asistencia?.tendenciaSemanal ?? []).map((b) => (
+                      <div key={b.semana} className="flex flex-col items-center gap-1 min-w-0 flex-1 h-full">
+                        <span className="micro" style={{ fontSize: 9 }}>
+                          {b.porcentaje}
+                        </span>
+                        <div className="w-full flex-1 flex items-end min-h-0">
+                          <div
+                            className="w-full rounded-t-md"
+                            style={{
+                              height: `${Math.max(b.porcentaje, 2)}%`,
+                              minHeight: 4,
+                              background: colorBarra(b.porcentaje),
+                            }}
+                            title={`${b.semana}: ${b.porcentaje}%`}
+                          />
+                        </div>
+                        <span style={{ fontSize: 9, color: 'var(--color-outline)' }}>{b.semana.slice(5)}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+          </Card>
+
+          {/* Progresión: barras por unidad */}
+          <Card size="lg">
+            <div className="card-head">
+              <h3>Progresión por Unidad</h3>
+              <Pill variante="blue" dot>
+                {progresion?.adelantosAprobadosMes ?? 0} adelanto(s) este mes
+              </Pill>
+            </div>
+
+            {loading ? (
+              <StateBlock estado="loading" filas={3} />
+            ) : (progresion?.porUnidad.length ?? 0) === 0 ? (
+              <StateBlock
+                estado="empty"
+                titulo="Sin indicadores"
+                mensaje="Aún no hay indicadores de progresión registrados en tu ámbito."
+              />
+            ) : (
+              <div className="flex flex-col gap-3">
+                {(progresion?.porUnidad ?? []).map((u) => (
+                  <div key={u.unidadId} className="flex items-center gap-3">
+                    <span className="truncate" style={{ width: 96, fontSize: 12.5 }}>
+                      {u.nombre}
+                    </span>
+                    <div
+                      className="flex-1 h-2.5 rounded-full overflow-hidden min-w-0"
+                      style={{ background: 'var(--color-surface-container-highest)' }}
+                      role="progressbar"
+                      aria-valuenow={u.porcentaje}
+                      aria-valuemin={0}
+                      aria-valuemax={100}
+                      aria-label={`Progresión de ${u.nombre}`}
+                    >
+                      <div
+                        className="h-full rounded-full"
+                        style={{ width: `${u.porcentaje}%`, background: colorBarra(u.porcentaje) }}
+                      />
+                    </div>
+                    <b style={{ width: 44, textAlign: 'right', fontSize: 12.5 }}>{u.porcentaje}%</b>
+                  </div>
+                ))}
               </div>
             )}
           </Card>
@@ -228,6 +343,49 @@ export const DashboardPage = () => {
 
         {/* Columna lateral */}
         <div className="flex flex-col gap-[18px] min-w-0">
+          {/* Alertas del ámbito (calculadas en tiempo real por el backend) */}
+          <Card>
+            <div className="card-head">
+              <h3>Alertas</h3>
+              <Pill variante={alertas.length > 0 ? 'gold' : 'green'} dot>
+                {loading ? '…' : alertas.length}
+              </Pill>
+            </div>
+
+            {loading ? (
+              <StateBlock estado="loading" filas={2} />
+            ) : alertas.length === 0 ? (
+              <StateBlock
+                estado="empty"
+                titulo="Sin alertas"
+                mensaje="No hay pendientes que requieran tu atención."
+              />
+            ) : (
+              <ul className="flex flex-col gap-2.5 list-none p-0 m-0">
+                {alertas.map((a) => (
+                  <li key={a.tipo}>
+                    <button
+                      type="button"
+                      className="ag-item w-full cursor-pointer text-left"
+                      onClick={() => navigate({ to: a.link })}
+                    >
+                      <span className="ag-body">
+                        <h4 style={{ fontSize: 13 }}>{a.texto}</h4>
+                        <span className="ag-meta">
+                          <span className="ag-scope" style={{ color: 'var(--color-primary)' }}>
+                            <i style={{ background: 'var(--color-primary)' }} />
+                            {a.tipo.replace(/_/g, ' ').toLowerCase()}
+                          </span>
+                        </span>
+                      </span>
+                      <ArrowForward className="text-outline/40" sx={{ fontSize: 16 }} aria-hidden="true" />
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </Card>
+
           <section
             className="card card-lg relative overflow-hidden flex flex-col justify-between min-h-[300px]"
             style={{

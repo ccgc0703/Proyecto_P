@@ -10,8 +10,8 @@ test('admin: navega dashboard, miembros, progresión, estructura y staff', async
   });
 
   await navegar(page, 'Miembros', '/app/miembros', 'Miembros');
-  // DataGrid: fila de cabecera + al menos una fila de datos
-  await expect(page.locator('[role="row"]').nth(1)).toBeVisible({ timeout: 30_000 });
+  // Tabla nativa: cabecera + al menos una fila de datos (rol implícito de <tr>)
+  await expect(page.getByRole('row').nth(1)).toBeVisible({ timeout: 30_000 });
 
   await navegar(page, 'Progresión', '/app/progresion', 'Progresión');
   // En el primer arranque Vite compila este chunk bajo demanda
@@ -23,7 +23,7 @@ test('admin: navega dashboard, miembros, progresión, estructura y staff', async
   });
 
   await navegar(page, 'Staff', '/app/staff', 'Staff');
-  await expect(page.locator('[role="row"]').nth(1)).toBeVisible({ timeout: 30_000 });
+  await expect(page.getByRole('row').nth(1)).toBeVisible({ timeout: 30_000 });
 
   await page.getByRole('button', { name: 'Cerrar Sesión' }).click();
   await page.waitForURL('**/login', { timeout: 15_000 });
