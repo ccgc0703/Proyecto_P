@@ -2,8 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import {
   Dialog, DialogTitle, DialogContent, DialogActions
 } from '@mui/material';
-import { DataGrid, GridColDef, GridRenderCellParams } from '@mui/x-data-grid';
-import { Add, Search, Groups2, FilterList } from '@mui/icons-material';
+import { Add, Search, Groups2, Edit, Delete } from '@mui/icons-material';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useNavigate } from '@tanstack/react-router';
@@ -13,6 +12,7 @@ import { usePermission } from '../hooks/usePermission';
 import { useUnidad, useCanViewAllUnidades, ordenarPorUnidad } from '../hooks/useUnidad';
 import { Unidad } from '../types/auth';
 import { UnidadEntity } from '../types/member';
+import { PageHeader, DataTableShell, PieTabla, StateBlock } from '../components/ui';
 
 interface Joven {
   id: string;
@@ -39,6 +39,8 @@ type JovenFormData = z.infer<typeof jovenSchema>;
 export const MiembrosPage = () => {
   const canView = usePermission('joven:view');
   const canCreate = usePermission('joven:create');
+  const canUpdate = usePermission('joven:update');
+  const canDelete = usePermission('joven:delete');
   const unidadAsignada = useUnidad();
   const canViewAll = useCanViewAllUnidades();
   const navigate = useNavigate();
@@ -47,6 +49,8 @@ export const MiembrosPage = () => {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [filtroUnidad, setFiltroUnidad] = useState<string>('');
+  const [pagina, setPagina] = useState(1);
+  const [porPagina, setPorPagina] = useState(15);
   const [openDialog, setOpenDialog] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
@@ -156,60 +160,23 @@ export const MiembrosPage = () => {
     }
   };
 
-  const columns: GridColDef[] = [
-    { 
-      field: 'nombre', 
-      headerName: 'Miembro / Identidad', 
-      flex: 1.5, 
-      minWidth: 250,
-      renderCell: (p) => (
-        <div className="flex items-center gap-4 h-full">
-          <div className="w-10 h-10 rounded-2xl sentinel-gradient flex items-center justify-center text-on-primary font-black text-xs shadow-lg shadow-primary/20 rotate-3 group-hover:rotate-0 transition-all shrink-0">
-            {p.row.nombres.charAt(0)}{p.row.apellidos.charAt(0)}
-          </div>
-          <div className="flex flex-col justify-center overflow-hidden">
-            <span className="block font-black text-sm text-primary uppercase tracking-tight leading-none mb-1 truncate">{p.row.nombres} {p.row.apellidos}</span>
-            <span className="text-[10px] px-1.5 py-0.5 bg-surface-container-high text-outline font-black rounded uppercase tracking-widest border border-outline/5">{p.row.cedula}</span>
-          </div>
-        </div>
-      )
-    },
-    {
-      field: 'fechaNacimiento', 
-      headerName: 'Fecha Nacimiento', 
-      width: 180,
-      renderCell: (p) => (
-        <div className="flex flex-col justify-center h-full">
-          <span className="text-[11px] font-black text-outline uppercase tracking-widest">
-            {new Date(p.value).toLocaleDateString('es', { day: '2-digit', month: 'short', year: 'numeric' })}
-          </span>
-          <span className="text-[9px] font-bold text-primary opacity-50 uppercase tracking-tighter">Registro Civil</span>
-        </div>
-      ),
-    },
-    {
-      field: 'unidadStore', 
-      headerName: 'Unidad / Sección', 
-      width: 180,
-      renderCell: (p: GridRenderCellParams) => {
-        const u = p.row.unidad as string;
-        return (
-          <div className="flex items-center h-full">
-            <span className="text-[11px] font-black uppercase tracking-widest text-primary border-l-4 border-accent pl-3">
-              {u}
-            </span>
-          </div>
-        );
-      },
-    },
-  ];
-
-  const filtered = jovenes.filter((j) => {
-    const matchSearch = j.nombres.toLowerCase().includes(search.toLowerCase()) ||
-      j.apellidos.toLowerCase().includes(search.toLowerCase());
+  const filtrados = jovenes.filter((j) => {
+    const q = search.toLowerCase();
+    const matchSearch =
+      j.nombres.toLowerCase().includes(q) ||
+      j.apellidos.toLowerCase().includes(q) ||
+      j.cedula.toLowerCase().includes(q);
     const matchUnidad = !filtroUnidad || j.unidad === filtroUnidad;
     return matchSearch && matchUnidad;
   });
+
+  // Reinicia la paginación al cambiar los filtros.
+  useEffect(() => {
+    setPagina(1);
+  }, [search, filtroUnidad]);
+
+  const desde = (pagina - 1) * porPagina;
+  const visibles = filtrados.slice(desde, desde + porPagina);
 
   if (!canView) {
     return (
@@ -224,143 +191,157 @@ export const MiembrosPage = () => {
   }
 
   return (
-    <div className="space-y-6 animate-fade-in-up pb-8">
+    <div className="space-y-5 animate-fade-in-up pb-8">
       {/* Page Header */}
-      <header className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-surface-container-lowest p-6 rounded-[2rem] border border-outline-variant/10 shadow-sm">
-        <div className="flex items-center gap-4">
-          <div className="w-10 h-10 bg-primary/5 rounded-2xl flex items-center justify-center text-primary rotate-1 shadow-sm">
-            <Groups2 sx={{ fontSize: 24 }} />
-          </div>
-          <div>
-            <h2 className="text-xl font-black tracking-tight text-primary uppercase italic leading-none mb-1">Directorio de Miembros</h2>
-            <p className="text-[9px] font-bold text-outline uppercase tracking-[0.2em] opacity-40">{jovenes.length} Registros Activos • Nodo Operativo</p>
-          </div>
-        </div>
-
-        {canCreate && (
-          <button 
-            onClick={iniciarAlta}
-            className="sentinel-gradient px-4 py-2.5 rounded-xl text-on-primary font-black text-[10px] uppercase tracking-widest shadow-lg shadow-primary/20 hover:scale-105 active:scale-95 transition-all flex items-center gap-2"
-          >
-            <Add sx={{ fontSize: 16 }} />
-            <span>Nuevo Registro</span>
-          </button>
-        )}
-      </header>
+      <PageHeader
+        micro="Administración / Miembros"
+        titulo="Directorio de Miembros"
+        subtitulo={`${jovenes.length} Registros Activos · Nodo Operativo`}
+        acciones={
+          canCreate && (
+            <button type="button" className="btn btn-primary btn-sm" onClick={iniciarAlta}>
+              <Add />
+              <span>Nuevo Registro</span>
+            </button>
+          )
+        }
+      />
 
       {error && (
-        <div className="p-4 bg-error/10 border border-error/20 text-error rounded-xl text-sm font-bold flex justify-between items-center">
+        <div className="p-4 bg-error/10 border border-error/20 text-error rounded-xl text-sm font-bold flex justify-between items-center" role="alert">
           <span>{error}</span>
-          <button onClick={() => setError(null)} className="text-xs uppercase tracking-widest px-2 hover:underline">Cerrar</button>
+          <button type="button" onClick={() => setError(null)} className="text-xs uppercase tracking-widest px-2 hover:underline">Cerrar</button>
         </div>
       )}
 
-      {/* Control Bar */}
-      <section className="bg-surface-container-low p-3 rounded-[1.5rem] shadow-inner flex flex-col md:flex-row gap-4 items-center border border-outline-variant/10">
-        <div className="relative flex-1 w-full">
-          <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-primary">
-            <Search sx={{ fontSize: 18 }} />
-          </div>
-          <input
-            type="text"
-            placeholder="INTERROGAR MIEMBRO POR NOMBRE O CREDENCIAL..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-11 pr-4 py-3 bg-surface-container-lowest border-none rounded-xl text-[10px] text-on-surface font-black uppercase tracking-widest shadow-sm focus:ring-2 focus:ring-primary transition-all"
-          />
-        </div>
-
-        <div className="flex items-center gap-2 w-full md:w-auto">
-          <div className="hidden sm:flex items-center gap-2 text-outline px-3">
-            <FilterList fontSize="small" />
-            <span className="text-[10px] font-black uppercase tracking-widest opacity-60">Filtros</span>
-          </div>
-          {canViewAll && (
-            <select 
-              value={filtroUnidad}
-              onChange={(e) => setFiltroUnidad(e.target.value)}
-              className="px-4 py-3 bg-surface-container-high border-none rounded-xl text-sm text-on-surface font-bold focus:ring-2 focus:ring-primary min-w-[140px] appearance-none"
-            >
-              <option value="">Todas las Unidades</option>
-              <option value="MANADA">🟢 Manada</option>
-              <option value="TROPA">🟡 Tropa</option>
-              <option value="COMUNIDAD">🟠 Comunidad</option>
-              <option value="CLAN">🟣 Clan</option>
-            </select>
-          )}
-        </div>
-      </section>
-
-      {/* Main Table Container */}
-      <div className="rounded-[2rem] shadow-sm overflow-hidden bg-surface-container-lowest border border-outline-variant/10">
-        <div className="px-2 pb-4">
-          <DataGrid
-            rows={filtered}
-            columns={columns}
-            loading={loading}
-            initialState={{ pagination: { paginationModel: { pageSize: 15 } } }}
-            pageSizeOptions={[10, 15, 25, 50]}
-            autoHeight
-            rowHeight={72}
-            disableRowSelectionOnClick
-            disableColumnMenu
-            sx={{ 
-              border: 'none',
-              '& .MuiDataGrid-columnHeaders': {
-                backgroundColor: 'var(--color-surface-container-low)',
-                color: 'var(--color-primary)',
-                textTransform: 'uppercase',
-                fontSize: '11px',
-                letterSpacing: '0.15em',
-                fontWeight: '950',
-                borderRadius: '1rem',
-                border: 'none',
-                minHeight: '48px !important',
-              },
-              '& .MuiDataGrid-cell': {
-                display: 'flex !important',
-                alignItems: 'center !important',
-                padding: '10px 16px !important',
-                borderBottom: '1px solid var(--color-surface-container-low)',
-                lineHeight: 'normal !important',
-                '&:focus, &:focus-within': { outline: 'none' },
-                '& > div': {
-                  display: 'flex !important',
-                  alignItems: 'center !important',
-                  height: '100% !important',
-                  width: '100%',
-                },
-                '& *': {
-                  lineHeight: 'normal !important',
-                }
-              },
-              '& .MuiDataGrid-row': {
-                margin: '2px 0',
-                transition: 'background-color 0.2s',
-              },
-              '& .MuiDataGrid-row:hover': {
-                backgroundColor: 'var(--color-surface-container-low) !important',
-              },
-              '& .MuiDataGrid-footerContainer': {
-                borderTop: 'none',
-                marginTop: '1rem',
-                color: 'var(--color-outline)',
-                fontSize: '11px',
-                fontWeight: '900',
-                textTransform: 'uppercase',
-                letterSpacing: '0.1em',
-              },
-              '& .MuiTablePagination-root': {
-                color: 'inherit',
-              },
-              '& .MuiTablePagination-selectLabel, & .MuiTablePagination-displayedRows': {
-                fontSize: '10px',
-                fontWeight: '900',
-              },
+      {/* Tabla principal */}
+      <DataTableShell
+        herramientas={
+          <>
+            <div className="tbl-tools-l flex-none justify-end">
+              <label className="tbl-search">
+                <Search />
+                <input
+                  type="search"
+                  placeholder="Nombre o cédula..."
+                  aria-label="Buscar miembro"
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                />
+              </label>
+              {canViewAll && (
+                <label className="rows-sel">
+                  Unidad
+                  <select
+                    value={filtroUnidad}
+                    onChange={(e) => setFiltroUnidad(e.target.value)}
+                    aria-label="Filtrar por unidad"
+                  >
+                    <option value="">Todas</option>
+                    <option value="MANADA">Manada</option>
+                    <option value="TROPA">Tropa</option>
+                    <option value="COMUNIDAD">Comunidad</option>
+                    <option value="CLAN">Clan</option>
+                  </select>
+                </label>
+              )}
+            </div>
+          </>
+        }
+        pie={
+          <PieTabla
+            total={filtrados.length}
+            pagina={pagina}
+            porPagina={porPagina}
+            onPagina={setPagina}
+            onPorPagina={(n) => {
+              setPorPagina(n);
+              setPagina(1);
             }}
+            coleccion="miembros"
           />
-        </div>
-      </div>
+        }
+      >
+        {loading ? (
+          <div className="p-4">
+            <StateBlock estado="loading" filas={6} />
+          </div>
+        ) : filtrados.length === 0 ? (
+          <StateBlock
+            estado="empty"
+            titulo="Sin resultados"
+            mensaje="Ningún miembro coincide con la búsqueda o el filtro de unidad."
+          />
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="dt">
+              <caption>Listado de miembros registrados en el sistema</caption>
+              <thead>
+                <tr>
+                  <th scope="col">Miembro / Identidad</th>
+                  <th scope="col">Fecha Nacimiento</th>
+                  <th scope="col">Unidad / Sección</th>
+                  <th scope="col" style={{ textAlign: 'right' }}>Acciones</th>
+                </tr>
+              </thead>
+              <tbody>
+                {visibles.map((j) => (
+                  <tr key={j.id}>
+                    <td data-l="Miembro">
+                      <div className="cell-id">
+                        <span className="av-sq" aria-hidden="true">
+                          {j.nombres.charAt(0)}
+                          {j.apellidos.charAt(0)}
+                        </span>
+                        <span>
+                          <span className="nm">{j.nombres} {j.apellidos}</span>
+                          <span className="sub">{j.cedula}</span>
+                        </span>
+                      </div>
+                    </td>
+                    <td data-l="Fec. Nacimiento">
+                      {new Date(j.fechaNacimiento).toLocaleDateString('es', {
+                        day: '2-digit',
+                        month: 'short',
+                        year: 'numeric',
+                      })}
+                    </td>
+                    <td data-l="Unidad">
+                      <span className="chip chip-mono">{j.unidad}</span>
+                    </td>
+                    <td data-l="Acciones">
+                      <div className="row-acts">
+                        {canUpdate && (
+                          <button
+                            type="button"
+                            className="act-btn"
+                            aria-label={`Editar ${j.nombres} ${j.apellidos}`}
+                            title="Editar"
+                            onClick={() => handleOpenDialog(j)}
+                          >
+                            <Edit />
+                          </button>
+                        )}
+                        {canDelete && (
+                          <button
+                            type="button"
+                            className="act-btn danger"
+                            aria-label={`Eliminar ${j.nombres} ${j.apellidos}`}
+                            title="Eliminar"
+                            onClick={() => setDeleteConfirm(j.id)}
+                          >
+                            <Delete />
+                          </button>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </DataTableShell>
 
       {/* Form Dialog */}
       <Dialog open={openDialog} onClose={() => { setOpenDialog(false); reset(); }} maxWidth="sm" fullWidth PaperProps={{ className: 'rounded-[2rem] !bg-surface-container-lowest shadow-2xl animate-fade-in-up' }}>

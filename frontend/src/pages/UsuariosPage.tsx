@@ -2,14 +2,14 @@ import { useState, useEffect } from 'react';
 import {
   Dialog, DialogTitle, DialogContent, DialogActions
 } from '@mui/material';
-import { DataGrid, GridColDef, GridRenderCellParams } from '@mui/x-data-grid';
-import { Add, Edit, Delete, Search, PeopleAlt, Shield, FilterList } from '@mui/icons-material';
+import { Add, Edit, Delete, Search, Shield } from '@mui/icons-material';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { usuariosApi } from '../api';
 import { usePermission } from '../hooks/usePermission';
 import { User } from '../types/auth';
+import { PageHeader, DataTableShell, PieTabla, StateBlock, Pill } from '../components/ui';
 
 const userSchema = z.object({
   email: z.string().email('Email inválido'),
@@ -32,25 +32,20 @@ export const UsuariosPage = () => {
   const [usuarios, setUsuarios] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
+  const [pagina, setPagina] = useState(1);
+  const [porPagina, setPorPagina] = useState(15);
   const [openDialog, setOpenDialog] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [emptyMessage, setEmptyMessage] = useState('');
 
   const fetchUsuarios = async () => {
     try {
       setLoading(true);
       const data = await usuariosApi.getAll();
       setUsuarios(data);
-      if (data.length === 0) {
-        setEmptyMessage('No hay usuarios registrados. ¡Sé el primero en inscribir un agente!');
-      } else {
-        setEmptyMessage('');
-      }
     } catch {
       setError('Error al cargar usuarios');
-      setEmptyMessage('');
     } finally {
       setLoading(false);
     }
@@ -96,78 +91,22 @@ export const UsuariosPage = () => {
     }
   };
 
-  const columns: GridColDef[] = [
-    { 
-      field: 'nombre', 
-      headerName: 'Identidad del Agente', 
-      flex: 1, 
-      minWidth: 220,
-      renderCell: (p) => (
-        <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-lg sentinel-gradient flex items-center justify-center text-on-primary font-black text-[10px] shrink-0 shadow-sm">
-            {p.row.nombre.charAt(0)}{p.row.apellido?.charAt(0) || ''}
-          </div>
-          <div className="flex flex-col">
-            <span className="font-bold text-sm text-primary leading-tight">{p.row.nombre} {p.row.apellido}</span>
-            <span className="text-[10px] font-medium text-outline truncate max-w-[140px]">{p.row.email}</span>
-          </div>
-        </div>
-      )
-    },
-    {
-      field: 'roles', headerName: 'Privilegios / Roles', width: 220,
-      renderCell: (p: GridRenderCellParams) => (
-        <div className="flex items-center gap-1.5 flex-wrap">
-          {(p.value as string[])?.slice(0, 2).map((r: string) => (
-            <span key={r} className="bg-primary/5 text-primary px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-tighter">
-              {r.replace(/_/g, ' ')}
-            </span>
-          ))}
-          {(p.value as string[])?.length > 2 && (
-            <span className="text-[9px] font-bold text-outline">+{ (p.value as string[]).length - 2 }</span>
-          )}
-        </div>
-      ),
-    },
-    {
-      field: 'activo', headerName: 'Estado', width: 120,
-      renderCell: (p) => (
-        <div className={`px-2 py-1 rounded-md text-[9px] font-black uppercase tracking-widest flex items-center gap-1.5 ${p.value ? 'bg-success/10 text-success' : 'bg-outline/10 text-outline'}`}>
-          <span className={`w-1.5 h-1.5 rounded-full ${p.value ? 'bg-success' : 'bg-outline'}`} />
-          {p.value ? 'Operativo' : 'Inactivo'}
-        </div>
-      ),
-    },
-    {
-      field: 'actions', headerName: 'Acciones', width: 110, sortable: false,
-      renderCell: (p) => (
-        <div className="flex items-center gap-1">
-          {canUpdate && (
-            <button
-              onClick={() => handleOpenDialog(p.row)}
-              className="p-1.5 rounded-lg hover:bg-primary/10 text-primary transition-all"
-            >
-              <Edit fontSize="small" />
-            </button>
-          )}
-          {canDelete && (
-            <button
-              onClick={() => setDeleteConfirm(p.row.id)}
-              className="p-1.5 rounded-lg hover:bg-error/10 text-error transition-all"
-            >
-              <Delete fontSize="small" />
-            </button>
-          )}
-        </div>
-      ),
-    },
-  ];
-
-  const filtered = usuarios.filter((u) =>
-    u.nombre.toLowerCase().includes(search.toLowerCase()) ||
-    u.apellido?.toLowerCase().includes(search.toLowerCase()) ||
-    u.email.toLowerCase().includes(search.toLowerCase())
+  const filtrados = usuarios.filter(
+    (u) =>
+      u.nombre.toLowerCase().includes(search.toLowerCase()) ||
+      u.apellido?.toLowerCase().includes(search.toLowerCase()) ||
+      u.email.toLowerCase().includes(search.toLowerCase())
   );
+
+  // Reinicia la paginación al buscar.
+  useEffect(() => {
+    setPagina(1);
+  }, [search]);
+
+  const desde = (pagina - 1) * porPagina;
+  const visibles = filtrados.slice(desde, desde + porPagina);
+
+  const sinUsuarios = usuarios.length === 0 && !loading;
 
   if (!canView) {
     return (
@@ -182,111 +121,163 @@ export const UsuariosPage = () => {
   }
 
   return (
-    <div className="space-y-6 animate-fade-in-up">
+    <div className="space-y-5 animate-fade-in-up">
       {/* Page Header */}
-      <header className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <div className="flex items-center gap-4">
-          <div className="w-12 h-12 bg-secondary/10 rounded-2xl flex items-center justify-center text-secondary">
-            <PeopleAlt sx={{ fontSize: 32 }} />
-          </div>
-          <div>
-            <h2 className="text-2xl font-black tracking-tight text-primary">Directorio de Agentes</h2>
-            <p className="text-[10px] font-bold text-outline uppercase tracking-[0.2em]">{usuarios.length} Entidades Registradas</p>
-          </div>
-        </div>
-
-        {canCreate && (
-          <button 
-            onClick={() => handleOpenDialog()}
-            className="sentinel-gradient px-6 py-3 rounded-xl text-on-primary font-bold tracking-tight shadow-lg shadow-primary/20 hover:shadow-xl active:scale-95 transition-all flex items-center gap-2"
-          >
-            <Add fontSize="small" />
-            <span>Asignar Nuevo Agente</span>
-          </button>
-        )}
-      </header>
+      <PageHeader
+        micro="Administración / Usuarios"
+        titulo="Directorio de Agentes"
+        subtitulo={`${usuarios.length} Entidades Registradas`}
+        acciones={
+          canCreate && (
+            <button type="button" className="btn btn-primary" onClick={() => handleOpenDialog()}>
+              <Add />
+              <span>Asignar Nuevo Agente</span>
+            </button>
+          )
+        }
+      />
 
       {error && (
-        <div className="p-4 bg-error/10 border border-error/20 text-error rounded-xl text-sm font-bold flex justify-between items-center animate-fade-in">
+        <div className="p-4 bg-error/10 border border-error/20 text-error rounded-xl text-sm font-bold flex justify-between items-center animate-fade-in" role="alert">
           <span>{error}</span>
-          <button onClick={() => setError(null)} className="text-xs uppercase tracking-widest px-2 hover:underline">Saber más</button>
+          <button type="button" onClick={() => setError(null)} className="text-xs uppercase tracking-widest px-2 hover:underline">Cerrar</button>
         </div>
       )}
 
-      {/* Empty state */}
-      {usuarios.length === 0 && !loading && (
-        <div className="p-8 text-center animate-fade-in-up">
-          <Shield className="text-error text-5xl opacity-20" fontSize="large" />
-          <h3 className="text-xl font-black text-error mt-4">Sin usuarios registrados</h3>
-          <p className="text-base text-outline/60 mb-6">{emptyMessage}</p>
-          {canCreate && (
-            <button 
-              onClick={() => handleOpenDialog()}
-              className="sentinel-gradient px-6 py-3 rounded-xl text-on-primary font-bold tracking-tight shadow-lg shadow-primary/20 hover:shadow-xl transition-all"
-            >
-              <Add fontSize="small" />
-              <span>Inscribir Primer Agente</span>
-            </button>
-          )}
-        </div>
-      )}
-
-      {/* Control Bar */}
-      <section className="bg-surface-container-low p-4 rounded-2xl shadow-sm flex flex-col md:flex-row gap-4 items-center">
-        <div className="relative flex-1 w-full">
-          <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-outline">
-            <Search fontSize="small" />
-          </div>
-          <input
-            type="text"
-            placeholder="Interrogando directorio de usuarios..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-12 pr-4 py-3 bg-surface-container-high border-none rounded-xl text-sm text-on-surface placeholder:text-outline/50 focus:ring-2 focus:ring-primary transition-all font-medium"
+      {/* Tabla principal */}
+      <DataTableShell
+        herramientas={
+          <>
+            <div className="tbl-titles">
+              <span className="micro">Listado Maestro</span>
+              <h3>Base de Datos — Agentes</h3>
+            </div>
+            <div className="tbl-tools-l flex-none justify-end">
+              <label className="tbl-search">
+                <Search />
+                <input
+                  type="search"
+                  placeholder="Buscar usuario..."
+                  aria-label="Buscar usuario"
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                />
+              </label>
+            </div>
+          </>
+        }
+        pie={
+          <PieTabla
+            total={filtrados.length}
+            pagina={pagina}
+            porPagina={porPagina}
+            onPagina={setPagina}
+            onPorPagina={(n) => {
+              setPorPagina(n);
+              setPagina(1);
+            }}
+            coleccion="entidades"
           />
-        </div>
-
-        <div className="flex items-center gap-2 w-full md:w-auto px-2">
-          <FilterList fontSize="small" className="text-outline/40" />
-          <span className="text-[10px] font-black uppercase tracking-widest text-outline/40">Filtro Inteligente</span>
-        </div>
-      </section>
-
-      {/* Table Container */}
-      <div className="rounded-[2rem] shadow-sm overflow-hidden bg-surface-container-lowest">
-        <DataGrid
-          rows={filtered}
-          columns={columns}
-          loading={loading}
-          initialState={{ pagination: { paginationModel: { pageSize: 15 } } }}
-          pageSizeOptions={[10, 15, 25, 50]}
-          autoHeight
-          disableRowSelectionOnClick
-          disableColumnMenu
-          sx={{ 
-            border: 'none',
-            '& .MuiDataGrid-columnHeaders': {
-              backgroundColor: 'var(--color-surface-container-highest)',
-              color: 'var(--color-outline)',
-              textTransform: 'uppercase',
-              fontSize: '10px',
-              letterSpacing: '0.15em',
-              fontWeight: '900',
-              borderBottom: 'none',
-            },
-            '& .MuiDataGrid-cell': {
-              borderBottom: 'none',
-              padding: '16px',
-            },
-            '& .MuiDataGrid-row:nth-of-type(odd)': {
-              backgroundColor: 'var(--color-surface-container-low)',
-            },
-            '& .MuiDataGrid-row:hover': {
-              backgroundColor: 'var(--color-surface-container-high) !important',
-            },
-          }}
-        />
-      </div>
+        }
+      >
+        {loading ? (
+          <div className="p-4">
+            <StateBlock estado="loading" filas={6} />
+          </div>
+        ) : sinUsuarios ? (
+          <StateBlock
+            estado="empty"
+            titulo="Sin usuarios registrados"
+            mensaje="No hay usuarios registrados. ¡Sé el primero en inscribir un agente!"
+            accion={
+              canCreate && (
+                <button type="button" className="btn btn-primary btn-sm mt-1" onClick={() => handleOpenDialog()}>
+                  <Add />
+                  <span>Inscribir Primer Agente</span>
+                </button>
+              )
+            }
+          />
+        ) : filtrados.length === 0 ? (
+          <StateBlock estado="empty" titulo="Sin resultados" mensaje="Ningún agente coincide con la búsqueda." />
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="dt">
+              <caption>Listado de usuarios del sistema</caption>
+              <thead>
+                <tr>
+                  <th scope="col">Identidad del Agente</th>
+                  <th scope="col">Privilegios / Roles</th>
+                  <th scope="col">Estado</th>
+                  <th scope="col" style={{ textAlign: 'right' }}>Acciones</th>
+                </tr>
+              </thead>
+              <tbody>
+                {visibles.map((u) => {
+                  const roles = u.roles ?? [];
+                  const visibles2 = roles.slice(0, 2);
+                  const extra = roles.length - visibles2.length;
+                  return (
+                    <tr key={u.id}>
+                      <td data-l="Identidad">
+                        <div className="cell-id">
+                          <span className="av-sq alt" aria-hidden="true">
+                            {u.nombre.charAt(0)}
+                            {u.apellido?.charAt(0) || ''}
+                          </span>
+                          <span>
+                            <span className="nm">{u.nombre} {u.apellido}</span>
+                            <span className="sub">{u.email}</span>
+                          </span>
+                        </div>
+                      </td>
+                      <td data-l="Roles">
+                        <div className="chip-row">
+                          {visibles2.map((r) => (
+                            <span key={r} className="chip chip-mono">{r.replace(/_/g, ' ')}</span>
+                          ))}
+                          {extra > 0 && <span className="chip-more">+{extra}</span>}
+                        </div>
+                      </td>
+                      <td data-l="Estado">
+                        <Pill variante={u.activo ? 'green' : 'grey'} dot>
+                          {u.activo ? 'Operativo' : 'Inactivo'}
+                        </Pill>
+                      </td>
+                      <td data-l="Acciones">
+                        <div className="row-acts">
+                          {canUpdate && (
+                            <button
+                              type="button"
+                              className="act-btn"
+                              aria-label={`Editar ${u.nombre}`}
+                              title="Editar"
+                              onClick={() => handleOpenDialog(u)}
+                            >
+                              <Edit />
+                            </button>
+                          )}
+                          {canDelete && (
+                            <button
+                              type="button"
+                              className="act-btn danger"
+                              aria-label={`Eliminar ${u.nombre}`}
+                              title="Eliminar"
+                              onClick={() => setDeleteConfirm(u.id)}
+                            >
+                              <Delete />
+                            </button>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </DataTableShell>
 
       {/* Form Dialog */}
       <Dialog open={openDialog} onClose={() => { setOpenDialog(false); reset(); }} maxWidth="sm" fullWidth PaperProps={{ className: 'rounded-[2rem] !bg-surface-container-lowest shadow-2xl animate-fade-in-up' }}>
