@@ -1,4 +1,5 @@
 import { useNavigate, useRouterState } from '@tanstack/react-router';
+import type { ReactNode } from 'react';
 import { useAuth } from '../../hooks/useAuth';
 import { usePermission } from '../../hooks/usePermission';
 import {
@@ -7,7 +8,6 @@ import {
   Groups2,
   ChevronLeft,
   Logout,
-  Shield,
   ManageAccounts,
   ChildCare,
   SportsHandball,
@@ -20,22 +20,29 @@ import {
   CalendarMonth,
 } from '@mui/icons-material';
 
+/** Anchos en px — solo para quien necesite el valor numérico.
+ *  El layout real los lee de `--sb-w` / `--sb-w-min` en `index.css`. */
 export const DRAWER_WIDTH_EXPANDED = 260;
 export const DRAWER_WIDTH_COLLAPSED = 80;
 
 interface SidebarProps {
+  /** `true` = expandido; `false` = colapsado a iconos. */
   open: boolean;
   onToggle: () => void;
+  /** Drawer en móvil (≤860px). `true` = visible. */
+  mobileOpen?: boolean;
+  /** Cierra el drawer móvil (al navegar o pulsar el backdrop). */
+  onCloseMobile?: () => void;
 }
 
 interface NavItem {
   text: string;
-  icon: React.ReactNode;
+  icon: ReactNode;
   path: string;
   permission: boolean;
 }
 
-export const Sidebar = ({ open, onToggle }: SidebarProps) => {
+export const Sidebar = ({ open, onToggle, mobileOpen = false, onCloseMobile }: SidebarProps) => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const routerState = useRouterState();
@@ -55,7 +62,12 @@ export const Sidebar = ({ open, onToggle }: SidebarProps) => {
     navigate({ to: '/login' });
   };
 
-  const isActive = (path: string) => currentPath === path || currentPath.startsWith(path + '/');
+  // "/" solo marca activo en el dashboard: sin esto, `/app/xxx`
+  // también activaba Dashboard por el prefijo.
+  const isActive = (path: string) =>
+    path === '/app'
+      ? currentPath === '/app'
+      : currentPath === path || currentPath.startsWith(path + '/');
 
   const mainItems: NavItem[] = [
     { text: 'Dashboard', icon: <Dashboard />, path: '/app', permission: true },
@@ -71,25 +83,37 @@ export const Sidebar = ({ open, onToggle }: SidebarProps) => {
       text: 'Manada',
       icon: <ChildCare />,
       path: '/app/manada',
-      permission: canViewUnidades && !esJoven && (!user?.roles.some(isRestricted) || user?.roles.includes('ADULTO_MANADA'))
+      permission:
+        canViewUnidades &&
+        !esJoven &&
+        (!user?.roles.some(isRestricted) || user?.roles.includes('ADULTO_MANADA')),
     },
     {
       text: 'Tropa',
       icon: <SportsHandball />,
       path: '/app/tropa',
-      permission: canViewUnidades && !esJoven && (!user?.roles.some(isRestricted) || user?.roles.includes('ADULTO_TROPA'))
+      permission:
+        canViewUnidades &&
+        !esJoven &&
+        (!user?.roles.some(isRestricted) || user?.roles.includes('ADULTO_TROPA')),
     },
     {
       text: 'Comunidad',
       icon: <Route />,
       path: '/app/comunidad',
-      permission: canViewUnidades && !esJoven && (!user?.roles.some(isRestricted) || user?.roles.includes('ADULTO_COMUNIDAD'))
+      permission:
+        canViewUnidades &&
+        !esJoven &&
+        (!user?.roles.some(isRestricted) || user?.roles.includes('ADULTO_COMUNIDAD')),
     },
     {
       text: 'Clan',
       icon: <AutoStories />,
       path: '/app/clan',
-      permission: canViewUnidades && !esJoven && (!user?.roles.some(isRestricted) || user?.roles.includes('ADULTO_CLAN'))
+      permission:
+        canViewUnidades &&
+        !esJoven &&
+        (!user?.roles.some(isRestricted) || user?.roles.includes('ADULTO_CLAN')),
     },
     {
       text: esJoven ? 'Mi Progresión' : 'Progresión',
@@ -100,7 +124,12 @@ export const Sidebar = ({ open, onToggle }: SidebarProps) => {
     { text: 'Unidades', icon: <ChildCare />, path: '/app/unidades', permission: canViewUnidades },
     { text: 'Eventos', icon: <CalendarMonth />, path: '/app/eventos', permission: canViewEventos },
     { text: 'Usuarios', icon: <PeopleAlt />, path: '/app/usuarios', permission: canViewUsuarios },
-    { text: 'Estructura', icon: <AccountTree />, path: '/app/estructura', permission: canViewOrganizacion && !esJoven },
+    {
+      text: 'Estructura',
+      icon: <AccountTree />,
+      path: '/app/estructura',
+      permission: canViewOrganizacion && !esJoven,
+    },
     { text: 'Staff', icon: <ManageAccounts />, path: '/app/staff', permission: canViewRBAC },
   ].filter((i) => i.permission);
 
@@ -108,117 +137,103 @@ export const Sidebar = ({ open, onToggle }: SidebarProps) => {
     ? user.nombre.charAt(0).toUpperCase() + (user.apellido?.charAt(0).toUpperCase() || '')
     : '?';
 
+  const goTo = (path: string) => {
+    navigate({ to: path });
+    onCloseMobile?.();
+  };
+
+  /** Botón de un ítem de navegación. Se llama como función (no como
+   *  componente) para que React no remonte el árbol en cada render. */
+  const renderNav = (item: NavItem) => {
+    const active = isActive(item.path);
+    return (
+      <button
+        key={item.path}
+        type="button"
+        onClick={() => goTo(item.path)}
+        aria-current={active ? 'page' : undefined}
+        className={`sb-item${active ? ' on' : ''}`}
+        title={!open ? item.text : undefined}
+      >
+        {item.icon}
+        <span className="lbl">{item.text}</span>
+      </button>
+    );
+  };
+
   return (
-    <aside
-      className={`fixed top-0 left-0 z-40 h-screen transition-all duration-300 flex flex-col bg-surface-container-low/80 backdrop-blur-xl shadow-2xl ${open ? 'w-[260px]' : 'w-[80px]'
-        }`}
-    >
-      {/* Header / Logo */}
-      <div className="h-16 flex items-center justify-between px-4">
-        <div className={`flex items-center gap-3 transition-opacity duration-200 ${open ? 'opacity-100' : 'opacity-0 w-0 overflow-hidden'}`}>
-          <div className="w-8 h-8 sentinel-gradient rounded-lg flex items-center justify-center shadow-md">
-            <Shield className="text-on-primary !text-[18px]" />
-          </div>
-          <div>
-            <h2 className="text-sm font-black tracking-tighter leading-none text-primary">Grupo Scout</h2>
-            <p className="text-[9px] uppercase tracking-[0.1em] text-outline font-bold">Sentinel Protocol</p>
-          </div>
-        </div>
-        <button
-          onClick={onToggle}
-          className="p-1.5 rounded-lg hover:bg-surface-container-high text-outline transition-colors"
-        >
-          {open ? <ChevronLeft /> : <MenuOpen />}
-        </button>
-      </div>
-
-      {/* Nav Content */}
-      <div className="flex-1 overflow-y-auto overflow-x-hidden p-3 space-y-6">
-        {/* Main Section */}
-        <nav className="space-y-1">
-          {mainItems.map((item) => {
-            const active = isActive(item.path);
-            return (
-              <button
-                key={item.path}
-                onClick={() => navigate({ to: item.path })}
-                className={`w-full flex items-center gap-4 p-3 rounded-xl transition-all group ${active
-                    ? 'sentinel-gradient text-on-primary shadow-lg shadow-primary/20'
-                    : 'text-on-surface-variant hover:bg-surface-container-high hover:text-primary'
-                  }`}
-              >
-                <div className={`transition-transform duration-200 group-hover:scale-110 ${active ? 'text-accent' : ''}`}>
-                  {item.icon}
-                </div>
-                {open && <span className="text-sm font-bold tracking-tight">{item.text}</span>}
-              </button>
-            );
-          })}
-        </nav>
-
-        {/* Admin Section */}
-        {managementItems.length > 0 && (
-          <div className="space-y-2">
-            {open ? (
-              <h3 className="px-3 text-[10px] font-black uppercase tracking-[0.2em] text-outline/60">
-                Administración
-              </h3>
-            ) : (
-              <div className="mx-2 border-t border-outline-variant/20" />
-            )}
-            <nav className="space-y-1">
-              {managementItems.map((item) => {
-                const active = isActive(item.path);
-                return (
-                  <button
-                    key={item.path}
-                    onClick={() => navigate({ to: item.path })}
-                    className={`w-full flex items-center gap-4 p-3 rounded-xl transition-all group ${active
-                        ? 'sentinel-gradient text-on-primary shadow-lg shadow-primary/20'
-                        : 'text-on-surface-variant hover:bg-surface-container-high hover:text-primary'
-                      }`}
-                  >
-                    <div className={`transition-transform duration-200 group-hover:scale-110 ${active ? 'text-accent' : ''}`}>
-                      {item.icon}
-                    </div>
-                    {open && <span className="text-sm font-bold tracking-tight">{item.text}</span>}
-                  </button>
-                );
-              })}
-            </nav>
-          </div>
-        )}
-      </div>
-
-      {/* User Footer */}
-      <div className="p-3 space-y-3">
-        {user && (
-          <div className={`bg-surface-container-high rounded-2xl transition-all ${open ? 'p-3' : 'p-1'}`}>
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl sentinel-gradient flex items-center justify-center text-on-primary font-black text-xs shadow-md shrink-0">
-                {initials}
-              </div>
-              {open && (
-                <div className="min-w-0 flex-1">
-                  <h4 className="text-xs font-black text-primary truncate leading-tight">{user.nombre}</h4>
-                  <p className="text-[10px] text-outline font-bold truncate uppercase tracking-tighter">
-                    {user.roles[0]?.replace(/_/g, ' ')}
-                  </p>
-                </div>
-              )}
+    <>
+      <aside
+        id="sidebar"
+        aria-label="Navegación principal"
+        className={['sb', !open && 'sb-min', mobileOpen && 'sb-open'].filter(Boolean).join(' ')}
+      >
+        <div className="sb-head">
+          <div className="sb-brand">
+            <div className="sb-logo" aria-hidden="true">
+              <svg viewBox="0 0 24 24">
+                <path d="M12 2l8 4v6c0 5-3.5 8.5-8 10-4.5-1.5-8-5-8-10V6l8-4z" />
+                <path d="M9 12l2 2 4-4" />
+              </svg>
+            </div>
+            <div>
+              <h2>Grupo Scout</h2>
+              <p>Sentinel Protocol</p>
             </div>
           </div>
-        )}
+          <button
+            type="button"
+            className="sb-toggle"
+            onClick={onToggle}
+            aria-label={open ? 'Contraer menú' : 'Expandir menú'}
+            aria-expanded={open}
+          >
+            {open ? <ChevronLeft /> : <MenuOpen />}
+          </button>
+        </div>
 
-        <button
-          onClick={handleLogout}
-          className={`w-full flex items-center gap-4 p-3 rounded-xl text-error bg-error/5 hover:bg-error/10 transition-all group ${!open && 'justify-center'
-            }`}
-        >
-          <Logout className="group-hover:-translate-x-1 transition-transform" />
-          {open && <span className="text-sm font-bold tracking-tight">Cerrar Sesión</span>}
-        </button>
-      </div>
-    </aside>
+        <div className="sb-scroll">
+          <div className="sb-sect">
+            <h3 className="lbl">Principal</h3>
+            {mainItems.map(renderNav)}
+          </div>
+
+          {managementItems.length > 0 && (
+            <div className="sb-sect">
+              <h3 className="lbl">Administración</h3>
+              {managementItems.map(renderNav)}
+            </div>
+          )}
+        </div>
+
+        <div className="sb-foot">
+          {user && (
+            <div className="sb-user">
+              <div className="av" aria-hidden="true">
+                {initials}
+              </div>
+              <div className="sb-user-meta">
+                <h4>{user.nombre}</h4>
+                <p>{user.roles[0]?.replace(/_/g, ' ')}</p>
+              </div>
+            </div>
+          )}
+
+          <button type="button" className="sb-out" onClick={handleLogout}>
+            <Logout />
+            <span className="lbl">Cerrar sesión</span>
+          </button>
+        </div>
+      </aside>
+
+      {/* Backdrop del drawer en móvil */}
+      <button
+        type="button"
+        aria-label="Cerrar menú"
+        tabIndex={mobileOpen ? 0 : -1}
+        className={`sb-backdrop${mobileOpen ? ' on' : ''}`}
+        onClick={onCloseMobile}
+      />
+    </>
   );
 };
