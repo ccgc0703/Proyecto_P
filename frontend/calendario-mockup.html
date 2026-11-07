@@ -1,0 +1,500 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Calendario Sentinel Protocol - Mockup</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700&family=DM+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500;1,600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #f9faf7;
+      --bg-subtle: #f3f4f1;
+      --surface: #ffffff;
+      --surface-low: #f8f9fa;
+      --primary: #003629;
+      --primary-light: #1b4d3e;
+      --primary-hover: #002a22;
+      --accent: #ffb800;
+      --accent-soft: rgba(255, 184, 0, 0.15);
+      --text: #191c1b;
+      --text-secondary: #404945;
+      --border: #e2e3e0;
+      --error: #b00020;
+      --success: #003629;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Manrope', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+    }
+
+    h1, h2, h3, h4, h5, h6 {
+      font-family: 'DM Sans', sans-serif;
+      font-weight: 700;
+    }
+
+    /* Background atmosphere */
+    .bg-atmosphere {
+      position: fixed;
+      inset: 0;
+      background: 
+        radial-gradient(ell 80% 50% at 20% 20%, rgba(0, 54, 41, 0.08) 0%, transparent 50%),
+        radial-gradient(ell 60% 40% at 80% 80%, rgba(255, 184, 0, 0.05) 0%, transparent 50%),
+        linear-gradient(180deg, var(--bg) 0%, var(--bg-subtle) 100%);
+      pointer-events: none;
+      z-index: -1;
+    }
+
+    /* Subtle grid pattern */
+    .grid-overlay {
+      position: fixed;
+      inset: 0;
+      background-image: 
+        linear-gradient(var(--border) 1px, transparent 1px),
+        linear-gradient(90deg, var(--border) 1px, transparent 1px);
+      background-size: 60px 60px;
+      opacity: 0.03;
+      pointer-events: none;
+      z-index: -1;
+      mask-image: radial-gradient(ell 80% 60% at 50% 50%, black, transparent);
+    }
+
+    /* Calendar grid */
+    .calendar-grid {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 4px;
+      margin-top: 8px;
+    }
+
+    .calendar-cell {
+      aspect-ratio: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      font-weight: 600;
+      border-radius: 6px;
+      transition: all 0.2s ease;
+    }
+
+    .calendar-cell.empty {
+      background: transparent;
+      border: 1px solid var(--border);
+    }
+
+    .calendar-cell.today {
+      background: var(--primary);
+      color: white;
+    }
+
+    .calendar-cell.has-event {
+      background: var(--accent-soft);
+      border: 1px solid var(--accent);
+      color: var(--primary);
+    }
+
+    .calendar-cell.range-start {
+      border-radius: 6px 0 0 6px;
+      background: var(--primary-light);
+      color: var(--primary);
+    }
+
+    .calendar-cell.range-end {
+      border-radius: 0 6px 6px 0;
+      background: var(--primary-light);
+      color: var(--primary);
+    }
+
+    .calendar-cell.range-middle {
+      background: var(--accent-soft);
+      border: 1px solid var(--accent);
+    }
+
+    .calendar-cell.range-continuous {
+      border-radius: 0;
+    }
+
+    /* Navigation buttons */
+    .nav-btn {
+      width: 40px;
+      height: 40px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: var(--surface);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--text);
+      transition: all 0.2s ease;
+    }
+
+    .nav-btn:hover {
+      border-color: var(--primary);
+      background: var(--primary-light);
+      color: var(--primary);
+    }
+
+    .nav-btn:focus-visible {
+      outline: 2px solid var(--accent);
+      outline-offset: 2px;
+    }
+
+    /* Panel styles */
+    .panel {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 24px;
+      transition: box-shadow 0.2s ease;
+    }
+
+    .panel:hover {
+      box-shadow: 0 4px 20px rgba(0, 54, 41, 0.08);
+    }
+
+    /* Action button */
+    .action-btn {
+      background: var(--primary);
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 8px;
+      font-family: 'DM Sans', sans-serif;
+      font-weight: 600;
+      font-size: 14px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .action-btn:hover {
+      background: var(--primary-hover);
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(0, 54, 41, 0.25);
+    }
+
+    .action-btn.secondary {
+      background: var(--surface);
+      color: var(--primary);
+      border: 1px solid var(--border);
+    }
+
+    .action-btn.secondary:hover {
+      border-color: var(--primary);
+      background: var(--primary-light);
+      color: var(--primary);
+    }
+
+    /* Form inputs */
+    .form-input {
+      width: 100%;
+      padding: 12px 16px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-family: 'Manrope', sans-serif;
+      font-size: 14px;
+      background: var(--surface);
+      color: var(--text);
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    .form-input:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px var(--primary-light);
+    }
+
+    .form-input::placeholder {
+      color: var(--text-secondary);
+    }
+
+    /* Select styles */
+    .select-input {
+      appearance: none;
+      background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23404945' stroke-width='2' stroke-linecap='round' stroke-linecap='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E") no-repeat right 12px center;
+      padding-right: 40px;
+    }
+
+    /* Tag styles */
+    .tag {
+      display: inline-flex;
+      align-items: center;
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .tag-primary {
+      background: var(--primary-light);
+      color: var(--primary);
+    }
+
+    .tag-accent {
+      background: var(--accent-soft);
+      color: var(--accent);
+    }
+
+    /* Status pill */
+    .status-pill {
+      display: inline-flex;
+      align-items: center;
+      padding: 6px 12px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    .status-operativo {
+      background: rgba(0, 54, 41, 0.1);
+      color: var(--primary);
+    }
+
+    .status-inactivo {
+      background: var(--bg-subtle);
+      color: var(--text-secondary);
+    }
+
+    /* Reduced motion */
+    @media (prefers-reduced-motion: reduce) {
+      * {
+        transition: none !important;
+        animation: none !important;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="bg-atmosphere"></div>
+  <div class="grid-overlay"></div>
+
+  <main class="max-w-7xl mx-auto px-4 py-8">
+
+    <!-- Header -->
+    <header class="mb-8 animate-fade-in" style="animation-delay: 0ms;">
+      <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 sm:gap-6">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-xl sentinel-gradient flex items-center justify-center text-on-primary font-black text-xs">
+            SC
+          </div>
+          <div>
+            <h1 class="text-2xl font-black tracking-tight text-primary">Sentinel Protocol</h1>
+            <p class="text-[10px] font-bold text-outline uppercase tracking-[0.2em] text-primary/60">Sistema de Gestión Scout</p>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-3">
+          <select class="select-input py-3 px-4 rounded-xl text-sm font-medium border-none focus-ring-primary" style="width: 200px;">
+            <option>Mi unidad</option>
+            <option>Todas las unidades</option>
+          </select>
+        </div>
+      </div>
+    </header>
+
+    <!-- Calendar section -->
+    <section class="grid lg:grid-cols-2 gap-6 mb-8 animate-fade-in" style="animation-delay: 100ms;">
+      
+      <!-- Calendar view -->
+      <div class="panel lg:panels-lg">
+        <h2 class="text-sm font-black uppercase tracking-[0.2em] text-primary/60 mb-4">Calendario de Planificaciones</h2>
+        
+        <div class="flex items-center gap-3 mb-6">
+          <button class="nav-btn" aria-label="Mes anterior">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="15 18 9 12 15 6" stroke-linecap="round"/>
+            </svg>
+          </button>
+          <span class="text-sm font-medium" id="mes-actual">Octubre 2026</span>
+          <button class="nav-btn" aria-label="Mes siguiente">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="9 18 15 12 9 6" stroke-linecap="round"/>
+            </svg>
+          </button>
+        </div>
+
+        <div class="calendar-grid" id="calendario-grid"></div>
+
+        <!-- Legend -->
+        <div class="mt-6 pt-6 border-t border-border/30 flex flex-wrap gap-4 text-xs text-text-secondary">
+          <span class="tag tag-primary">Planificada</span>
+          <span class="tag tag-accent">En curso</span>
+          <span class="inline-flex items-center gap-2 px-2 py-1 bg-border/30 rounded">
+            <span class="w-2 h-2 rounded-full bg-success"></span>
+            <span class="text-text-secondary">Operativo</span>
+          </span>
+        </div>
+      </div>
+
+      <!-- Upcoming plans panel -->
+      <div class="panel lg:panels-lg">
+        <h2 class="text-sm font-black uppercase tracking-[0.2em] text-primary/60 mb-4">Próximas Planificaciones</h2>
+        
+        <div class="space-y-3" id="planes-proximos">
+          <!-- Dinámico -->
+        </div>
+
+        <button class="action-btn secondary w-full mt-4" style="width: 100%;">
+          Ver todas las planificaciones
+        </button>
+      </div>
+
+    </section>
+
+    <!-- Stats bar -->
+    <section class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8 animate-fade-in" style="animation-delay: 200ms;">
+      <div>
+        <div class="text-3xl font-black text-primary mb-1" id="total-planes">0</div>
+        <div class="text-xs uppercase tracking-[0.1em] text-primary/60">Total planificaciones</div>
+      </div>
+      <div>
+        <div class="text-3xl font-black text-accent mb-1" id="en-curso">0</div>
+        <div class="text-xs uppercase tracking-[0.1em] text-accent/60">En curso</div>
+      </div>
+      <div>
+        <div class="text-3xl font-black text-success mb-1" id="completadas">0</div>
+        <div class="text-xs uppercase tracking-[0.1em] text-success/60">Completadas</div>
+      </div>
+      <div>
+        <div class="text-3xl font-black text-text-secondary mb-1" id="por-asignar">0</div>
+        <div class="text-xs uppercase tracking-[0.1em] text-text-secondary/60">Por asignar</div>
+      </div>
+    </section>
+
+  </main>
+
+  <script>
+    // Inicialización
+    const today = new Date();
+    const firstDayOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+    const lastDayOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+    const startingDay = firstDayOfMonth.getDay(); // 0 = Domingo
+    const totalDays = lastDayOfMonth.getDate();
+    
+    // Datos de ejemplo - planificaciones por unidad
+    const planesData = [
+      { id: 1, unidad: "Manada", nombre: "Campamento de Otoño", fecha: "2026-10-15", estatus: "programada", grupo: "Grupos 1-3" },
+      { id: 2, unidad: "Tropa", nombre: "Ruta de Reconocimiento", fecha: "2026-10-20", estatus: "en-curso", grupo: "Tropa Norte" },
+      { id: 3, unidad: "Comunidad", nombre: "Encuentro Regional", fecha: "2026-11-05", estatus: "programada", grupo: "Región Centro" },
+      { id: 4, unidad: "Clan", nombre: "Senderismo Nocturno", fecha: "2026-10-29", estatus: "programada", grupo: "Clan del Valle" },
+    ];
+
+    // Renderizar calendario
+    function renderCalendario(mes = today.getMonth(), ano = today.getFullYear()) {
+      const primerDia = new Date(ano, mes, 1);
+      const ultimoDia = new Date(ano, mes + 1, 0);
+      const diaSemanaInicio = primerDia.getDay();
+      const totalDias = ultimoDia.getDate();
+      
+      const grid = document.getElementById('calendario-grid');
+      grid.innerHTML = '';
+      
+      // Días vacíos al inicio
+      for (let i = 0; i < diaSemanaInicio; i++) {
+        const cell = document.createElement('div');
+        cell.className = 'calendar-cell empty';
+        grid.appendChild(cell);
+      }
+      
+      // Días del mes
+      for (let dia = 1; dia <= totalDias; dia++) {
+        const date = `${ano}-${String(mes + 1).padStart(2, '0')}-${String(dia).padStart(2, '0')}`;
+        const esHoy = dia === today.getDate() && mes === today.getMonth() && ano === today.getFullYear();
+        const tieneEvento = planesData.some(p => p.fecha === date);
+        const esFinDeSemana = [0, 6].includes(new Date(date).getDay());
+        
+        const cell = document.createElement('div');
+        cell.className = 'calendar-cell' + (esHoy ? ' today' : '');
+        
+        if (tieneEvento) {
+          cell.classList.add('has-event');
+          cell.innerHTML = `<span class="text-[8px]">${dia}</span>`;
+        } else if (esFinDeSemana) {
+          cell.classList.add('range-middle');
+          cell.innerHTML = `<span class="text-[8px] text-primary/60">${dia}</span>`;
+        } else {
+          cell.classList.add('empty');
+          cell.innerHTML = `<span class="text-[8px] text-text-secondary">${dia}</span>`;
+        }
+        
+        // Marcar rango (del 15 al 20 como ejemplo)
+        if (dia >= 15 && dia <= 20) {
+          cell.classList.add('range-start', 'range-end');
+        }
+        
+        grid.appendChild(cell);
+      }
+    }
+    
+    // Renderizar planes próximos
+    function renderPlanesProximos() {
+      const container = document.getElementById('planes-proximos');
+      container.innerHTML = '';
+      
+      const planesOrdenados = [...planesData].sort((a, b) => 
+        new Date(a.fecha) - new Date(b.fecha)
+      );
+      
+      if (planesOrdenados.length === 0) {
+        container.innerHTML = '<p class="text-text-secondary text-sm">No hay planificaciones próximas</p>';
+        return;
+      }
+      
+      planesOrdenados.slice(0, 5).forEach(plan => {
+        const fecha = new Date(plan.fecha);
+        const meses = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+        const mesTexto = meses[fecha.getMonth()];
+        
+        const div = document.createElement('div');
+        div.className = 'flex items-start gap-3 p-3 rounded-xl hover:bg-primary/5 transition-all';
+        div.innerHTML = `
+          <div class="w-2 h-2 rounded-full ${plan.estatus === 'en-curso' ? 'bg-success' : 'bg-primary'} flex-shrink-0 mt-1"></div>
+          <div class="flex-1 min-w-0">
+            <p class="font-black text-primary truncate line-clamp-1">${plan.nombre}</p>
+            <p class="text-[9px] text-primary/60 truncate">${plan.unidad} • ${mesTexto} ${fecha.getDate()}</p>
+          </div>
+        `;
+        container.appendChild(div);
+      });
+    }
+    
+    // Actualizar estadísticas
+    function actualizarEstadisticas() {
+      const total = planesData.length;
+      const enCurso = planesData.filter(p => p.estatus === 'en-curso').length;
+      const completadas = planesData.filter(p => p.estatus === 'completada').length || 0;
+      const porAsignar = total - enCurso - completadas;
+      
+      document.getElementById('total-planes').textContent = total;
+      document.getElementById('en-curso').textContent = enCurso;
+      document.getElementById('completadas').textContent = completadas;
+      document.getElementById('por-asignar').textContent = porAsignar;
+    }
+    
+    // Event listeners
+    document.querySelectorAll('.nav-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        // Lógica de navegación de mes
+        renderCalendario();
+        actualizarEstadisticas();
+      });
+    });
+    
+    // Renderizar todo en carga
+    renderCalendario();
+    renderPlanesProximos();
+    actualizarEstadisticas();
+  </script>
+</body>
+</html>
