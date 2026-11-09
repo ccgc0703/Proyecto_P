@@ -215,7 +215,7 @@ export const UnitDashboard = ({ unitType, label, icon, description }: UnitDashbo
 
       {puedeVerProgresion && pestana === 1 ? (
         unidadId ? (
-          <UnidadProgresionPanel unidadId={unidadId} />
+          <UnidadProgresionPanel unidadId={unidadId} titulo={label} />
         ) : (
           <div className="card">
             <p className="text-xs font-bold text-outline uppercase tracking-widest text-center py-6">

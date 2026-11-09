@@ -1416,6 +1416,60 @@
   }
   .perm.ent { background: var(--color-primary); color: #fff; }
 
+  /* ── Selector de unidades en forma de chips (Progresión) ────────── */
+  .chip-form { display: flex; gap: 9px; flex-wrap: wrap; margin-bottom: 22px; }
+  .chip-btn {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    padding: 11px 20px;
+    border: none;
+    border-radius: var(--radius-full);
+    background: var(--color-surface-container-lowest);
+    box-shadow: var(--sh-1);
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--color-on-surface-variant);
+    cursor: pointer;
+    transition: 0.16s;
+  }
+  .chip-btn i { width: 9px; height: 9px; border-radius: 3px; flex-shrink: 0; }
+  .chip-btn:hover { transform: translateY(-2px); box-shadow: var(--sh-2); color: var(--color-primary); }
+  .chip-btn.on {
+    background: linear-gradient(135deg, var(--color-primary), var(--color-primary-container));
+    color: #fff;
+    box-shadow: 0 6px 18px rgba(0, 54, 41, 0.26);
+  }
+  .chip-btn.on:hover { color: #fff; }
+
+  /* ── Barra de avance del Cuadro de Adelanto ─────────────────────── */
+  .prog {
+    height: 8px;
+    border-radius: var(--radius-full);
+    background: var(--color-surface-container-highest);
+    overflow: hidden;
+    position: relative;
+    min-width: 90px;
+  }
+  .prog > i {
+    display: block;
+    height: 100%;
+    border-radius: var(--radius-full);
+    background: linear-gradient(90deg, var(--color-primary), var(--color-primary-container));
+    transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  .prog.green > i { background: linear-gradient(90deg, var(--color-success), #2f9e70); }
+  .prog.gold > i { background: linear-gradient(90deg, var(--color-warning), var(--color-accent)); }
+  .prog-cell { display: flex; align-items: center; gap: 11px; min-width: 170px; }
+  .prog-cell .pc {
+    font-family: var(--font-mono);
+    font-size: 11.5px;
+    font-weight: 700;
+    color: var(--color-primary);
+    min-width: 36px;
+    text-align: right;
+  }
+
   /* ── Selector de alcance (Calendario) ───────────────────────────── */
   .scope-tabs {
     display: flex;
