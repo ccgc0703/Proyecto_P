@@ -3,6 +3,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { ProgresionService, Actor } from './progresion.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { AuditService } from '../audit/audit.service';
+import { NotificacionesService } from '../notificaciones/notificaciones.service';
 import { UnitAccessPolicy } from '../../common/policies/unit-access.policy';
 
 const areaCrecimiento = (n: number, orden: number) => ({
@@ -66,6 +67,10 @@ describe('ProgresionService', () => {
 
     const mockAudit = { logAction: jest.fn() };
     const mockUnitAccess = { assertCanAccessUnit: jest.fn() };
+    const mockNotificaciones = {
+        publicar: jest.fn().mockResolvedValue(undefined),
+        responsablesUnidad: jest.fn().mockResolvedValue([] as string[]),
+    };
 
     const actor: Actor = { id: 'user-1', roles: ['ADULTO_TROPA'], permissions: ['progresion:aprobar'] };
 
@@ -98,6 +103,7 @@ describe('ProgresionService', () => {
                 { provide: PrismaService, useValue: mockPrisma },
                 { provide: AuditService, useValue: mockAudit },
                 { provide: UnitAccessPolicy, useValue: mockUnitAccess },
+                { provide: NotificacionesService, useValue: mockNotificaciones },
             ],
         }).compile();
 

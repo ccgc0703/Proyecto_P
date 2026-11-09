@@ -206,6 +206,7 @@ model Usuario {
   UsuarioRoles      UsuarioRol[]
   Adulto            Adulto?
   Joven             Joven?
+  Notificaciones    Notificacion[]
 
   @@index([unidadId])
   @@index([nodoId])
@@ -594,6 +595,24 @@ model Progresion {
   @@unique([jovenId, adelantoId])
   @@index([jovenId])
   @@index([jovenId, estado])
+}
+
+// Notificación in-app (Fase 3): se crea vía NotificacionesService.publicar y
+// solo la ve su dueño (GET /notificaciones filtra por usuarioId del JWT).
+// No se audita cada notificación (ruido); sí el evento que la origina.
+model Notificacion {
+  id        String    @id @default(uuid())
+  usuarioId String
+  tipo      String // CUENTA_CREADA, SOLICITUD_APROBACION, PROGRESION_RESUELTA, FICHA_MEDICA_ALTA, SEGURO_POR_VENCER, CARGO_ASIGNADO...
+  titulo    String
+  cuerpo    String
+  link      String? // ruta interna a la que navega al hacer click
+  leidaEn   DateTime?
+  createdAt DateTime  @default(now())
+  Usuario   Usuario   @relation(fields: [usuarioId], references: [id])
+
+  @@index([usuarioId, leidaEn])
+  @@index([usuarioId, createdAt])
 }
 
 model EstadoLogroJoven {

@@ -1,8 +1,10 @@
 import { Module } from '@nestjs/common';
 import { OrganizacionService } from './organizacion.service';
 import { OrganizacionController } from './organizacion.controller';
+import { NotificacionesModule } from '../notificaciones/notificaciones.module';
 
 @Module({
+    imports: [NotificacionesModule],
     providers: [OrganizacionService],
     controllers: [OrganizacionController],
     exports: [OrganizacionService],

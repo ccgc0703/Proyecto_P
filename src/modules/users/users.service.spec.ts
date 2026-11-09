@@ -2,6 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { UsersService } from './users.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { AuditService } from '../audit/audit.service';
+import { NotificacionesService } from '../notificaciones/notificaciones.service';
 import { ConflictException, NotFoundException } from '@nestjs/common';
 
 describe('UsersService', () => {
@@ -22,12 +23,17 @@ describe('UsersService', () => {
         logAction: jest.fn().mockResolvedValue(undefined),
     };
 
+    const mockNotificaciones = {
+        publicar: jest.fn().mockResolvedValue(undefined),
+    };
+
     beforeEach(async () => {
         const module: TestingModule = await Test.createTestingModule({
             providers: [
                 UsersService,
                 { provide: PrismaService, useValue: mockPrisma },
                 { provide: AuditService, useValue: mockAuditService },
+                { provide: NotificacionesService, useValue: mockNotificaciones },
             ],
         }).compile();
 

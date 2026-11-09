@@ -4,6 +4,7 @@ import { BaseService } from '../../common/base.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { AuditService } from '../audit/audit.service';
+import { NotificacionesService, TIPOS_NOTIFICACION } from '../notificaciones/notificaciones.service';
 import * as bcrypt from 'bcryptjs';
 import {
     OpcionesLista,
@@ -19,6 +20,7 @@ export class UsersService extends BaseService<any> {
     constructor(
         prisma: PrismaService,
         private readonly auditService: AuditService,
+        private readonly notificaciones: NotificacionesService,
     ) {
         super(prisma, 'usuario');
     }
@@ -120,6 +122,15 @@ export class UsersService extends BaseService<any> {
             ipAddress: ip,
             userAgent,
         });
+
+        // Fase 3: aviso in-app de cuenta creada (best-effort, no bloquea)
+        await this.notificaciones.publicar(
+            [user.id],
+            TIPOS_NOTIFICACION.CUENTA_CREADA,
+            'Cuenta creada',
+            'Tu cuenta ya está activa. Puedes iniciar sesión con el correo que te proporcionó tu jefatura.',
+            '/app',
+        );
 
         return this.excludePassword(user);
     }

@@ -2,6 +2,7 @@ import { BadRequestException, ConflictException, ForbiddenException, Injectable,
 import { TipoUnidad } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { AuditService } from '../audit/audit.service';
+import { NotificacionesService, TIPOS_NOTIFICACION } from '../notificaciones/notificaciones.service';
 import { UnitAccessPolicy, UNIT_BYPASS_ROLES } from '../../common/policies/unit-access.policy';
 import { OpcionesLista, hayPaginacion, rangoLista, filtroBusqueda } from '../../common/paginacion';
 import { ActualizarEstadoIndicadorDto } from './dto/actualizar-estado-indicador.dto';
@@ -46,6 +47,7 @@ export class ProgresionService {
         private readonly prisma: PrismaService,
         private readonly audit: AuditService,
         private readonly unitAccess: UnitAccessPolicy,
+        private readonly notificaciones: NotificacionesService,
     ) { }
 
     private registrar(actorId: string, action: string, targetId: string, description: string): void {
@@ -489,6 +491,16 @@ export class ProgresionService {
             `Adelanto "${progresion.Adelanto.nombre}" solicitado por ${progresion.Joven.Miembro.nombres} ${progresion.Joven.Miembro.apellidos}`,
         );
 
+        // Fase 3: aviso a los responsables de la unidad (sin incluir al actor)
+        const responsables = await this.notificaciones.responsablesUnidad(unidadId);
+        await this.notificaciones.publicar(
+            responsables.filter((id) => id !== actor.id),
+            TIPOS_NOTIFICACION.SOLICITUD_APROBACION,
+            'Solicitud de adelanto',
+            `${progresion.Joven.Miembro.nombres} ${progresion.Joven.Miembro.apellidos} solicitó el adelanto "${progresion.Adelanto.nombre}"`,
+            '/app/progresion',
+        );
+
         return { apto: true, ...evaluacion };
     }
 
@@ -559,6 +571,17 @@ export class ProgresionService {
             `Adelanto "${progresion.Adelanto.nombre}" aprobado${progresionSiguiente ? ` -> "${progresionSiguiente.Adelanto.nombre}" en curso` : ' (último adelanto de la unidad)'}`,
         );
 
+        // Fase 3: el joven con cuenta recibe el resultado de su adelanto
+        if (progresion.Joven.usuarioId) {
+            await this.notificaciones.publicar(
+                [progresion.Joven.usuarioId],
+                TIPOS_NOTIFICACION.PROGRESION_RESUELTA,
+                'Adelanto aprobado',
+                `¡Felicidades! Tu adelanto "${progresion.Adelanto.nombre}" fue aprobado.`,
+                '/app/mi-progresion',
+            );
+        }
+
         return { progresion: actualizada, siguiente: progresionSiguiente };
     }
 
@@ -583,6 +606,17 @@ export class ProgresionService {
             progresion.id,
             `Adelanto "${progresion.Adelanto.nombre}" rechazado${dto.motivo ? `: ${dto.motivo}` : ''}`,
         );
+
+        // Fase 3: el joven con cuenta recibe el resultado de su adelanto
+        if (progresion.Joven.usuarioId) {
+            await this.notificaciones.publicar(
+                [progresion.Joven.usuarioId],
+                TIPOS_NOTIFICACION.PROGRESION_RESUELTA,
+                'Adelanto rechazado',
+                `Tu adelanto "${progresion.Adelanto.nombre}" fue rechazado${dto.motivo ? `: ${dto.motivo}` : ''}`,
+                '/app/mi-progresion',
+            );
+        }
 
         return actualizada;
     }

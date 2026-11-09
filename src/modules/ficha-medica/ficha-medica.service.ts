@@ -8,6 +8,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { CreateFichaMedicaDto } from './dto/create-ficha-medica.dto';
 import { UpdateFichaMedicaDto } from './dto/update-ficha-medica.dto';
 import { AuditService } from '../audit/audit.service';
+import { NotificacionesService, TIPOS_NOTIFICACION } from '../notificaciones/notificaciones.service';
 import { FichaMedica, Prisma } from '@prisma/client';
 
 @Injectable()
@@ -15,6 +16,7 @@ export class FichaMedicaService {
     constructor(
         private readonly prisma: PrismaService,
         private readonly auditService: AuditService,
+        private readonly notificaciones: NotificacionesService,
     ) {}
 
     private readonly includeRelations = {
@@ -78,6 +80,16 @@ export class FichaMedicaService {
             targetId: ficha.id,
             description: `Ficha médica creada para el miembro ${dto.miembroId}`,
         });
+
+        // Fase 3: aviso in-app a los responsables de la unidad (sin el actor)
+        const responsables = await this.notificaciones.responsablesUnidad(miembro.unidadId);
+        await this.notificaciones.publicar(
+            responsables.filter((id) => id !== userId),
+            TIPOS_NOTIFICACION.FICHA_MEDICA_ALTA,
+            'Ficha médica registrada',
+            `Se registró la ficha médica de ${miembro.nombres} ${miembro.apellidos}.`,
+            '/app/miembros',
+        );
 
         return ficha;
     }

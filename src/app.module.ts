@@ -23,6 +23,7 @@ import { ProgresionModule } from './modules/progresion/progresion.module';
 import { OrganizacionModule } from './modules/organizacion/organizacion.module';
 import { EventosModule } from './modules/eventos/eventos.module';
 import { DashboardModule } from './modules/dashboard/dashboard.module';
+import { NotificacionesModule } from './modules/notificaciones/notificaciones.module';
 
 // Rate limit global por IP: 600 req/min por defecto. El login aplica su
 // propio límite más estricto con @Throttle (ver AuthController).
@@ -58,6 +59,7 @@ const rateLimitGlobal = Number.isFinite(RATE_GLOBAL) && RATE_GLOBAL > 0 ? RATE_G
     OrganizacionModule,
     EventosModule,
     DashboardModule,
+    NotificacionesModule,
     HealthModule,
   ],
   controllers: [],

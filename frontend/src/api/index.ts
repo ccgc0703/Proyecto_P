@@ -13,5 +13,6 @@ export {
   organizacionApi,
   eventosApi,
   dashboardApi,
+  notificacionesApi,
   descargarArchivo,
 } from './endpoints';

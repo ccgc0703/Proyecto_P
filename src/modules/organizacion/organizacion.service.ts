@@ -5,6 +5,7 @@ import { CreateNodoDto } from './dto/create-nodo.dto';
 import { UpdateNodoDto } from './dto/update-nodo.dto';
 import { CreateCargoDto } from './dto/create-cargo.dto';
 import { UpdateCargoDto } from './dto/update-cargo.dto';
+import { NotificacionesService, TIPOS_NOTIFICACION } from '../notificaciones/notificaciones.service';
 
 /** Nivel jerárquico del nodo (1 = cúspide del árbol) */
 const NIVEL_POR_TIPO: Record<TipoNodoOrganizacion, number> = {
@@ -49,7 +50,10 @@ export const CARGOS_POR_TIPO: Record<TipoNodoOrganizacion, readonly string[]> = 
 
 @Injectable()
 export class OrganizacionService {
-    constructor(private readonly prisma: PrismaService) { }
+    constructor(
+        private readonly prisma: PrismaService,
+        private readonly notificaciones: NotificacionesService,
+    ) { }
 
     /** Árbol completo (nodos activos con sus unidades), anidado por jerarquía */
     async getArbol() {
@@ -237,7 +241,7 @@ export class OrganizacionService {
             );
         }
 
-        return this.prisma.cargoAsignacion.create({
+        const asignacion = await this.prisma.cargoAsignacion.create({
             data: {
                 nodoId,
                 usuarioId: dto.usuarioId,
@@ -251,6 +255,17 @@ export class OrganizacionService {
                 },
             },
         });
+
+        // Fase 3: aviso in-app al usuario que recibió el cargo
+        await this.notificaciones.publicar(
+            [dto.usuarioId],
+            TIPOS_NOTIFICACION.CARGO_ASIGNADO,
+            'Nuevo cargo asignado',
+            `Has sido designado como ${dto.cargo} en ${nodo.nombre}.`,
+            '/app/estructura',
+        );
+
+        return asignacion;
     }
 
     /** Cierra (hasta/activo) una asignación de cargo */

@@ -8,6 +8,7 @@ import {
   RespuestaIndicadores,
   ResultadoSolicitud,
 } from '../types/progresion';
+import { ListadoNotificaciones } from '../types/notificacion';
 
 export const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL || '/api/v1',
@@ -171,6 +172,21 @@ export const eventosApi = {
 
 export const dashboardApi = {
   getResumen: () => api.get('/dashboard/resumen').then((r) => r.data.data),
+};
+
+export const notificacionesApi = {
+  /** Lista las notificaciones propias + badge `noLeidas` (Fase 3). */
+  listar: (params?: { soloNoLeidas?: boolean; page?: number; limit?: number }) =>
+    api
+      .get('/notificaciones', { params })
+      .then((r): ListadoNotificaciones => ({
+        items: r.data.data,
+        total: r.data.meta?.total ?? r.data.data.length,
+        noLeidas: r.data.meta?.noLeidas ?? 0,
+      })),
+  marcarLeida: (id: string) =>
+    api.post(`/notificaciones/${id}/leer`).then((r) => r.data.data),
+  marcarTodas: () => api.post('/notificaciones/leer-todas').then((r) => r.data),
 };
 
 export const descargarArchivo = (nombre: string, blob: Blob) => {

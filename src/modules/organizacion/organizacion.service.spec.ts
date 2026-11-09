@@ -1,10 +1,15 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { OrganizacionService } from './organizacion.service';
 import { PrismaService } from '../prisma/prisma.service';
+import { NotificacionesService } from '../notificaciones/notificaciones.service';
 import { BadRequestException, ConflictException, NotFoundException } from '@nestjs/common';
 
 describe('OrganizacionService', () => {
     let service: OrganizacionService;
+
+    const mockNotificaciones = {
+        publicar: jest.fn().mockResolvedValue(undefined),
+    };
 
     const mockPrisma = {
         organizacionNodo: {
@@ -26,6 +31,7 @@ describe('OrganizacionService', () => {
             providers: [
                 OrganizacionService,
                 { provide: PrismaService, useValue: mockPrisma },
+                { provide: NotificacionesService, useValue: mockNotificaciones },
             ],
         }).compile();
 

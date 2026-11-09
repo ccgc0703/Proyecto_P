@@ -1,6 +1,7 @@
 import { Outlet, Navigate, useRouterState, useNavigate } from '@tanstack/react-router';
 import { useEffect, useState } from 'react';
 import { useAuth } from '../../hooks/useAuth';
+import { useNotificaciones } from '../../hooks/useNotificaciones';
 import { Sidebar } from './Sidebar';
 import { RequierePermiso } from '../common/RequierePermiso';
 import { permisosDeRuta } from '../common/rutaPermisos';
@@ -34,7 +35,14 @@ export const MainLayout = () => {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const [notifOpen, setNotifOpen] = useState(false);
   const { isAuthenticated, isLoading, user, logout } = useAuth();
+  const {
+    items: notificaciones,
+    noLeidas,
+    marcarLeida,
+    marcarTodas,
+  } = useNotificaciones();
   const navigate = useNavigate();
   const routerState = useRouterState();
   const currentPath = routerState.location.pathname;
@@ -58,10 +66,11 @@ export const MainLayout = () => {
   const pageTitle = getPageTitle();
   const permisosRuta = permisosDeRuta(currentPath);
 
-  // Al cambiar de ruta se cierra el drawer móvil y el menú de usuario.
+  // Al cambiar de ruta se cierra el drawer móvil y los menús desplegables.
   useEffect(() => {
     setMobileOpen(false);
     setUserMenuOpen(false);
+    setNotifOpen(false);
   }, [currentPath]);
 
   // Escape cierra el drawer móvil.
@@ -131,10 +140,66 @@ export const MainLayout = () => {
           </div>
 
           <div className="tb-right">
-            <button type="button" className="icon-btn" aria-label="Notificaciones">
-              <NotificationsNone />
-              <span className="badge" aria-hidden="true" />
-            </button>
+            <div className="relative">
+              <button
+                type="button"
+                className="icon-btn"
+                aria-label={noLeidas > 0 ? `Notificaciones (${noLeidas} sin leer)` : 'Notificaciones'}
+                aria-haspopup="menu"
+                aria-expanded={notifOpen}
+                onClick={() => setNotifOpen((v) => !v)}
+              >
+                <NotificationsNone />
+                {noLeidas > 0 && (
+                  <span className="badge" data-testid="notif-badge">
+                    {noLeidas > 99 ? '99+' : noLeidas}
+                  </span>
+                )}
+              </button>
+
+              {notifOpen && (
+                <>
+                  <div
+                    className="fixed inset-0 z-40"
+                    onClick={() => setNotifOpen(false)}
+                    aria-hidden="true"
+                  />
+                  <div className="notif-menu animate-fade-in-up" role="menu">
+                    <div className="notif-head">
+                      <b>Notificaciones</b>
+                      {noLeidas > 0 && (
+                        <button type="button" onClick={() => void marcarTodas()}>
+                          Marcar todas
+                        </button>
+                      )}
+                    </div>
+                    <div className="notif-list">
+                      {notificaciones.length === 0 ? (
+                        <p className="notif-empty">No tienes notificaciones.</p>
+                      ) : (
+                        notificaciones.map((n) => (
+                          <button
+                            key={n.id}
+                            type="button"
+                            role="menuitem"
+                            className={`notif-item${n.leidaEn ? '' : ' unread'}`}
+                            onClick={() => {
+                              if (!n.leidaEn) void marcarLeida(n.id);
+                              setNotifOpen(false);
+                              if (n.link) navigate({ to: n.link });
+                            }}
+                          >
+                            <b>{n.titulo}</b>
+                            <span>{n.cuerpo}</span>
+                            <time>{new Date(n.createdAt).toLocaleString('es-ES')}</time>
+                          </button>
+                        ))
+                      )}
+                    </div>
+                  </div>
+                </>
+              )}
+            </div>
 
             <div className="relative">
               <button

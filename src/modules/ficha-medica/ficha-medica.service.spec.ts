@@ -2,12 +2,18 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { FichaMedicaService } from './ficha-medica.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { AuditService } from '../audit/audit.service';
+import { NotificacionesService } from '../notificaciones/notificaciones.service';
 import { ConflictException, NotFoundException } from '@nestjs/common';
 
 describe('FichaMedicaService', () => {
     let service: FichaMedicaService;
     let prisma: any;
     let audit: any;
+
+    const mockNotificaciones = {
+        publicar: jest.fn().mockResolvedValue(undefined),
+        responsablesUnidad: jest.fn().mockResolvedValue([] as string[]),
+    };
 
     const mockFicha = {
         id: 'ficha-1',
@@ -38,6 +44,7 @@ describe('FichaMedicaService', () => {
                 FichaMedicaService,
                 { provide: PrismaService, useValue: mockPrisma },
                 { provide: AuditService, useValue: { logAction: jest.fn() } },
+                { provide: NotificacionesService, useValue: mockNotificaciones },
             ],
         }).compile();
 

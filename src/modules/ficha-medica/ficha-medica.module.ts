@@ -2,10 +2,11 @@ import { Module } from '@nestjs/common';
 import { FichaMedicaService } from './ficha-medica.service';
 import { FichaMedicaController } from './ficha-medica.controller';
 import { PrismaModule } from '../prisma/prisma.module';
+import { NotificacionesModule } from '../notificaciones/notificaciones.module';
 import { SelfScopePolicy } from '../../common/policies/self-scope.policy';
 
 @Module({
-    imports: [PrismaModule],
+    imports: [PrismaModule, NotificacionesModule],
     controllers: [FichaMedicaController],
     providers: [FichaMedicaService, SelfScopePolicy],
     exports: [FichaMedicaService],

@@ -6,8 +6,8 @@
 > |---|---|
 > | PRE (8.1 deuda bloqueante: circulares + README + AGENTS.md) | ✅ Cerrada |
 > | Fase 1 — Asistencia + Eventos | ✅ Cerrada — commit `60e0c05` |
-> | Fase 2 — Dashboard Ejecutivo con Métricas Reales | ✅ Cerrada (backend 344/344 · frontend 23/23 · E2E 15/15) |
-> | Fase 3 — Notificaciones in-app (decisión: sin email) | ⬜ Pendiente |
+> | Fase 2 — Dashboard Ejecutivo con Métricas Reales | ✅ Cerrada — commit `3df726d` (backend 344/344 · frontend 23/23 · E2E 15/15) |
+> | Fase 3 — Notificaciones in-app (decisión: sin email) | ✅ Cerrada — backend 360/360 · integración 14/14 · frontend 30/30 · E2E 16/16 |
 > | Fase 5 — Biblioteca (Documentos y Normativa) | ⬜ Pendiente |
 > | Fase 6 — Completar formación / datos-scout / programas-mundiales (decisión: permisos nuevos `datosscout:*`) | ⬜ Pendiente |
 > | Fase 7 — Madurez y escala (PWA, PDF, Finanzas…; multi-grupo SOLO si aplica) | ⬜ Pendiente |
@@ -189,6 +189,14 @@ model Notificacion {
 ### 3.3 Tests
 - Unit: publicar, listar, marcar leída, filtro por usuario (nunca filtrar ajenas), paginación.
 - Integración: tras `POST .../aprobar` existe la notificación para el adulto correcto.
+
+### ✅ Ejecución — CERRADA
+
+- **Esquema**: modelo `Notificacion` (relación `Usuario.Notificaciones`) con `@@index([usuarioId, leidaEn])` y `@@index([usuarioId, createdAt])`; migración `20261109172003_crear_notificaciones`.
+- **Backend**: `src/modules/notificaciones/` (`service` + `controller` + `dto` + `module` + spec). `publicar()` es best-effort: **nunca lanza** (try/catch + `Logger.warn`), deduplica ids y solo notifica cuentas activas. `responsablesUnidad()` = adultos de la unidad (roles `ADULTO_*`/`REPRESENTANTE_UNIDAD`) + todos los `SYSTEM_ADMIN`, sin duplicados. `GET /notificaciones` devuelve `meta = {page,limit,total,totalPages,noLeidas}`; `POST :id/leer` idempotente (404 si es ajena); `POST leer-todas`. Las 4 rutas usan **`@SelfScope()`** sin `@RequirePermission` (alcance = id del JWT). Sin auditoría por notificación (los eventos que la originan ya auditan).
+- **Disparores** (llamada directa en los services existentes): `users.create` → `CUENTA_CREADA` (cubre también `adultos.createAccount`); `progresion.solicitar` → responsables de la unidad menos el actor; `aprobar`/`rechazar` → `Joven.usuarioId` si existe (nullable) con link `/app/mi-progresion`; `ficha-medica.create` → responsables menos el actor; `organizacion.crearCargo` → el usuario del cargo. Más cron diario 03:30 `avisarSegurosPorVencer` (fichas con `seguroVigencia ≤ 30 d`, dedupe de 30 días por usuario, nunca lanza).
+- **Frontend**: `types/notificacion.ts` + `notificacionesApi` (endpoints) + hook `useNotificaciones` (carga inicial + **sondeo silencioso cada 60 s** — los errores del sondeo se tragan y el badge conserva su valor — + `marcarLeida`/`marcarTodas` optimistas con reconciliación server-side). `MainLayout`: campana con badge de conteo (aria-label `Notificaciones (N sin leer)`), panel `.notif-menu` (patrón del `user-menu`, se cierra al cambiar de ruta) y clic en un ítem → marcar leída + `navigate(link)`.
+- **Tests**: backend **360/360** (33 suites; 16 nuevos) · integración **14/14** (4 suites; 5 nuevos) · frontend **30/30** (7 nuevos del hook, con fake timers para el polling) · E2E **16/16** (1 nuevo: alta por API → badge `1` → panel → "Cuenta creada" → Marcar todas → badge a 0 → cleanup).
 
 ---
 
