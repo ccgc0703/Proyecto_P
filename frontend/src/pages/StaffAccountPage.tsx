@@ -3,16 +3,12 @@ import { useNavigate, useParams } from '@tanstack/react-router';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import {
-  ArrowBack,
-  VpnKey,
-  Email,
-  Shield,
-} from '@mui/icons-material';
+import { ArrowBack, Email, Shield, VpnKey } from '@mui/icons-material';
 import { adultosApi, rbacApi } from '../api';
 import { getApiErrorMessage } from '../utils/errors';
 import { useAuth } from '../hooks/useAuth';
 import { puedeAsignarRol } from '../types/auth';
+import { PageHeader, StateBlock } from '../components/ui';
 
 interface StaffAccount {
   nombres?: string;
@@ -83,86 +79,131 @@ export const StaffAccountPage = () => {
 
   const goBack = () => navigate({ to: '/app/staff' });
 
-  const inputClasses =
-    'w-full p-4 bg-surface-container-high border-none rounded-xl text-sm font-bold focus:ring-2 focus:ring-primary transition-all h-[54px]';
-  const labelClasses =
-    'text-[10px] font-black uppercase tracking-widest px-1 text-outline flex items-center gap-2';
-  const sectionClasses =
-    'bg-surface-container-lowest p-8 md:p-10 rounded-[2rem] shadow-sm border border-outline-variant/5';
+  const iniciales = `${member?.nombres?.[0] ?? ''}${member?.apellidos?.[0] ?? ''}` || '?';
 
   if (loading) {
     return (
-      <div className="flex justify-center items-center h-64">
-        <div className="w-12 h-12 border-4 border-primary/20 border-t-primary rounded-full animate-spin" />
+      <div className="animate-fade-in-up pb-10 max-w-4xl mx-auto">
+        <StateBlock estado="loading" filas={4} />
       </div>
     );
   }
 
   return (
-    <div className="space-y-8 animate-fade-in-up pb-10 max-w-4xl mx-auto">
-      {/* Header */}
-      <header className="flex items-center gap-6">
-        <button
-          onClick={goBack}
-          className="w-12 h-12 bg-surface-container-high rounded-2xl flex items-center justify-center text-primary hover:bg-surface-container-highest transition-colors"
-        >
-          <ArrowBack />
-        </button>
-        <div>
-          <h1 className="text-2xl font-black tracking-tighter text-primary">
-            Vincular Cuenta de Sistema
-          </h1>
-          <p className="text-[10px] font-bold text-outline uppercase tracking-[0.2em]">
-            Creando acceso digital para {member?.nombres} {member?.apellidos}
-          </p>
-        </div>
-      </header>
+    <div className="space-y-5 animate-fade-in-up pb-10 max-w-4xl mx-auto">
+      <PageHeader
+        micro={
+          <span className="tb-crumb">
+            <span className="micro">Staff</span>
+            <span className="micro">/</span>
+            <span className="micro">Vincular cuenta</span>
+          </span>
+        }
+        titulo="Vincular Cuenta de Sistema"
+        subtitulo={
+          <>
+            Creando acceso digital para <strong>{member?.nombres} {member?.apellidos}</strong>
+          </>
+        }
+        acciones={
+          <button type="button" onClick={goBack} className="btn btn-ghost btn-sm">
+            <ArrowBack />
+            Volver
+          </button>
+        }
+      />
 
       {/* Messages */}
       {formError && (
-        <div className="p-4 bg-error/10 border border-error/20 text-error rounded-xl text-sm font-bold animate-fade-in">
+        <div className="p-4 bg-error/10 border border-error/20 text-error rounded-xl text-sm font-bold animate-fade-in" role="alert">
           {formError}
         </div>
       )}
       {success && (
-        <div className="p-4 bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 rounded-xl text-sm font-bold animate-fade-in">
+        <div className="p-4 bg-success/10 border border-success/20 text-success rounded-xl text-sm font-bold animate-fade-in" role="status">
           ✓ Cuenta vinculada y acceso autorizado correctamente.
         </div>
       )}
 
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
-        <section className={sectionClasses}>
-          <div className="flex items-center gap-4 mb-10 p-6 bg-surface-container-low rounded-3xl border border-outline-variant/10">
-            <div className="w-16 h-16 rounded-2xl sentinel-gradient flex items-center justify-center text-on-primary font-black text-xl shadow-lg">
-              {member?.nombres?.[0]}{member?.apellidos?.[0]}
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-3.5" noValidate>
+        <div className="form-sect">
+          <header>
+            <div className="ic" aria-hidden="true">
+              <VpnKey />
             </div>
             <div>
-              <p className="text-[10px] font-black uppercase tracking-widest text-outline mb-1">Agente Identificado</p>
-              <h4 className="text-2xl font-black text-primary uppercase">{member?.nombres} {member?.apellidos}</h4>
-              <p className="text-xs font-bold text-outline uppercase tracking-widest mt-1">C.I. {member?.cedula}</p>
+              <span className="micro">Identificación</span>
+              <h3>Agente Identificado</h3>
+            </div>
+          </header>
+
+          <div
+            className="flex items-center gap-4 p-5 rounded-xl mb-5"
+            style={{
+              background: 'var(--color-surface-container-low)',
+              border: '1px solid var(--color-outline-variant)',
+            }}
+          >
+            <div className="avatar-xl" style={{ width: 64, height: 64, fontSize: 22, borderRadius: 18, margin: 0 }}>
+              <span>{iniciales}</span>
+            </div>
+            <div className="min-w-0">
+              <p className="micro">Agente Identificado</p>
+              <h4
+                style={{
+                  fontFamily: 'var(--font-display)',
+                  fontWeight: 800,
+                  fontSize: 20,
+                  letterSpacing: '-0.025em',
+                  color: 'var(--color-primary)',
+                  marginTop: 4,
+                }}
+              >
+                {member?.nombres} {member?.apellidos}
+              </h4>
+              <p className="text-xs font-bold text-outline mt-1">C.I. {member?.cedula}</p>
             </div>
           </div>
 
-          <div className="grid grid-cols-1 gap-6">
-            <div className="space-y-2">
-              <label className={labelClasses}>
-                <Email sx={{ fontSize: 14 }} /> Correo Electrónico (Usuario) *
+          <div className="form-grid">
+            <div className="field" style={{ gridColumn: '1 / -1' }}>
+              <label className="micro" htmlFor="cuenta-email">
+                <Email sx={{ fontSize: 12, verticalAlign: 'middle', marginRight: 4 }} />
+                Correo Electrónico (Usuario) *
               </label>
-              <input {...register('email')} type="email" className={inputClasses} placeholder="correo@scout.com" />
-              {errors.email && <p className="text-[10px] text-error font-bold px-1">{errors.email.message}</p>}
+              <input
+                id="cuenta-email"
+                {...register('email')}
+                type="email"
+                className="inp"
+                placeholder="correo@scout.com"
+                aria-invalid={!!errors.email}
+              />
+              {errors.email && <span className="field-err">{errors.email.message}</span>}
             </div>
-            <div className="space-y-2">
-              <label className={labelClasses}>
-                <VpnKey sx={{ fontSize: 14 }} /> Contraseña de Acceso *
+
+            <div className="field" style={{ gridColumn: '1 / -1' }}>
+              <label className="micro" htmlFor="cuenta-password">
+                <VpnKey sx={{ fontSize: 12, verticalAlign: 'middle', marginRight: 4 }} />
+                Contraseña de Acceso *
               </label>
-              <input {...register('password')} type="password" className={inputClasses} placeholder="Mínimo 6 caracteres" />
-              {errors.password && <p className="text-[10px] text-error font-bold px-1">{errors.password.message}</p>}
+              <input
+                id="cuenta-password"
+                {...register('password')}
+                type="password"
+                className="inp"
+                placeholder="Mínimo 6 caracteres"
+                aria-invalid={!!errors.password}
+              />
+              {errors.password && <span className="field-err">{errors.password.message}</span>}
             </div>
-            <div className="space-y-2">
-              <label className={labelClasses}>
-                <Shield sx={{ fontSize: 14 }} /> Nivel de Autorización (Rol) *
+
+            <div className="field" style={{ gridColumn: '1 / -1' }}>
+              <label className="micro" htmlFor="cuenta-rol">
+                <Shield sx={{ fontSize: 12, verticalAlign: 'middle', marginRight: 4 }} />
+                Nivel de Autorización (Rol) *
               </label>
-              <select {...register('rolId')} className={inputClasses}>
+              <select id="cuenta-rol" {...register('rolId')} className="inp" aria-invalid={!!errors.rolId}>
                 <option value="">Seleccione el nivel jerárquico</option>
                 {roles
                   .filter((r) => puedeAsignarRol(user?.roles ?? [], r.nombre))
@@ -170,27 +211,19 @@ export const StaffAccountPage = () => {
                     <option key={r.id} value={r.id}>{r.nombre.replace(/_/g, ' ')}</option>
                   ))}
               </select>
-              {errors.rolId && <p className="text-[10px] text-error font-bold px-1">{errors.rolId.message}</p>}
+              {errors.rolId && <span className="field-err">{errors.rolId.message}</span>}
             </div>
           </div>
-        </section>
 
-        <div className="flex justify-between items-center gap-4">
-           <button
-             type="button"
-             onClick={goBack}
-             className="px-8 py-4 bg-surface-container-high text-primary rounded-xl font-black text-[10px] uppercase tracking-widest transition-colors"
-           >
-             Cancelar
-           </button>
-           <button
-             type="submit"
-             disabled={isSubmitting || success}
-             className="sentinel-gradient text-on-primary px-12 py-4 rounded-xl font-black text-[10px] uppercase tracking-widest shadow-xl shadow-primary/20 hover:scale-105 transition-all flex items-center gap-3 disabled:opacity-50"
-           >
-             <VpnKey sx={{ fontSize: 18 }} />
-             {isSubmitting ? 'Procesando...' : 'Autorizar y Vincular'}
-           </button>
+          <div className="form-actions" style={{ marginTop: 16 }}>
+            <button type="button" onClick={goBack} className="btn btn-ghost">
+              Cancelar
+            </button>
+            <button type="submit" className="btn btn-primary" disabled={isSubmitting || success}>
+              <VpnKey />
+              {isSubmitting ? 'Procesando...' : 'Autorizar y Vincular'}
+            </button>
+          </div>
         </div>
       </form>
     </div>

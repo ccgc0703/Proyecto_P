@@ -5,15 +5,15 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import {
   ArrowBack,
-  Person,
   Badge,
   CalendarMonth,
-  Wc,
-  EscalatorWarning,
-  VpnKey,
   Email,
+  EscalatorWarning,
+  Person,
+  SaveAlt,
   Shield,
-  SaveAlt
+  VpnKey,
+  Wc,
 } from '@mui/icons-material';
 import { adultosApi, unidadesApi, rbacApi } from '../api';
 import { ordenarPorUnidad } from '../hooks/useUnidad';
@@ -21,6 +21,7 @@ import { UnidadEntity } from '../types/member';
 import { getApiErrorMessage } from '../utils/errors';
 import { useAuth } from '../hooks/useAuth';
 import { puedeAsignarRol } from '../types/auth';
+import { PageHeader } from '../components/ui';
 
 const staffSchema = z.object({
   nombres: z.string().min(2, 'Requerido'),
@@ -106,98 +107,95 @@ export const StaffRegisterPage = () => {
 
   const goBack = () => navigate({ to: '/app/staff' });
 
-  const inputClasses =
-    'w-full p-4 bg-surface-container-high border-none rounded-xl text-sm font-bold focus:ring-2 focus:ring-primary transition-all h-[54px]';
-  const labelClasses =
-    'text-[10px] font-black uppercase tracking-widest px-1 text-outline flex items-center gap-2';
-  const sectionClasses =
-    'bg-surface-container-lowest p-8 md:p-10 rounded-[2rem] shadow-sm border border-outline-variant/5';
-
   return (
-    <div className="space-y-8 animate-fade-in-up pb-10 max-w-5xl mx-auto">
-      {/* Header */}
-      <header className="flex items-center gap-6">
-        <button
-          onClick={goBack}
-          className="w-12 h-12 bg-surface-container-high rounded-2xl flex items-center justify-center text-primary hover:bg-surface-container-highest transition-colors"
-        >
-          <ArrowBack />
-        </button>
-        <div>
-          <h1 className="text-2xl font-black tracking-tighter text-primary">
-            Registrar Nuevo Staff / Adulto
-          </h1>
-          <p className="text-[10px] font-bold text-outline uppercase tracking-[0.2em]">
-            Añadir nuevo facilitador o administrativo al sistema
-          </p>
-        </div>
-      </header>
+    <div className="space-y-5 animate-fade-in-up pb-10 max-w-5xl mx-auto">
+      <PageHeader
+        micro={
+          <span className="tb-crumb">
+            <span className="micro">Staff</span>
+            <span className="micro">/</span>
+            <span className="micro">Registrar</span>
+          </span>
+        }
+        titulo="Registrar Nuevo Staff / Adulto"
+        subtitulo="Añadir nuevo facilitador o administrativo al sistema"
+        acciones={
+          <button type="button" onClick={goBack} className="btn btn-ghost btn-sm">
+            <ArrowBack />
+            Volver
+          </button>
+        }
+      />
 
       {/* Messages */}
       {formError && (
-        <div className="p-4 bg-error/10 border border-error/20 text-error rounded-xl text-sm font-bold animate-fade-in">
+        <div className="p-4 bg-error/10 border border-error/20 text-error rounded-xl text-sm font-bold animate-fade-in" role="alert">
           {formError}
         </div>
       )}
       {success && (
-        <div className="p-4 bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 rounded-xl text-sm font-bold animate-fade-in">
+        <div className="p-4 bg-success/10 border border-success/20 text-success rounded-xl text-sm font-bold animate-fade-in" role="status">
           ✓ Adulto registrado correctamente. Redirigiendo...
         </div>
       )}
 
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-3.5" noValidate>
         {/* Datos Personales */}
-        <section className={sectionClasses}>
-          <div className="flex items-center gap-3 mb-8">
-            <Person className="text-primary" />
-            <h3 className="text-lg font-black text-primary uppercase tracking-tight">
-              Información Personal
-            </h3>
-          </div>
+        <div className="form-sect">
+          <header>
+            <div className="ic" aria-hidden="true">
+              <Person />
+            </div>
+            <div>
+              <span className="micro">Sección 01</span>
+              <h3>Información Personal</h3>
+            </div>
+          </header>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="space-y-2">
-              <label className={labelClasses}>
-                <Person sx={{ fontSize: 14 }} /> Nombres *
+          <div className="form-grid">
+            <div className="field">
+              <label className="micro" htmlFor="reg-nombres">
+                <Person sx={{ fontSize: 12, verticalAlign: 'middle', marginRight: 4 }} /> Nombres *
               </label>
-              <input {...register('nombres')} className={inputClasses} placeholder="Nombre completo" />
-              {errors.nombres && <p className="text-[10px] text-error font-bold px-1">{errors.nombres.message}</p>}
+              <input id="reg-nombres" {...register('nombres')} className="inp" placeholder="Nombre completo" aria-invalid={!!errors.nombres} />
+              {errors.nombres && <span className="field-err">{errors.nombres.message}</span>}
             </div>
-            <div className="space-y-2">
-              <label className={labelClasses}>
-                <Person sx={{ fontSize: 14 }} /> Apellidos *
+            <div className="field">
+              <label className="micro" htmlFor="reg-apellidos">
+                <Person sx={{ fontSize: 12, verticalAlign: 'middle', marginRight: 4 }} /> Apellidos *
               </label>
-              <input {...register('apellidos')} className={inputClasses} placeholder="Apellidos" />
-              {errors.apellidos && <p className="text-[10px] text-error font-bold px-1">{errors.apellidos.message}</p>}
+              <input id="reg-apellidos" {...register('apellidos')} className="inp" placeholder="Apellidos" aria-invalid={!!errors.apellidos} />
+              {errors.apellidos && <span className="field-err">{errors.apellidos.message}</span>}
             </div>
-            <div className="space-y-2">
-              <label className={labelClasses}>
-                <Badge sx={{ fontSize: 14 }} /> Cédula *
+            <div className="field">
+              <label className="micro" htmlFor="reg-cedula">
+                <Badge sx={{ fontSize: 12, verticalAlign: 'middle', marginRight: 4 }} /> Cédula *
               </label>
-              <input {...register('cedula')} className={inputClasses} placeholder="V-0000000" />
-              {errors.cedula && <p className="text-[10px] text-error font-bold px-1">{errors.cedula.message}</p>}
+              <input id="reg-cedula" {...register('cedula')} className="inp" placeholder="V-0000000" aria-invalid={!!errors.cedula} />
+              {errors.cedula && <span className="field-err">{errors.cedula.message}</span>}
             </div>
-            <div className="space-y-2">
-              <label className={labelClasses}>
-                <CalendarMonth sx={{ fontSize: 14 }} /> Fecha de Nacimiento *
+            <div className="field">
+              <label className="micro" htmlFor="reg-nacimiento">
+                <CalendarMonth sx={{ fontSize: 12, verticalAlign: 'middle', marginRight: 4 }} /> Fecha de Nacimiento *
               </label>
-              <input {...register('fechaNacimiento')} type="date" className={inputClasses} />
-              {errors.fechaNacimiento && <p className="text-[10px] text-error font-bold px-1">{errors.fechaNacimiento.message}</p>}
+              <input id="reg-nacimiento" type="date" {...register('fechaNacimiento')} className="inp" aria-invalid={!!errors.fechaNacimiento} />
+              {errors.fechaNacimiento && <span className="field-err">{errors.fechaNacimiento.message}</span>}
             </div>
-            <div className="space-y-2">
-              <label className={labelClasses}>
-                <Wc sx={{ fontSize: 14 }} /> Género *
+            <div className="field">
+              <label className="micro" htmlFor="reg-genero">
+                <Wc sx={{ fontSize: 12, verticalAlign: 'middle', marginRight: 4 }} /> Género *
               </label>
-              <select {...register('genero')} className={inputClasses}>
+              <select id="reg-genero" {...register('genero')} className="inp" aria-invalid={!!errors.genero}>
                 <option value="MASCULINO">MASCULINO</option>
                 <option value="FEMENINO">FEMENINO</option>
               </select>
+              {errors.genero && <span className="field-err">{errors.genero.message}</span>}
             </div>
-            <div className="space-y-2">
-              <label className={labelClasses}>
-                <EscalatorWarning sx={{ fontSize: 14 }} /> Unidad Scout Asignada *
+            <div className="field">
+              <label className="micro" htmlFor="reg-unidad">
+                <EscalatorWarning sx={{ fontSize: 12, verticalAlign: 'middle', marginRight: 4 }} /> Unidad Scout Asignada *
               </label>
-              <select {...register('unidadId')} className={inputClasses}>
+              <select id="reg-unidad" {...register('unidadId')} className="inp" aria-invalid={!!errors.unidadId}>
                 <option value="">Seleccione Unidad / Grupo</option>
                 {unidades.map((u) => (
                   <option key={u.id} value={u.id}>
@@ -205,47 +203,48 @@ export const StaffRegisterPage = () => {
                   </option>
                 ))}
               </select>
-              {errors.unidadId && <p className="text-[10px] text-error font-bold px-1">{errors.unidadId.message}</p>}
+              {errors.unidadId && <span className="field-err">{errors.unidadId.message}</span>}
             </div>
           </div>
-        </section>
+        </div>
 
         {/* Cuenta de Sistema */}
-        <section className={`${sectionClasses} border-l-4 border-l-accent/50`}>
-          <div className="flex items-center justify-between mb-8">
-            <div className="flex items-center gap-3">
-              <VpnKey className="text-accent" />
-              <h3 className="text-lg font-black text-primary uppercase tracking-tight">
-                Acceso al Sistema
-              </h3>
+        <div className="form-sect">
+          <header>
+            <div className="ic" aria-hidden="true">
+              <VpnKey />
             </div>
-            <label className="flex items-center gap-3 cursor-pointer">
-              <input type="checkbox" {...register('crearCuenta')} className="w-5 h-5 rounded text-primary form-checkbox bg-surface-container-highest border-none" />
-              <span className="text-[10px] font-black uppercase tracking-widest text-outline">Habilitar Cuenta</span>
+            <div>
+              <span className="micro">Sección 02</span>
+              <h3>Acceso al Sistema</h3>
+            </div>
+            <label className="chk ml-auto" htmlFor="crear-cuenta">
+              <input id="crear-cuenta" type="checkbox" {...register('crearCuenta')} />
+              <span className="micro">Habilitar Cuenta</span>
             </label>
-          </div>
+          </header>
 
           {watchCrearCuenta && (
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 animate-fade-in">
-              <div className="space-y-2">
-                <label className={labelClasses}>
-                  <Email sx={{ fontSize: 14 }} /> Email (Usuario) *
+            <div className="form-grid animate-fade-in">
+              <div className="field">
+                <label className="micro" htmlFor="reg-email">
+                  <Email sx={{ fontSize: 12, verticalAlign: 'middle', marginRight: 4 }} /> Email (Usuario) *
                 </label>
-                <input {...register('email')} type="email" className={inputClasses} placeholder="correo@scout.com" />
-                {errors.email && <p className="text-[10px] text-error font-bold px-1">{errors.email.message}</p>}
+                <input id="reg-email" type="email" {...register('email')} className="inp" placeholder="correo@scout.com" aria-invalid={!!errors.email} />
+                {errors.email && <span className="field-err">{errors.email.message}</span>}
               </div>
-              <div className="space-y-2">
-                <label className={labelClasses}>
-                  <VpnKey sx={{ fontSize: 14 }} /> Contraseña *
+              <div className="field">
+                <label className="micro" htmlFor="reg-password">
+                  <VpnKey sx={{ fontSize: 12, verticalAlign: 'middle', marginRight: 4 }} /> Contraseña *
                 </label>
-                <input {...register('password')} type="password" className={inputClasses} placeholder="******" />
-                {errors.password && <p className="text-[10px] text-error font-bold px-1">{errors.password.message}</p>}
+                <input id="reg-password" type="password" {...register('password')} className="inp" placeholder="******" aria-invalid={!!errors.password} />
+                {errors.password && <span className="field-err">{errors.password.message}</span>}
               </div>
-              <div className="space-y-2">
-                <label className={labelClasses}>
-                  <Shield sx={{ fontSize: 14 }} /> Rol Asignado *
+              <div className="field">
+                <label className="micro" htmlFor="reg-rol">
+                  <Shield sx={{ fontSize: 12, verticalAlign: 'middle', marginRight: 4 }} /> Rol Asignado *
                 </label>
-                <select {...register('rolId')} className={inputClasses}>
+                <select id="reg-rol" {...register('rolId')} className="inp" aria-invalid={!!errors.rolId}>
                   <option value="">Seleccione Rol</option>
                   {roles
                     .filter((r) => puedeAsignarRol(user?.roles ?? [], r.nombre))
@@ -253,54 +252,39 @@ export const StaffRegisterPage = () => {
                       <option key={r.id} value={r.id}>{r.nombre.replace(/_/g, ' ')}</option>
                     ))}
                 </select>
-                {errors.rolId && <p className="text-[10px] text-error font-bold px-1">{errors.rolId.message}</p>}
+                {errors.rolId && <span className="field-err">{errors.rolId.message}</span>}
               </div>
             </div>
           )}
 
           {!watchCrearCuenta && (
-            <div className="p-4 bg-surface-container-low rounded-xl border border-dashed border-outline-variant/30 text-center">
-              <p className="text-[10px] font-bold text-outline uppercase tracking-widest">
-                No se creará cuenta de acceso digital en este momento.
-              </p>
+            <div className="p-4 rounded-xl border border-dashed text-center" style={{ borderColor: 'var(--color-outline-variant)', background: 'var(--color-surface-container-low)' }}>
+              <p className="micro">No se creará cuenta de acceso digital en este momento.</p>
             </div>
           )}
-        </section>
+        </div>
 
-        {/* Resumen Final Visual */}
-        <section className="bg-primary p-8 rounded-[2rem] text-on-primary">
-          <div className="flex flex-col md:flex-row justify-between items-center gap-6">
-            <div className="flex items-center gap-4">
-               <div className="w-12 h-12 bg-white/10 rounded-2xl flex items-center justify-center">
-                 <Person sx={{ color: 'white' }} />
-               </div>
-               <div>
-                  <p className="text-[10px] font-black uppercase tracking-widest opacity-60">Resumen de Agente</p>
-                  <h4 className="text-xl font-black uppercase truncate max-w-[300px]">
-                    {getValues('nombres') || '---'} {getValues('apellidos') || ''}
-                  </h4>
-               </div>
-            </div>
-            
-            <div className="flex gap-3">
-              <button
-                type="button"
-                onClick={goBack}
-                className="px-8 py-3 bg-white/10 hover:bg-white/20 text-white rounded-xl font-black text-[10px] uppercase tracking-widest transition-colors"
-              >
-                Cancelar
-              </button>
-              <button
-                type="submit"
-                disabled={isSubmitting || success}
-                className="bg-accent text-primary px-10 py-3 rounded-xl font-black text-[10px] uppercase tracking-widest shadow-lg shadow-accent/20 hover:scale-105 transition-all flex items-center gap-2 disabled:opacity-50"
-              >
-                <SaveAlt sx={{ fontSize: 16 }} />
-                {isSubmitting ? 'Registrando...' : 'Finalizar Registro'}
-              </button>
-            </div>
+        {/* Resumen final */}
+        <div className="np-head" style={{ marginBottom: 0 }}>
+          <span className="micro">Resumen de Agente</span>
+          <h4>
+            {getValues('nombres') || '---'} {getValues('apellidos') || ''}
+          </h4>
+          <div className="form-actions" style={{ justifyContent: 'flex-start' }}>
+            <button
+              type="button"
+              onClick={goBack}
+              className="btn btn-sm"
+              style={{ background: 'rgba(255, 255, 255, 0.16)', color: '#fff' }}
+            >
+              Cancelar
+            </button>
+            <button type="submit" className="btn btn-gold btn-sm" disabled={isSubmitting || success}>
+              <SaveAlt />
+              {isSubmitting ? 'Registrando...' : 'Finalizar Registro'}
+            </button>
           </div>
-        </section>
+        </div>
       </form>
     </div>
   );

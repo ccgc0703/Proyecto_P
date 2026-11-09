@@ -11,8 +11,6 @@ import {
   Typography,
 } from '@mui/material';
 import {
-  AccountTree,
-  ArrowDropDown,
   ArrowRight,
   Badge,
   CheckCircle,
@@ -22,11 +20,11 @@ import {
   Error as ErrorIcon,
   FolderOff,
   Groups,
-  MeetingRoom,
 } from '@mui/icons-material';
 import { useAuth } from '../hooks/useAuth';
 import { usePermission } from '../hooks/usePermission';
 import { organizacionApi, unidadesApi, usuariosApi } from '../api';
+import { PageHeader, StateBlock } from '../components/ui';
 import {
   CargoAsignacion,
   ETIQUETA_TIPO,
@@ -48,12 +46,13 @@ const hijoPermitidoDe = (tipo: TipoNodoOrganizacion): TipoNodoOrganizacion | nul
   return entrada ? entrada[0] : null;
 };
 
-const COLOR_TIPO: Record<TipoNodoOrganizacion, string> = {
-  CONSEJO_NACIONAL: 'bg-primary text-on-primary',
-  DIRECCION_EJECUTIVA: 'bg-secondary text-on-secondary',
-  REGION: 'bg-tertiary/20 text-primary',
-  DISTRITO: 'bg-surface-container-high text-outline',
-  GRUPO: 'bg-success/15 text-success',
+/** Clase de color del código de nodo — espejo de `.tn-c-*` de la maqueta */
+const CLASE_TIPO: Record<TipoNodoOrganizacion, string> = {
+  CONSEJO_NACIONAL: 'tn-c-consejo',
+  DIRECCION_EJECUTIVA: 'tn-c-direccion',
+  REGION: 'tn-c-region',
+  DISTRITO: 'tn-c-distrito',
+  GRUPO: 'tn-c-grupo',
 };
 
 interface Snack {
@@ -127,6 +126,19 @@ export const EstructuraPage = () => {
   };
 
   const raiz = useMemo(() => arbol[0] ?? null, [arbol]);
+
+  /** Total de nodos del árbol — se muestra en la píldora de la cabecera. */
+  const totalNodos = useMemo(() => {
+    let total = 0;
+    const contar = (lista: NodoOrganizacion[]) => {
+      lista.forEach((n) => {
+        total += 1;
+        contar(n.hijos ?? []);
+      });
+    };
+    contar(arbol);
+    return total;
+  }, [arbol]);
 
   // ── Crear ────────────────────────────────────────────────────────────────
   const abrirCrear = () => {
@@ -354,115 +366,114 @@ export const EstructuraPage = () => {
   const renderNodo = (nodo: NodoOrganizacion, profundidad: number) => {
     const expandido = expandidos.has(nodo.id);
     const activo = seleccionado?.id === nodo.id;
-    const tieneContenido = (nodo.hijos?.length ?? 0) > 0 || (nodo.Unidades?.length ?? 0) > 0;
+    const tieneHijos = (nodo.hijos?.length ?? 0) > 0;
+    const tieneUnidades = (nodo.Unidades?.length ?? 0) > 0;
+    const desplegable = tieneHijos || (tieneUnidades && profundidad >= 4);
+
+    const alternar = () => {
+      setSeleccionado(nodo);
+      if (desplegable) toggleExpandir(nodo.id);
+    };
 
     return (
-      <div key={nodo.id}>
-        <div
-          className={`flex items-center gap-2 p-3 rounded-xl border cursor-pointer transition-all ${
-            activo
-              ? 'border-primary bg-primary/5 shadow-sm'
-              : 'border-transparent hover:bg-surface-container-high'
-          }`}
-          style={{ marginLeft: profundidad * 20 }}
-          onClick={() => setSeleccionado(nodo)}
+      <div key={nodo.id} className="tnode">
+        <button
+          type="button"
+          className={`tnode-btn${activo ? ' on' : ''}`}
+          aria-expanded={expandido}
+          onClick={alternar}
         >
-          <button
-            className={`w-6 h-6 flex items-center justify-center rounded hover:bg-surface-container-highest ${
-              tieneContenido ? '' : 'opacity-0 pointer-events-none'
-            }`}
-            onClick={(e) => {
-              e.stopPropagation();
-              toggleExpandir(nodo.id);
-            }}
-            title={expandido ? 'Contraer' : 'Expandir'}
+          <span
+            className={`tw${expandido ? ' open' : ''}${desplegable ? '' : ' leaf'}`}
+            aria-hidden="true"
           >
-            {expandido ? <ArrowDropDown fontSize="small" /> : <ArrowRight fontSize="small" />}
-          </button>
-
-          <span className={`px-2 py-0.5 rounded text-[9px] font-black tracking-wider ${COLOR_TIPO[nodo.tipo]}`}>
-            {nodo.codigo}
+            {desplegable && <ArrowRight />}
           </span>
 
-          <span className={`text-sm font-bold ${nodo.activo ? 'text-on-surface' : 'text-outline line-through'}`}>
-            {nodo.nombre}
-          </span>
+          <span className={`tnode-cod ${CLASE_TIPO[nodo.tipo]}`}>{nodo.codigo}</span>
 
-          <span className="text-[9px] font-black uppercase tracking-widest text-outline">
-            {ETIQUETA_TIPO[nodo.tipo]}
-          </span>
+          <span className={`tnode-nm${nodo.activo ? '' : ' off'}`}>{nodo.nombre}</span>
 
-          {(nodo.Unidades?.length ?? 0) > 0 && (
-            <span className="inline-flex items-center gap-1 text-[9px] font-bold text-outline">
-              <Groups sx={{ fontSize: 12 }} /> {nodo.Unidades!.length} unidad{nodo.Unidades!.length > 1 ? 'es' : ''}
+          <span className="tnode-tipo">{ETIQUETA_TIPO[nodo.tipo]}</span>
+
+          {nodo.tipo === 'GRUPO' && tieneUnidades && (
+            <span className="tnode-tipo" style={{ color: 'var(--color-primary)' }}>
+              {nodo.Unidades!.length} und.
             </span>
           )}
 
           {!nodo.activo && (
-            <span className="px-2 py-0.5 rounded bg-error/10 text-error text-[8px] font-black uppercase">
+            <span className="pill pill-red">
+              <i aria-hidden="true" />
               Inactivo
             </span>
           )}
-        </div>
+        </button>
 
-        {expandido && nodo.hijos?.map((hijo) => renderNodo(hijo, profundidad + 1))}
-        {expandido &&
-          profundidad >= 4 &&
-          nodo.Unidades?.map((u) => (
-            <div
-              key={u.id}
-              className="flex items-center gap-2 p-2 rounded-lg text-xs font-bold text-outline bg-surface-container-low"
-              style={{ marginLeft: (profundidad + 1) * 20 }}
-            >
-              <Groups sx={{ fontSize: 14 }} /> {u.nombre}
-              <span className="text-[9px] uppercase tracking-widest">{u.tipo ?? ''}</span>
-            </div>
-          ))}
+        {expandido && tieneHijos && (
+          <div className="tnode-hijos">
+            {nodo.hijos!.map((hijo) => renderNodo(hijo, profundidad + 1))}
+          </div>
+        )}
+
+        {expandido && profundidad >= 4 && tieneUnidades && (
+          <div className="tnode-hijos">
+            {nodo.Unidades!.map((u) => (
+              <div key={u.id} className="np-li">
+                <span className="dot" style={{ background: 'var(--color-success)' }} aria-hidden="true" />
+                <span className="nm">{u.nombre}</span>
+                <span className="mt">{u.tipo ?? ''}</span>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     );
   };
 
   if (!puedeVer) {
     return (
-      <div className="bg-surface-container-low p-8 rounded-[2rem] border border-outline-variant/10 text-center">
-        <p className="text-xs font-bold text-outline uppercase tracking-widest">
-          No tenés permiso para ver la estructura organizacional.
-        </p>
+      <div className="animate-fade-in-up pb-10">
+        <StateBlock
+          estado="error"
+          titulo="Sin permiso"
+          mensaje="No tenés permiso para ver la estructura organizacional."
+        />
       </div>
     );
   }
 
   return (
-    <div className="space-y-8 animate-fade-in-up pb-10">
-      <header className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div className="flex items-center gap-4">
-          <div className="w-12 h-12 bg-primary/5 rounded-2xl flex items-center justify-center text-primary">
-            <AccountTree />
-          </div>
-          <div>
-            <h2 className="text-2xl font-black tracking-tight text-primary uppercase">Estructura Organizacional</h2>
-            <p className="text-[10px] font-bold text-outline uppercase tracking-[0.2em]">
-              Consejo Nacional → Dirección Ejecutiva → Regiones → Distritos → Grupos
-            </p>
-          </div>
-        </div>
-
-        {puedeEscribir && (
-          <button
-            onClick={abrirCrear}
-            disabled={!tipoACrear}
-            className="sentinel-gradient px-6 py-3 rounded-xl text-on-primary font-black text-[10px] uppercase tracking-widest shadow-lg shadow-primary/20 disabled:opacity-40"
-            title={tipoACrear ? `Crear ${ETIQUETA_TIPO[tipoACrear]}` : 'Seleccioná un nodo para crear su siguiente nivel'}
-          >
-            <CreateNewFolder sx={{ fontSize: 14, verticalAlign: 'middle', mr: 1 }} />
-            {raiz
-              ? seleccionado && tipoACrear
-                ? `Nuevo ${ETIQUETA_TIPO[tipoACrear]}`
-                : 'Nuevo nodo'
-              : 'Crear Consejo Nacional'}
-          </button>
-        )}
-      </header>
+    <div className="space-y-5 animate-fade-in-up pb-10">
+      <PageHeader
+        micro={
+          <span className="tb-crumb">
+            <span className="micro">Administración</span>
+            <span className="micro">/</span>
+            <span className="micro">Estructura</span>
+          </span>
+        }
+        titulo="Estructura Organizacional"
+        subtitulo="Consejo Nacional → Dirección Ejecutiva → Regiones → Distritos → Grupos"
+        acciones={
+          puedeEscribir && (
+            <button
+              type="button"
+              onClick={abrirCrear}
+              disabled={!tipoACrear}
+              className="btn btn-primary btn-sm"
+              title={tipoACrear ? `Crear ${ETIQUETA_TIPO[tipoACrear]}` : 'Seleccioná un nodo para crear su siguiente nivel'}
+            >
+              <CreateNewFolder />
+              {raiz
+                ? seleccionado && tipoACrear
+                  ? `Nuevo ${ETIQUETA_TIPO[tipoACrear]}`
+                  : 'Nuevo nodo'
+                : 'Crear Consejo Nacional'}
+            </button>
+          )
+        }
+      />
 
       {error && (
         <div className="p-4 bg-error/10 border border-error/20 text-error rounded-xl text-sm font-bold">
@@ -470,91 +481,101 @@ export const EstructuraPage = () => {
         </div>
       )}
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <div className="dash-grid">
         {/* Árbol */}
-        <section className="lg:col-span-2 bg-surface-container-lowest p-6 rounded-[2rem] shadow-sm">
-          <h3 className="text-[10px] font-black uppercase tracking-widest text-outline mb-4 flex items-center gap-2">
-            <AccountTree sx={{ fontSize: 14 }} /> Árbol jerárquico
-          </h3>
+        <div className="card card-lg">
+          <div className="card-head">
+            <h3>Árbol jerárquico</h3>
+            <span className="pill pill-grey">{totalNodos} nodos</span>
+          </div>
 
           {cargando ? (
-            <div className="flex justify-center py-12">
-              <div className="w-8 h-8 border-4 border-primary/10 border-t-primary rounded-full animate-spin" />
-            </div>
+            <StateBlock estado="loading" filas={5} />
           ) : arbol.length === 0 ? (
-            <p className="text-xs font-bold text-outline text-center py-8">
-              Sin estructura. Creá el Consejo Nacional para comenzar.
-            </p>
+            <StateBlock
+              estado="empty"
+              titulo="Sin estructura"
+              mensaje="Creá el Consejo Nacional para comenzar."
+              accion={
+                puedeEscribir && (
+                  <button type="button" className="btn btn-primary btn-sm mt-4" onClick={abrirCrear}>
+                    <CreateNewFolder />
+                    Crear Consejo Nacional
+                  </button>
+                )
+              }
+            />
           ) : (
-            <div className="space-y-1">{arbol.map((n) => renderNodo(n, 0))}</div>
+            <div className="tree">{arbol.map((n) => renderNodo(n, 0))}</div>
           )}
-        </section>
+        </div>
 
         {/* Detalle del nodo seleccionado */}
-        <section className="bg-surface-container-low p-6 rounded-[2rem] shadow-sm h-fit">
-          <h3 className="text-[10px] font-black uppercase tracking-widest text-outline mb-4 flex items-center gap-2">
-            <MeetingRoom sx={{ fontSize: 14 }} /> Nodo seleccionado
-          </h3>
+        <div className="node-panel">
+          <div className="card card-lg">
+            <div className="card-head">
+              <h3>Nodo seleccionado</h3>
+            </div>
 
-          {!seleccionado ? (
-            <p className="text-xs font-bold text-outline">Seleccioná un nodo del árbol.</p>
-          ) : (
-            <div className="space-y-4">
-              <div>
-                <span className={`inline-block px-2 py-0.5 rounded text-[9px] font-black tracking-wider ${COLOR_TIPO[seleccionado.tipo]}`}>
-                  {seleccionado.codigo}
-                </span>
-                <h4 className="text-lg font-black text-primary uppercase tracking-tight mt-2">
-                  {seleccionado.nombre}
-                </h4>
-                <p className="text-[10px] font-bold text-outline uppercase tracking-widest">
-                  {ETIQUETA_TIPO[seleccionado.tipo]} · Nivel {seleccionado.nivel} ·{' '}
-                  {seleccionado.activo ? 'Activo' : 'Inactivo'}
-                </p>
-              </div>
-
-              {(seleccionado.Unidades?.length ?? 0) > 0 && (
-                <div className="bg-surface-container-high rounded-xl p-4">
-                  <p className="text-[9px] font-black uppercase tracking-widest text-outline mb-2">Unidades</p>
-                  <ul className="space-y-1">
-                    {seleccionado.Unidades!.map((u) => (
-                      <li key={u.id} className="text-xs font-bold text-on-surface">{u.nombre}</li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-
-              {/* Cargos del nodo */}
-              <div className="bg-surface-container-high rounded-xl p-4">
-                <p className="text-[9px] font-black uppercase tracking-widest text-outline mb-2 flex items-center gap-1.5">
-                  <Badge sx={{ fontSize: 12 }} /> Cargos
-                </p>
-                {cargandoCargos ? (
-                  <div className="flex justify-center py-3">
-                    <div className="w-5 h-5 border-2 border-primary/10 border-t-primary rounded-full animate-spin" />
+            {!seleccionado ? (
+              <StateBlock
+                estado="empty"
+                titulo="Sin selección"
+                mensaje="Seleccioná un nodo del árbol para ver sus detalles."
+              />
+            ) : (
+              <>
+                <div className="np-head">
+                  <span className="micro">{seleccionado.codigo}</span>
+                  <h4>{seleccionado.nombre}</h4>
+                  <div className="np-meta">
+                    <span>{ETIQUETA_TIPO[seleccionado.tipo]}</span>
+                    <span>Nivel {seleccionado.nivel}</span>
+                    <span>{seleccionado.activo ? 'Activo' : 'Inactivo'}</span>
                   </div>
-                ) : cargos.length === 0 ? (
-                  <p className="text-[10px] font-bold text-outline">Sin cargos asignados.</p>
-                ) : (
-                  <ul className="space-y-2">
-                    {cargos.map((c) => (
-                      <li key={c.id} className="flex items-center justify-between gap-2">
-                        <div className="min-w-0">
-                          <p className="text-xs font-bold text-on-surface truncate">
-                            {etiquetaCargo(c.cargo)}
-                          </p>
-                          <p className="text-[9px] font-bold text-outline truncate">
+                </div>
+
+                {(seleccionado.Unidades?.length ?? 0) > 0 && (
+                  <div className="np-sec">
+                    <span className="micro">Unidades ({seleccionado.Unidades!.length})</span>
+                    {seleccionado.Unidades!.map((u) => (
+                      <div key={u.id} className="np-li">
+                        <span
+                          className="dot"
+                          style={{ background: 'var(--color-success)' }}
+                          aria-hidden="true"
+                        />
+                        <span className="nm">{u.nombre}</span>
+                        <span className="mt">{u.tipo ?? ''}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* Cargos del nodo */}
+                <div className="np-sec">
+                  <span className="micro">Cargos</span>
+                  {cargandoCargos ? (
+                    <p className="text-xs font-bold text-outline">Cargando cargos…</p>
+                  ) : cargos.length === 0 ? (
+                    <p style={{ fontSize: '13px', color: 'var(--color-outline)' }}>
+                      Sin cargos asignados.
+                    </p>
+                  ) : (
+                    cargos.map((c) => (
+                      <div key={c.id} className="np-cargo">
+                        <div className="r">{etiquetaCargo(c.cargo)}</div>
+                        <div className="p">
+                          <span>
                             {c.Usuario.nombre} {c.Usuario.apellido ?? ''}
-                            {' · '}
-                            <span className={c.activo ? 'text-success' : 'text-outline line-through'}>
+                          </span>
+                          <span className="flex items-center gap-1.5">
+                            <em className={c.activo ? undefined : 'line-through opacity-60'}>
                               {c.activo ? 'Vigente' : 'Cerrado'}
-                            </span>
-                          </p>
-                        </div>
-                        {puedeEscribir && (
-                          <div className="flex shrink-0 gap-1">
-                            {c.activo && (
+                            </em>
+                            {puedeEscribir && c.activo && (
                               <button
+                                type="button"
                                 onClick={() => cerrarCargo(c.id)}
                                 className="px-2 py-1 rounded-lg bg-surface-container-highest text-[8px] font-black uppercase tracking-widest text-secondary"
                                 title="Cerrar cargo (hoy)"
@@ -562,61 +583,57 @@ export const EstructuraPage = () => {
                                 Cerrar
                               </button>
                             )}
-                            <button
-                              onClick={() => eliminarCargo(c.id)}
-                              className="px-2 py-1 rounded-lg bg-error/10 text-[8px] font-black uppercase tracking-widest text-error"
-                              title="Eliminar asignación"
-                            >
-                              Quitar
-                            </button>
-                          </div>
-                        )}
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </div>
-
-              {puedeEscribir && (
-                <div className="flex flex-wrap gap-2 pt-2">
-                  <button
-                    onClick={abrirRenombrar}
-                    className="inline-flex items-center gap-1.5 px-3 py-2 bg-surface-container-high rounded-xl text-[9px] font-black uppercase tracking-widest text-primary"
-                  >
-                    <DriveFileRenameOutline sx={{ fontSize: 14 }} /> Renombrar
-                  </button>
-                  <button
-                    onClick={alternarActivo}
-                    className="inline-flex items-center gap-1.5 px-3 py-2 bg-surface-container-high rounded-xl text-[9px] font-black uppercase tracking-widest text-secondary"
-                  >
-                    {seleccionado.activo ? <FolderOff sx={{ fontSize: 14 }} /> : <CheckCircle sx={{ fontSize: 14 }} />}
-                    {seleccionado.activo ? 'Desactivar' : 'Reactivar'}
-                  </button>
-                  <button
-                    onClick={abrirDialogoCargo}
-                    className="inline-flex items-center gap-1.5 px-3 py-2 bg-surface-container-high rounded-xl text-[9px] font-black uppercase tracking-widest text-primary"
-                  >
-                    <Badge sx={{ fontSize: 14 }} /> Asignar cargo
-                  </button>
-                  {seleccionado.tipo === 'GRUPO' && (
-                    <button
-                      onClick={abrirUnidades}
-                      className="inline-flex items-center gap-1.5 px-3 py-2 bg-surface-container-high rounded-xl text-[9px] font-black uppercase tracking-widest text-success"
-                    >
-                      <Groups sx={{ fontSize: 14 }} /> Unidades
-                    </button>
+                            {puedeEscribir && (
+                              <button
+                                type="button"
+                                onClick={() => eliminarCargo(c.id)}
+                                className="px-2 py-1 rounded-lg bg-error/10 text-[8px] font-black uppercase tracking-widest text-error"
+                                title="Eliminar asignación"
+                              >
+                                Quitar
+                              </button>
+                            )}
+                          </span>
+                        </div>
+                      </div>
+                    ))
                   )}
-                  <button
-                    onClick={() => setDialogoEliminar(true)}
-                    className="inline-flex items-center gap-1.5 px-3 py-2 bg-error/10 rounded-xl text-[9px] font-black uppercase tracking-widest text-error"
-                  >
-                    <Delete sx={{ fontSize: 14 }} /> Eliminar
-                  </button>
                 </div>
-              )}
-            </div>
-          )}
-        </section>
+
+                {puedeEscribir && (
+                  <div className="form-actions">
+                    <button type="button" onClick={abrirRenombrar} className="btn btn-ghost btn-sm">
+                      <DriveFileRenameOutline />
+                      Renombrar
+                    </button>
+                    <button type="button" onClick={alternarActivo} className="btn btn-soft btn-sm">
+                      {seleccionado.activo ? <FolderOff /> : <CheckCircle />}
+                      {seleccionado.activo ? 'Desactivar' : 'Reactivar'}
+                    </button>
+                    <button type="button" onClick={abrirDialogoCargo} className="btn btn-soft btn-sm">
+                      <Badge />
+                      Asignar cargo
+                    </button>
+                    {seleccionado.tipo === 'GRUPO' && (
+                      <button type="button" onClick={abrirUnidades} className="btn btn-soft btn-sm">
+                        <Groups />
+                        Unidades
+                      </button>
+                    )}
+                    <button
+                      type="button"
+                      onClick={() => setDialogoEliminar(true)}
+                      className="btn btn-danger btn-sm"
+                    >
+                      <Delete />
+                      Eliminar
+                    </button>
+                  </div>
+                )}
+              </>
+            )}
+          </div>
+        </div>
       </div>
 
       {/* Diálogo: crear nodo */}

@@ -5,20 +5,21 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import {
   ArrowBack,
-  Person,
   Badge,
   CalendarMonth,
-  Wc,
-  EscalatorWarning,
-  SaveAlt,
   Edit,
-  MedicalInformation
+  EscalatorWarning,
+  MedicalInformation,
+  Person,
+  SaveAlt,
+  Wc,
 } from '@mui/icons-material';
 import { adultosApi, unidadesApi } from '../api';
 import { ordenarPorUnidad } from '../hooks/useUnidad';
 import { FichaMedicaPanel } from '../features/fichaMedica/FichaMedicaPanel';
 import { UnidadEntity } from '../types/member';
 import { getApiErrorMessage } from '../utils/errors';
+import { PageHeader, StateBlock } from '../components/ui';
 
 const editSchema = z.object({
   nombres: z.string().min(2, 'Requerido'),
@@ -90,106 +91,102 @@ export const StaffEditPage = () => {
 
   const goBack = () => navigate({ to: '/app/staff' });
 
-  const inputClasses =
-    'w-full p-4 bg-surface-container-high border-none rounded-xl text-sm font-bold focus:ring-2 focus:ring-primary transition-all h-[54px]';
-  const labelClasses =
-    'text-[10px] font-black uppercase tracking-widest px-1 text-outline flex items-center gap-2';
-  const sectionClasses =
-    'bg-surface-container-lowest p-8 md:p-10 rounded-[2rem] shadow-sm border border-outline-variant/5';
-
   if (loading) {
     return (
-      <div className="flex justify-center items-center h-64">
-        <div className="w-12 h-12 border-4 border-primary/20 border-t-primary rounded-full animate-spin" />
+      <div className="animate-fade-in-up pb-10 max-w-5xl mx-auto">
+        <StateBlock estado="loading" filas={5} />
       </div>
     );
   }
 
   return (
-    <div className="space-y-8 animate-fade-in-up pb-10 max-w-5xl mx-auto">
-      {/* Header */}
-      <header className="flex items-center gap-6">
-        <button
-          onClick={goBack}
-          className="w-12 h-12 bg-surface-container-high rounded-2xl flex items-center justify-center text-primary hover:bg-surface-container-highest transition-colors"
-        >
-          <ArrowBack />
-        </button>
-        <div>
-          <h1 className="text-2xl font-black tracking-tighter text-primary">
-            Editar Staff / Adulto
-          </h1>
-          <p className="text-[10px] font-bold text-outline uppercase tracking-[0.2em]">
-            Modificando perfil de facilitador corporativo
-          </p>
-        </div>
-      </header>
+    <div className="space-y-5 animate-fade-in-up pb-10 max-w-5xl mx-auto">
+      <PageHeader
+        micro={
+          <span className="tb-crumb">
+            <span className="micro">Staff</span>
+            <span className="micro">/</span>
+            <span className="micro">Editar</span>
+          </span>
+        }
+        titulo="Editar Staff / Adulto"
+        subtitulo="Modificando perfil de facilitador corporativo"
+        acciones={
+          <button type="button" onClick={goBack} className="btn btn-ghost btn-sm">
+            <ArrowBack />
+            Volver
+          </button>
+        }
+      />
 
       {/* Messages */}
       {formError && (
-        <div className="p-4 bg-error/10 border border-error/20 text-error rounded-xl text-sm font-bold animate-fade-in">
+        <div className="p-4 bg-error/10 border border-error/20 text-error rounded-xl text-sm font-bold animate-fade-in" role="alert">
           {formError}
         </div>
       )}
       {success && (
-        <div className="p-4 bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 rounded-xl text-sm font-bold animate-fade-in">
+        <div className="p-4 bg-success/10 border border-success/20 text-success rounded-xl text-sm font-bold animate-fade-in" role="status">
           ✓ Cambios guardados correctamente.
         </div>
       )}
 
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
-        {/* Formulario */}
-        <section className={sectionClasses}>
-          <div className="flex items-center gap-3 mb-8">
-            <Edit className="text-primary" />
-            <h3 className="text-lg font-black text-primary uppercase tracking-tight">
-              Datos del Perfil
-            </h3>
-          </div>
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-3.5" noValidate>
+        <div className="form-sect">
+          <header>
+            <div className="ic" aria-hidden="true">
+              <Edit />
+            </div>
+            <div>
+              <span className="micro">Sección 01</span>
+              <h3>Datos del Perfil</h3>
+            </div>
+          </header>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="space-y-2">
-              <label className={labelClasses}>
-                <Person sx={{ fontSize: 14 }} /> Nombres *
+          <div className="form-grid">
+            <div className="field">
+              <label className="micro" htmlFor="staff-nombres">
+                <Person sx={{ fontSize: 12, verticalAlign: 'middle', marginRight: 4 }} /> Nombres *
               </label>
-              <input {...register('nombres')} className={inputClasses} />
-              {errors.nombres && <p className="text-[10px] text-error font-bold px-1">{errors.nombres.message}</p>}
+              <input id="staff-nombres" {...register('nombres')} className="inp" aria-invalid={!!errors.nombres} />
+              {errors.nombres && <span className="field-err">{errors.nombres.message}</span>}
             </div>
-            <div className="space-y-2">
-              <label className={labelClasses}>
-                <Person sx={{ fontSize: 14 }} /> Apellidos *
+            <div className="field">
+              <label className="micro" htmlFor="staff-apellidos">
+                <Person sx={{ fontSize: 12, verticalAlign: 'middle', marginRight: 4 }} /> Apellidos *
               </label>
-              <input {...register('apellidos')} className={inputClasses} />
-              {errors.apellidos && <p className="text-[10px] text-error font-bold px-1">{errors.apellidos.message}</p>}
+              <input id="staff-apellidos" {...register('apellidos')} className="inp" aria-invalid={!!errors.apellidos} />
+              {errors.apellidos && <span className="field-err">{errors.apellidos.message}</span>}
             </div>
-            <div className="space-y-2">
-              <label className={labelClasses}>
-                <Badge sx={{ fontSize: 14 }} /> Cédula *
+            <div className="field">
+              <label className="micro" htmlFor="staff-cedula">
+                <Badge sx={{ fontSize: 12, verticalAlign: 'middle', marginRight: 4 }} /> Cédula *
               </label>
-              <input {...register('cedula')} className={inputClasses} />
-              {errors.cedula && <p className="text-[10px] text-error font-bold px-1">{errors.cedula.message}</p>}
+              <input id="staff-cedula" {...register('cedula')} className="inp" aria-invalid={!!errors.cedula} />
+              {errors.cedula && <span className="field-err">{errors.cedula.message}</span>}
             </div>
-            <div className="space-y-2">
-              <label className={labelClasses}>
-                <CalendarMonth sx={{ fontSize: 14 }} /> Fecha de Nacimiento *
+            <div className="field">
+              <label className="micro" htmlFor="staff-nacimiento">
+                <CalendarMonth sx={{ fontSize: 12, verticalAlign: 'middle', marginRight: 4 }} /> Fecha de Nacimiento *
               </label>
-              <input {...register('fechaNacimiento')} type="date" className={inputClasses} />
-              {errors.fechaNacimiento && <p className="text-[10px] text-error font-bold px-1">{errors.fechaNacimiento.message}</p>}
+              <input id="staff-nacimiento" type="date" {...register('fechaNacimiento')} className="inp" aria-invalid={!!errors.fechaNacimiento} />
+              {errors.fechaNacimiento && <span className="field-err">{errors.fechaNacimiento.message}</span>}
             </div>
-            <div className="space-y-2">
-              <label className={labelClasses}>
-                <Wc sx={{ fontSize: 14 }} /> Género *
+            <div className="field">
+              <label className="micro" htmlFor="staff-genero">
+                <Wc sx={{ fontSize: 12, verticalAlign: 'middle', marginRight: 4 }} /> Género *
               </label>
-              <select {...register('genero')} className={inputClasses}>
+              <select id="staff-genero" {...register('genero')} className="inp" aria-invalid={!!errors.genero}>
                 <option value="MASCULINO">MASCULINO</option>
                 <option value="FEMENINO">FEMENINO</option>
               </select>
+              {errors.genero && <span className="field-err">{errors.genero.message}</span>}
             </div>
-            <div className="space-y-2">
-              <label className={labelClasses}>
-                <EscalatorWarning sx={{ fontSize: 14 }} /> Unidad Scout Asignada *
+            <div className="field">
+              <label className="micro" htmlFor="staff-unidad">
+                <EscalatorWarning sx={{ fontSize: 12, verticalAlign: 'middle', marginRight: 4 }} /> Unidad Scout Asignada *
               </label>
-              <select {...register('unidadId')} className={inputClasses}>
+              <select id="staff-unidad" {...register('unidadId')} className="inp" aria-invalid={!!errors.unidadId}>
                 <option value="">Seleccione Unidad / Grupo</option>
                 {unidades.map((u) => (
                   <option key={u.id} value={u.id}>
@@ -197,40 +194,35 @@ export const StaffEditPage = () => {
                   </option>
                 ))}
               </select>
-              {errors.unidadId && <p className="text-[10px] text-error font-bold px-1">{errors.unidadId.message}</p>}
+              {errors.unidadId && <span className="field-err">{errors.unidadId.message}</span>}
             </div>
           </div>
-        </section>
 
-        {/* Action Buttons */}
-        <div className="flex justify-between items-center bg-surface-container-low p-6 rounded-[2rem]">
-          <button
-            type="button"
-            onClick={goBack}
-            className="px-8 py-3 bg-surface-container-high text-primary rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-surface-container-highest transition-colors"
-          >
-            Cancelar
-          </button>
-          
-          <button
-            type="submit"
-            disabled={isSubmitting || success}
-            className="sentinel-gradient text-on-primary px-10 py-3 rounded-xl font-black text-[10px] uppercase tracking-widest shadow-lg shadow-primary/20 hover:scale-105 transition-all flex items-center gap-2 disabled:opacity-50"
-          >
-            <SaveAlt sx={{ fontSize: 16 }} />
-            {isSubmitting ? 'Guardando...' : 'Guardar Cambios'}
-          </button>
+          <div className="form-actions" style={{ marginTop: 16 }}>
+            <button type="button" onClick={goBack} className="btn btn-ghost">
+              Cancelar
+            </button>
+            <button type="submit" className="btn btn-primary" disabled={isSubmitting || success}>
+              <SaveAlt />
+              {isSubmitting ? 'Guardando...' : 'Guardar Cambios'}
+            </button>
+          </div>
         </div>
       </form>
 
       {/* Ficha Médica del adulto/staff */}
-      <section className="bg-surface-container-lowest p-6 md:p-8 rounded-[2rem] shadow-sm border border-outline-variant/5">
-        <div className="flex items-center gap-3 mb-6">
-          <MedicalInformation className="text-emerald-600" />
-          <h3 className="text-lg font-black text-primary uppercase tracking-tight">Ficha Médica</h3>
-        </div>
+      <div className="form-sect" style={{ marginBottom: 0 }}>
+        <header>
+          <div className="ic" aria-hidden="true">
+            <MedicalInformation />
+          </div>
+          <div>
+            <span className="micro">Sección 02</span>
+            <h3>Ficha Médica</h3>
+          </div>
+        </header>
         <FichaMedicaPanel miembroId={miembroId} miembroNombre={staffNombre} />
-      </section>
+      </div>
     </div>
   );
 };

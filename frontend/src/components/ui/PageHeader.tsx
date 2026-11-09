@@ -1,8 +1,8 @@
 import type { ReactNode } from 'react';
 
 interface PageHeaderProps {
-  /** Etiqueta monoespaciada sobre el título (categoría / módulo). */
-  micro?: string;
+  /** Etiqueta monoespaciada sobre el título (categoría / módulo / ruta). */
+  micro?: ReactNode;
   titulo: string;
   subtitulo?: ReactNode;
   /** Botones de acción alineados a la derecha. */

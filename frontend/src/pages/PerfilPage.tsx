@@ -3,17 +3,18 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useAuth } from '../hooks/useAuth';
+import { usePermission } from '../hooks/usePermission';
 import { adultosApi, miembrosApi, usuariosApi } from '../api';
 import { FichaMedicaPanel } from '../features/fichaMedica/FichaMedicaPanel';
-import { 
-  Person, 
-  Shield, 
-  Email, 
-  Fingerprint,
-  VerifiedUser,
+import { PageHeader, Pill } from '../components/ui';
+import {
+  Email,
   Key,
   MedicalInformation,
-  MilitaryTech
+  MilitaryTech,
+  Password,
+  Refresh,
+  Save,
 } from '@mui/icons-material';
 
 const perfilSchema = z.object({
@@ -64,6 +65,7 @@ interface MiPerfilJoven {
 
 export const PerfilPage = () => {
   const { user, checkAuth, logout } = useAuth();
+  const puedeVerFicha = usePermission('medico:view');
   const [success, setSuccess] = useState(false);
   const [pwdSuccess, setPwdSuccess] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -201,291 +203,319 @@ export const PerfilPage = () => {
     ? user.nombre.charAt(0).toUpperCase() + (user.apellido?.charAt(0).toUpperCase() || '')
     : '?';
 
+  const permisos = user?.permissions ?? [];
+  const conFicha = Boolean(miembroId) && puedeVerFicha;
+
   return (
-    <div className="space-y-8 animate-fade-in-up">
-      {/* Page Header */}
-      <header className="flex items-center gap-4">
-        <div className="w-12 h-12 bg-primary/5 rounded-2xl flex items-center justify-center text-primary">
-          <Person fontSize="medium" />
-        </div>
-        <div>
-          <h2 className="text-2xl font-black tracking-tight text-primary uppercase">
-            {esJoven ? 'Mi Perfil Joven' : 'Mi Perfil Agente'}
-          </h2>
-          <p className="text-[10px] font-bold text-outline uppercase tracking-[0.2em]">ID de Enlace: {user?.id.slice(0, 8)}...</p>
-        </div>
-      </header>
+    <div className="space-y-5 animate-fade-in-up pb-10">
+      <PageHeader
+        micro={
+          <span className="tb-crumb">
+            <span className="micro">Principal</span>
+            <span className="micro">/</span>
+            <span className="micro">Perfil</span>
+          </span>
+        }
+        titulo={esJoven ? 'Mi Perfil Joven' : 'Mi Perfil Agente'}
+        subtitulo={
+          <>
+            ID de Enlace:{' '}
+            <span className="chip chip-mono" style={{ marginLeft: 4 }}>
+              {user?.id.slice(0, 8)}
+            </span>
+          </>
+        }
+      />
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-        {/* Left Column: Avatar & Summary */}
-        <div className="lg:col-span-4 space-y-6">
-          <section className="bg-surface-container-lowest p-8 rounded-[2rem] shadow-sm text-center relative overflow-hidden">
-             <div className="absolute top-0 right-0 p-4 opacity-5">
-                <Fingerprint sx={{ fontSize: 100 }} />
-             </div>
-
-            <div className="relative z-10">
-              <div className="w-24 h-24 mx-auto mb-4 sentinel-gradient rounded-3xl flex items-center justify-center text-on-primary font-black text-2xl shadow-xl shadow-primary/20">
-                {initials}
+      <div className="perfil-grid">
+        {/* ── Columna lateral: identidad y acceso ─────────────────────── */}
+        <div className="perfil-side">
+          <div className="card">
+            <div className="text-center">
+              <div className="avatar-xl" aria-hidden="true">
+                <span>{initials}</span>
               </div>
-              
-              <h3 className="text-xl font-black text-primary mb-1 uppercase tracking-tight">
+              <h3
+                style={{
+                  fontFamily: 'var(--font-display)',
+                  fontWeight: 800,
+                  fontSize: 18,
+                  letterSpacing: '-0.025em',
+                  color: 'var(--color-primary)',
+                }}
+              >
                 {user?.nombre} {user?.apellido}
               </h3>
-              <p className="text-xs font-bold text-outline mb-6">{user?.email}</p>
-
-              <div className="flex flex-wrap gap-2 justify-center mb-6">
+              <p style={{ fontSize: '12.5px', color: 'var(--color-outline)', marginTop: 5 }}>
+                {user?.email}
+              </p>
+              <div className="chip-row justify-center mt-3.5">
                 {user?.roles.map((role) => (
-                  <span key={role} className="bg-primary px-3 py-1 rounded-full text-[9px] font-black text-on-primary uppercase tracking-widest">
+                  <span
+                    key={role}
+                    className="chip chip-mono"
+                    style={{ background: 'var(--color-primary)', color: '#fff' }}
+                  >
                     {role.replace(/_/g, ' ')}
                   </span>
                 ))}
               </div>
+            </div>
 
-              <div className="h-px bg-surface-container-high w-full mb-6" />
-
-              <div className="text-left space-y-4">
-                <div className="flex items-center gap-3">
-                   <Shield className="text-outline" fontSize="small" />
-                   <h4 className="text-[10px] font-black uppercase tracking-widest text-outline">Nivel de Autorización</h4>
-                </div>
-                
-                <div className="flex flex-wrap gap-1.5">
-                  {user?.permissions.slice(0, 8).map((perm) => (
-                    <span key={perm} className="px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-tighter bg-surface-container-high border border-outline-variant/10 text-outline">
-                      {perm}
-                    </span>
-                  ))}
-                  {(user?.permissions.length ?? 0) > 8 && (
-                    <span className="text-[8px] font-bold text-outline">+{ (user?.permissions.length ?? 0) - 8 }</span>
-                  )}
-                </div>
+            <div className="np-sec" style={{ marginTop: 18 }}>
+              <span className="micro">Nivel de autorización</span>
+              <div className="seg">
+                {permisos.slice(0, 8).map((perm, i) => (
+                  <span key={perm} className={i < 4 ? 'hi' : undefined}>
+                    {perm}
+                  </span>
+                ))}
+                {permisos.length > 8 && <span>+{permisos.length - 8}</span>}
               </div>
             </div>
-          </section>
+          </div>
 
-          <section className="bg-surface-container-low p-6 rounded-[2rem] flex items-center gap-4">
-             <div className="w-10 h-10 bg-tertiary/20 rounded-xl flex items-center justify-center text-primary">
-                <VerifiedUser />
-             </div>
-             <div>
-                <p className="text-[10px] font-black uppercase tracking-widest text-primary">Estado de Seguridad</p>
-                <p className="text-xs font-bold text-outline uppercase tracking-widest">Protocolo Validado</p>
-             </div>
-          </section>
+          <div className="card">
+            <span className="micro">Estado de seguridad</span>
+            <p className="mt-3">
+              <Pill variante="green" dot>
+                Protocolo Validado
+              </Pill>
+            </p>
+            <p
+              style={{
+                fontSize: '12.5px',
+                color: 'var(--color-on-surface-variant)',
+                marginTop: 11,
+                lineHeight: 1.6,
+              }}
+            >
+              Sesión protegida con JWT. Última verificación hace 2 minutos.
+            </p>
+          </div>
         </div>
 
-        {/* Right Column: Editing Forms */}
-        <div className="lg:col-span-8 space-y-8">
-          {/* Personal Info Form */}
-          <section className="bg-surface-container-lowest p-8 rounded-[2rem] shadow-sm">
-            <div className="flex items-center gap-3 mb-8">
-              <Email className="text-primary" />
-              <h3 className="text-lg font-black text-primary uppercase tracking-tight">Información de Enlace</h3>
-            </div>
+        {/* ── Columna principal: formularios ──────────────────────────── */}
+        <div>
+          {/* Sección 01 — Información de enlace */}
+          <div className="form-sect">
+            <header>
+              <div className="ic" aria-hidden="true">
+                <Email />
+              </div>
+              <div>
+                <span className="micro">Sección 01</span>
+                <h3>Información de Enlace</h3>
+              </div>
+            </header>
 
             {success && (
-              <div className="mb-6 p-4 bg-success/10 border border-success/20 text-success rounded-xl text-sm font-bold animate-fade-in flex items-center gap-2">
+              <div className="mb-4 p-4 bg-success/10 border border-success/20 text-success rounded-xl text-sm font-bold animate-fade-in flex items-center gap-2" role="status">
                 <span>✓ Perfil actualizado correctamente en el nodo central.</span>
               </div>
             )}
-            
+
             {error && (
-              <div className="mb-6 p-4 bg-error/10 border border-error/20 text-error rounded-xl text-sm font-bold animate-fade-in">
+              <div className="mb-4 p-4 bg-error/10 border border-error/20 text-error rounded-xl text-sm font-bold animate-fade-in" role="alert">
                 {error}
               </div>
             )}
 
-            <form onSubmit={handleSubmit(onSubmitPerfil)} className="space-y-6">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                <div className="space-y-2">
-                  <label className="text-[10px] font-black uppercase tracking-widest px-1 text-outline">Nombre</label>
-                  <input {...register('nombre')} className="w-full p-4 bg-surface-container-high border-none rounded-xl text-sm font-bold focus:ring-2 focus:ring-primary h-[54px]" />
-                  {errors.nombre && <p className="text-[10px] text-error font-bold px-1">{errors.nombre.message}</p>}
+            <form onSubmit={handleSubmit(onSubmitPerfil)} noValidate>
+              <div className="form-grid">
+                <div className="field">
+                  <label className="micro" htmlFor="perfil-nombre">Nombre</label>
+                  <input id="perfil-nombre" {...register('nombre')} className="inp" aria-invalid={!!errors.nombre} />
+                  {errors.nombre && <span className="field-err">{errors.nombre.message}</span>}
                 </div>
-                <div className="space-y-2">
-                  <label className="text-[10px] font-black uppercase tracking-widest px-1 text-outline">Apellido</label>
-                  <input {...register('apellido')} className="w-full p-4 bg-surface-container-high border-none rounded-xl text-sm font-bold focus:ring-2 focus:ring-primary h-[54px]" />
-                  {errors.apellido && <p className="text-[10px] text-error font-bold px-1">{errors.apellido.message}</p>}
+                <div className="field">
+                  <label className="micro" htmlFor="perfil-apellido">Apellido</label>
+                  <input id="perfil-apellido" {...register('apellido')} className="inp" aria-invalid={!!errors.apellido} />
+                  {errors.apellido && <span className="field-err">{errors.apellido.message}</span>}
+                </div>
+                <div className="field" style={{ gridColumn: '1 / -1' }}>
+                  <label className="micro" htmlFor="perfil-email">Correo Electrónico</label>
+                  <input id="perfil-email" type="email" {...register('email')} className="inp" aria-invalid={!!errors.email} />
+                  {errors.email && <span className="field-err">{errors.email.message}</span>}
                 </div>
               </div>
 
-              <div className="space-y-2">
-                <label className="text-[10px] font-black uppercase tracking-widest px-1 text-outline">Correo Electrónico</label>
-                <input {...register('email')} type="email" className="w-full p-4 bg-surface-container-high border-none rounded-xl text-sm font-bold focus:ring-2 focus:ring-primary h-[54px]" />
-                {errors.email && <p className="text-[10px] text-error font-bold px-1">{errors.email.message}</p>}
-              </div>
-
-              <div className="pt-2">
-                <button 
-                  type="submit" 
-                  disabled={isSubmitting}
-                  className="sentinel-gradient px-8 py-3 rounded-xl text-on-primary font-black text-[10px] uppercase tracking-widest shadow-lg shadow-primary/20 hover:shadow-xl transition-all disabled:opacity-50"
-                >
+              <div className="form-actions" style={{ marginTop: 16 }}>
+                <button type="submit" className="btn btn-primary" disabled={isSubmitting}>
+                  <Refresh />
                   {isSubmitting ? 'Sincronizando...' : 'Sincronizar Datos'}
                 </button>
               </div>
             </form>
-          </section>
+          </div>
 
-          {/* Mis Datos Scout (solo jóvenes con perfil vinculado) */}
+          {/* Sección 02 — Mis datos scout (solo jóvenes con perfil vinculado) */}
           {esJoven && miembroDatos && (
-            <section className="bg-surface-container-lowest p-8 rounded-[2rem] shadow-sm">
-              <div className="flex items-center gap-3 mb-8">
-                <MilitaryTech className="text-primary" />
-                <h3 className="text-lg font-black text-primary uppercase tracking-tight">Mis Datos Scout</h3>
-              </div>
+            <div className="form-sect">
+              <header>
+                <div className="ic" aria-hidden="true">
+                  <MilitaryTech />
+                </div>
+                <div>
+                  <span className="micro">Sección 02</span>
+                  <h3>Mis Datos Scout</h3>
+                </div>
+              </header>
 
               {miSuccess && (
-                <div className="mb-6 p-4 bg-success/10 border border-success/20 text-success rounded-xl text-sm font-bold animate-fade-in flex items-center gap-2">
+                <div className="mb-4 p-4 bg-success/10 border border-success/20 text-success rounded-xl text-sm font-bold animate-fade-in flex items-center gap-2" role="status">
                   <span>✓ Información scout actualizada correctamente.</span>
                 </div>
               )}
 
               {miError && (
-                <div className="mb-6 p-4 bg-error/10 border border-error/20 text-error rounded-xl text-sm font-bold animate-fade-in">
+                <div className="mb-4 p-4 bg-error/10 border border-error/20 text-error rounded-xl text-sm font-bold animate-fade-in" role="alert">
                   {miError}
                 </div>
               )}
 
-              <div className="mb-8 grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <div className="bg-surface-container-high rounded-xl p-4">
-                  <p className="text-[9px] font-black uppercase tracking-widest text-outline mb-1">Unidad</p>
-                  <p className="text-sm font-bold text-on-surface">{miembroDatos.Unidad?.nombre ?? '—'}</p>
+              <div className="stat-grid">
+                <div className="stat-mini">
+                  <b>{miembroDatos.Unidad?.nombre ?? '—'}</b>
+                  <span>Unidad</span>
                 </div>
-                <div className="bg-surface-container-high rounded-xl p-4">
-                  <p className="text-[9px] font-black uppercase tracking-widest text-outline mb-1">Representante</p>
-                  <p className="text-sm font-bold text-on-surface">{miembroDatos.Representante?.nombre ?? '—'}</p>
+                <div className="stat-mini">
+                  <b>{miembroDatos.Representante?.nombre ?? '—'}</b>
+                  <span>Representante</span>
                 </div>
-                <div className="bg-surface-container-high rounded-xl p-4">
-                  <p className="text-[9px] font-black uppercase tracking-widest text-outline mb-1">Estado</p>
-                  <p className="text-sm font-bold text-on-surface">{miembroDatos.estado ?? '—'}</p>
+                <div className="stat-mini">
+                  <b style={{ color: 'var(--color-success)' }}>{miembroDatos.estado ?? '—'}</b>
+                  <span>Estado</span>
                 </div>
               </div>
 
-              <form onSubmit={miForm.handleSubmit(onSubmitMiPerfil)} className="space-y-6">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                  <div className="space-y-2">
-                    <label className="text-[10px] font-black uppercase tracking-widest px-1 text-outline">Nombres</label>
-                    <input {...miForm.register('nombres')} className="w-full p-4 bg-surface-container-high border-none rounded-xl text-sm font-bold focus:ring-2 focus:ring-primary h-[54px]" />
-                    {miForm.formState.errors.nombres && <p className="text-[10px] text-error font-bold px-1">{miForm.formState.errors.nombres.message}</p>}
+              <form onSubmit={miForm.handleSubmit(onSubmitMiPerfil)} noValidate>
+                <div className="form-grid">
+                  <div className="field">
+                    <label className="micro" htmlFor="mi-nombres">Nombres</label>
+                    <input id="mi-nombres" {...miForm.register('nombres')} className="inp" aria-invalid={!!miForm.formState.errors.nombres} />
+                    {miForm.formState.errors.nombres && <span className="field-err">{miForm.formState.errors.nombres.message}</span>}
                   </div>
-                  <div className="space-y-2">
-                    <label className="text-[10px] font-black uppercase tracking-widest px-1 text-outline">Apellidos</label>
-                    <input {...miForm.register('apellidos')} className="w-full p-4 bg-surface-container-high border-none rounded-xl text-sm font-bold focus:ring-2 focus:ring-primary h-[54px]" />
-                    {miForm.formState.errors.apellidos && <p className="text-[10px] text-error font-bold px-1">{miForm.formState.errors.apellidos.message}</p>}
+                  <div className="field">
+                    <label className="micro" htmlFor="mi-apellidos">Apellidos</label>
+                    <input id="mi-apellidos" {...miForm.register('apellidos')} className="inp" aria-invalid={!!miForm.formState.errors.apellidos} />
+                    {miForm.formState.errors.apellidos && <span className="field-err">{miForm.formState.errors.apellidos.message}</span>}
                   </div>
-                  <div className="space-y-2">
-                    <label className="text-[10px] font-black uppercase tracking-widest px-1 text-outline">Cédula</label>
-                    <input {...miForm.register('cedula')} className="w-full p-4 bg-surface-container-high border-none rounded-xl text-sm font-bold focus:ring-2 focus:ring-primary h-[54px]" />
-                    {miForm.formState.errors.cedula && <p className="text-[10px] text-error font-bold px-1">{miForm.formState.errors.cedula.message}</p>}
+                  <div className="field">
+                    <label className="micro" htmlFor="mi-cedula">Cédula</label>
+                    <input id="mi-cedula" {...miForm.register('cedula')} className="inp" aria-invalid={!!miForm.formState.errors.cedula} />
+                    {miForm.formState.errors.cedula && <span className="field-err">{miForm.formState.errors.cedula.message}</span>}
                   </div>
-                  <div className="space-y-2">
-                    <label className="text-[10px] font-black uppercase tracking-widest px-1 text-outline">Fecha de Nacimiento</label>
-                    <input {...miForm.register('fechaNacimiento')} type="date" className="w-full p-4 bg-surface-container-high border-none rounded-xl text-sm font-bold focus:ring-2 focus:ring-primary h-[54px]" />
-                    {miForm.formState.errors.fechaNacimiento && <p className="text-[10px] text-error font-bold px-1">{miForm.formState.errors.fechaNacimiento.message}</p>}
+                  <div className="field">
+                    <label className="micro" htmlFor="mi-nacimiento">Fecha de Nacimiento</label>
+                    <input id="mi-nacimiento" type="date" {...miForm.register('fechaNacimiento')} className="inp" aria-invalid={!!miForm.formState.errors.fechaNacimiento} />
+                    {miForm.formState.errors.fechaNacimiento && <span className="field-err">{miForm.formState.errors.fechaNacimiento.message}</span>}
                   </div>
-                  <div className="space-y-2">
-                    <label className="text-[10px] font-black uppercase tracking-widest px-1 text-outline">Género</label>
-                    <select {...miForm.register('genero')} className="w-full p-4 bg-surface-container-high border-none rounded-xl text-sm font-bold focus:ring-2 focus:ring-primary h-[54px]">
+                  <div className="field">
+                    <label className="micro" htmlFor="mi-genero">Género</label>
+                    <select id="mi-genero" {...miForm.register('genero')} className="inp" aria-invalid={!!miForm.formState.errors.genero}>
                       <option value="MASCULINO">MASCULINO</option>
                       <option value="FEMENINO">FEMENINO</option>
                     </select>
-                    {miForm.formState.errors.genero && <p className="text-[10px] text-error font-bold px-1">{miForm.formState.errors.genero.message}</p>}
+                    {miForm.formState.errors.genero && <span className="field-err">{miForm.formState.errors.genero.message}</span>}
                   </div>
-                  <div className="space-y-2">
-                    <label className="text-[10px] font-black uppercase tracking-widest px-1 text-outline">Cargo Actual</label>
-                    <input {...miForm.register('cargoActual')} className="w-full p-4 bg-surface-container-high border-none rounded-xl text-sm font-bold focus:ring-2 focus:ring-primary h-[54px]" />
+                  <div className="field">
+                    <label className="micro" htmlFor="mi-cargo">Cargo Actual</label>
+                    <input id="mi-cargo" {...miForm.register('cargoActual')} className="inp" />
                   </div>
-                  <div className="space-y-2">
-                    <label className="text-[10px] font-black uppercase tracking-widest px-1 text-outline">Fecha de Ingreso</label>
-                    <input {...miForm.register('fechaIngreso')} type="date" className="w-full p-4 bg-surface-container-high border-none rounded-xl text-sm font-bold focus:ring-2 focus:ring-primary h-[54px]" />
+                  <div className="field">
+                    <label className="micro" htmlFor="mi-ingreso">Fecha de Ingreso</label>
+                    <input id="mi-ingreso" type="date" {...miForm.register('fechaIngreso')} className="inp" />
                   </div>
-                  <div className="space-y-2">
-                    <label className="text-[10px] font-black uppercase tracking-widest px-1 text-outline">Fecha de Promesa</label>
-                    <input {...miForm.register('fechaPromesa')} type="date" className="w-full p-4 bg-surface-container-high border-none rounded-xl text-sm font-bold focus:ring-2 focus:ring-primary h-[54px]" />
+                  <div className="field">
+                    <label className="micro" htmlFor="mi-promesa">Fecha de Promesa</label>
+                    <input id="mi-promesa" type="date" {...miForm.register('fechaPromesa')} className="inp" />
+                  </div>
+                  <div className="field" style={{ gridColumn: '1 / -1' }}>
+                    <label className="micro" htmlFor="mi-historial">Historial</label>
+                    <textarea id="mi-historial" rows={3} {...miForm.register('historial')} className="inp" />
                   </div>
                 </div>
 
-                <div className="space-y-2">
-                  <label className="text-[10px] font-black uppercase tracking-widest px-1 text-outline">Historial</label>
-                  <textarea {...miForm.register('historial')} rows={3} className="w-full p-4 bg-surface-container-high border-none rounded-xl text-sm font-bold focus:ring-2 focus:ring-primary" />
-                </div>
-
-                <div className="pt-2">
-                  <button
-                    type="submit"
-                    disabled={miForm.formState.isSubmitting}
-                    className="sentinel-gradient px-8 py-3 rounded-xl text-on-primary font-black text-[10px] uppercase tracking-widest shadow-lg shadow-primary/20 hover:shadow-xl transition-all disabled:opacity-50"
-                  >
+                <div className="form-actions" style={{ marginTop: 16 }}>
+                  <button type="submit" className="btn btn-primary" disabled={miForm.formState.isSubmitting}>
+                    <Save />
                     {miForm.formState.isSubmitting ? 'Guardando...' : 'Guardar Datos Scout'}
                   </button>
                 </div>
               </form>
-            </section>
+            </div>
           )}
 
-          {/* Password Change Form */}
-          <section className="p-8 rounded-[2rem] shadow-sm bg-surface-container-low">
-            <div className="flex items-center gap-3 mb-8">
-              <Key className="text-secondary" />
-              <h3 className="text-lg font-black text-secondary uppercase tracking-tight">Rotación de Claves</h3>
-            </div>
+          {/* Sección 03 — Rotación de claves */}
+          <div className="form-sect">
+            <header>
+              <div className="ic" aria-hidden="true">
+                <Password />
+              </div>
+              <div>
+                <span className="micro">Sección 03</span>
+                <h3>Rotación de Claves</h3>
+              </div>
+            </header>
 
             {pwdSuccess && (
-              <div className="mb-6 p-4 bg-success/10 border border-success/20 text-success rounded-xl text-sm font-bold animate-fade-in flex items-center gap-2">
+              <div className="mb-4 p-4 bg-success/10 border border-success/20 text-success rounded-xl text-sm font-bold animate-fade-in flex items-center gap-2" role="status">
                 <span>✓ Contraseña actualizada. Serás redirigido al login en unos segundos.</span>
               </div>
             )}
-            
+
             {pwdError && (
-              <div className="mb-6 p-4 bg-error/10 border border-error/20 text-error rounded-xl text-sm font-bold animate-fade-in">
+              <div className="mb-4 p-4 bg-error/10 border border-error/20 text-error rounded-xl text-sm font-bold animate-fade-in" role="alert">
                 {pwdError}
               </div>
             )}
 
-            <form onSubmit={pwdForm.handleSubmit(onSubmitPassword)} className="space-y-6">
-              <div className="space-y-2">
-                <label className="text-[10px] font-black uppercase tracking-widest px-1 text-outline">Clave Actual</label>
-                <input {...pwdForm.register('currentPassword')} type="password" placeholder="••••••••" className="w-full p-4 bg-surface-container-high border-none rounded-xl text-sm font-bold focus:ring-2 focus:ring-secondary-container h-[54px]" />
-                {pwdForm.formState.errors.currentPassword && <p className="text-[10px] text-error font-bold px-1">{pwdForm.formState.errors.currentPassword.message}</p>}
+            <form onSubmit={pwdForm.handleSubmit(onSubmitPassword)} noValidate>
+              <div className="form-grid">
+                <div className="field">
+                  <label className="micro" htmlFor="pwd-actual">Clave Actual</label>
+                  <input id="pwd-actual" type="password" placeholder="••••••••" {...pwdForm.register('currentPassword')} className="inp" aria-invalid={!!pwdForm.formState.errors.currentPassword} />
+                  {pwdForm.formState.errors.currentPassword && <span className="field-err">{pwdForm.formState.errors.currentPassword.message}</span>}
+                </div>
+                <div className="field">
+                  <label className="micro" htmlFor="pwd-nueva">Nueva Clave</label>
+                  <input id="pwd-nueva" type="password" placeholder="••••••••" {...pwdForm.register('newPassword')} className="inp" aria-invalid={!!pwdForm.formState.errors.newPassword} />
+                  {pwdForm.formState.errors.newPassword && <span className="field-err">{pwdForm.formState.errors.newPassword.message}</span>}
+                </div>
+                <div className="field">
+                  <label className="micro" htmlFor="pwd-confirmar">Confirmar Nueva Clave</label>
+                  <input id="pwd-confirmar" type="password" placeholder="••••••••" {...pwdForm.register('confirmPassword')} className="inp" aria-invalid={!!pwdForm.formState.errors.confirmPassword} />
+                  {pwdForm.formState.errors.confirmPassword && <span className="field-err">{pwdForm.formState.errors.confirmPassword.message}</span>}
+                </div>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                <div className="space-y-2">
-                  <label className="text-[10px] font-black uppercase tracking-widest px-1 text-outline">Nueva Clave</label>
-                  <input {...pwdForm.register('newPassword')} type="password" placeholder="••••••••" className="w-full p-4 bg-surface-container-high border-none rounded-xl text-sm font-bold focus:ring-2 focus:ring-secondary-container h-[54px]" />
-                  {pwdForm.formState.errors.newPassword && <p className="text-[10px] text-error font-bold px-1">{pwdForm.formState.errors.newPassword.message}</p>}
-                </div>
-                <div className="space-y-2">
-                  <label className="text-[10px] font-black uppercase tracking-widest px-1 text-outline">Confirmar Nueva Clave</label>
-                  <input {...pwdForm.register('confirmPassword')} type="password" placeholder="••••••••" className="w-full p-4 bg-surface-container-high border-none rounded-xl text-sm font-bold focus:ring-2 focus:ring-secondary-container h-[54px]" />
-                  {pwdForm.formState.errors.confirmPassword && <p className="text-[10px] text-error font-bold px-1">{pwdForm.formState.errors.confirmPassword.message}</p>}
-                </div>
-              </div>
-
-              <div className="pt-2">
-                <button 
-                  type="submit" 
-                  disabled={pwdForm.formState.isSubmitting}
-                  className="bg-secondary text-on-secondary px-8 py-3 rounded-xl font-black text-[10px] uppercase tracking-widest shadow-lg shadow-secondary/20 hover:shadow-xl transition-all disabled:opacity-50"
-                >
+              <div className="form-actions" style={{ marginTop: 16 }}>
+                <button type="submit" className="btn btn-secondary" disabled={pwdForm.formState.isSubmitting}>
+                  <Key />
                   {pwdForm.formState.isSubmitting ? 'Rotando...' : 'Confirmar Rotación'}
                 </button>
               </div>
             </form>
-          </section>
+          </div>
+
+          {/* Sección 04 — Ficha médica propia (staff vinculado) */}
+          {conFicha && (
+            <div className="form-sect">
+              <header>
+                <div className="ic" aria-hidden="true">
+                  <MedicalInformation />
+                </div>
+                <div>
+                  <span className="micro">Sección 04</span>
+                  <h3>Ficha Médica</h3>
+                </div>
+              </header>
+              <FichaMedicaPanel miembroId={miembroId} miembroNombre={staffNombre} />
+            </div>
+          )}
         </div>
       </div>
-
-      {/* Ficha Médica propia (staff vinculado) */}
-      <section className="bg-surface-container-lowest p-6 md:p-8 rounded-[2rem] shadow-sm">
-        <div className="flex items-center gap-3 mb-6">
-          <MedicalInformation className="text-emerald-600" />
-          <h3 className="text-lg font-black text-primary uppercase tracking-tight">Ficha Médica</h3>
-        </div>
-        <FichaMedicaPanel miembroId={miembroId} miembroNombre={staffNombre} />
-      </section>
     </div>
   );
 };
