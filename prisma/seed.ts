@@ -1,4 +1,4 @@
-import { PrismaClient, TipoNodoOrganizacion, TipoUnidad } from '@prisma/client';
+import { PrismaClient, TipoNodoOrganizacion, TipoProgramaMundial, TipoUnidad } from '@prisma/client';
 import { PrismaPg } from '@prisma/adapter-pg';
 import { Pool } from 'pg';
 import * as bcrypt from 'bcryptjs';
@@ -77,6 +77,8 @@ const PERMISOS_SEED = [
     // Expediente scout (Fase 6)
     { accion: 'datosscout:view', modulo: 'datos-scout', descripcion: 'Ver el expediente scout' },
     { accion: 'datosscout:manage', modulo: 'datos-scout', descripcion: 'Gestionar el expediente scout' },
+    { accion: 'programamundial:view', modulo: 'programas-mundiales', descripcion: 'Ver los programas mundiales del miembro' },
+    { accion: 'programamundial:manage', modulo: 'programas-mundiales', descripcion: 'Gestionar los programas mundiales del miembro' },
 ];
 
 // ─── Catálogo de roles ────────────────────────────────────────────────────
@@ -250,13 +252,16 @@ const ROL_PERMISOS_SEED: Record<string, string[]> = {
         'unidad:view', 'catalogo:view',
         // Expediente scout propio (el self-scope acota el alcance en la API)
         'datosscout:view',
+        // Programas mundiales propios (el self-scope acota el alcance en la API)
+        'programamundial:view',
     ],
 };
 
 /**
- * `datos-scout` deriva su matriz de `joven:*` para no repetir el permiso en
- * quince roles: quien puede ver jóvenes puede ver su expediente, y quien
- * puede editarlos puede gestionarlo. `JOVEN` lo recibe explícito arriba.
+ * `datos-scout` y `programas-mundiales` derivan su matriz de `joven:*` para no
+ * repetir los permisos en quince roles: quien puede ver jóvenes puede ver su
+ * expediente y sus programas, y quien puede editarlos puede gestionarlos.
+ * `JOVEN` los recibe explícito arriba.
  */
 for (const permisos of Object.values(ROL_PERMISOS_SEED)) {
     if (permisos.includes('joven:view') && !permisos.includes('datosscout:view')) {
@@ -264,6 +269,12 @@ for (const permisos of Object.values(ROL_PERMISOS_SEED)) {
     }
     if (permisos.includes('joven:update') && !permisos.includes('datosscout:manage')) {
         permisos.push('datosscout:manage');
+    }
+    if (permisos.includes('joven:view') && !permisos.includes('programamundial:view')) {
+        permisos.push('programamundial:view');
+    }
+    if (permisos.includes('joven:update') && !permisos.includes('programamundial:manage')) {
+        permisos.push('programamundial:manage');
     }
 }
 
@@ -632,6 +643,48 @@ async function main() {
         }
     }
     console.log(`  ✓ Usuario adulto: ${emailAdulto}`);
+
+    // ── Catálogo de programas mundiales (Fase 6) ────────────────────────
+    // El catálogo es el único punto de entrada de los enlaces de un miembro,
+    // sin él la sección del perfil no tendría nada que enlazar.
+    console.log('\n  🌍 Programas mundiales...');
+    const programasMundiales: Array<{ nombre: string; tipo: TipoProgramaMundial; descripcion: string }> = [
+        {
+            nombre: 'World Scout Jamboree',
+            tipo: 'PROGRAMA_MUNDIAL',
+            descripcion: 'Encuentro mundial de scouts cada cuatro años',
+        },
+        {
+            nombre: 'World Scout Moot',
+            tipo: 'PROGRAMA_MUNDIAL',
+            descripcion: 'Encuentro mundial para jóvenes de 18 a 25 años',
+        },
+        {
+            nombre: 'World Scout Conference',
+            tipo: 'PROGRAMA_MUNDIAL',
+            descripcion: 'Conferencia mundial de la Organización Mundial del Movimiento Scout',
+        },
+        {
+            nombre: 'Desafío Mundial de Scouts',
+            tipo: 'DESAFIO',
+            descripcion: 'Desafío de progresión personal con hitos verificables',
+        },
+        {
+            nombre: 'Mes de la Amistad',
+            tipo: 'INICIATIVA',
+            descripcion: 'Iniciativa mensual de integración y convivencia en la unidad',
+        },
+    ];
+
+    for (const p of programasMundiales) {
+        const existente = await prisma.programaMundial.findFirst({ where: { nombre: p.nombre } });
+        if (!existente) {
+            await prisma.programaMundial.create({ data: p });
+            console.log(`  ✓ Programa creado: ${p.nombre}`);
+        } else {
+            console.log(`  — Programa ya existe: ${p.nombre}`);
+        }
+    }
 
     console.log('\n✅ Seed finalizado con éxito.');
 }

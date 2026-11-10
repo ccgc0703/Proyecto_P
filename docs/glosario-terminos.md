@@ -141,6 +141,8 @@ endpoint y fue borrado junto con `roles.decorator.ts`.
 | `perfil` (self-scope) | `self:view`, `self:update` |
 | `organizacion` | `organizacion:view`, `organizacion:create`, `organizacion:update`, `organizacion:delete` |
 | `formacion` | `formacion:view`, `formacion:manage` |
+| `datos-scout` | `datosscout:view`, `datosscout:manage` |
+| `programas-mundiales` | `programamundial:view`, `programamundial:manage` |
 
 \* `condecoracion:update` y `condecoracion:delete` **añadidos al catálogo** en esta revisión (§10.1 ✅); antes solo existían en la matriz de asignación.
 
@@ -177,7 +179,7 @@ endpoint y fue borrado junto con `roles.decorator.ts`.
 | `adultos` | `GET /adultos/mi-perfil`, CRUD, `POST /adultos/:id/cuenta` | `user:*`/`self:*` |
 | `datos-scout` | `GET /datos-scout`, `GET /datos-scout/miembro/:miembroId`, `POST /datos-scout`, `PATCH /datos-scout/miembro/:miembroId` (upsert) | `datosscout:view/manage` (+ `self:view` para el propio) |
 | `formacion` | `GET /formacion`, `GET /formacion/adultos`, `GET /formacion/adulto/:adultoId`, `GET /formacion/:id`, `POST /formacion`, `PATCH /formacion/:id`, `DELETE /formacion/:id` | `formacion:view/manage` |
-| `programas-mundiales` | `GET /programas-mundiales/catalogo`, `GET /.../miembro/:miembroId` | — |
+| `programas-mundiales` | `GET /programas-mundiales` (global, scoped), `GET /programas-mundiales/catalogo`, `GET /programas-mundiales/miembro/:miembroId`, `POST /programas-mundiales`, `PATCH /programas-mundiales/:id`, `DELETE /programas-mundiales/:id` (soft-delete) | `programamundial:view/manage` (+ self-scope para el propio) |
 | `health` | `GET /health` (sin auth) | — |
 
 ---
@@ -193,7 +195,8 @@ endpoint y fue borrado junto con `roles.decorator.ts`.
 `INDICADOR_ESTADO_CHANGED`,
 `PROGRESION_SOLICITADA`, `PROGRESION_APROBADA`, `PROGRESION_RECHAZADA`,
 `FORMACION_CREATED`, `FORMACION_UPDATED`, `FORMACION_DELETED`,
-`DATOS_SCOUT_CREATED`, `DATOS_SCOUT_UPDATED`.
+`DATOS_SCOUT_CREATED`, `DATOS_SCOUT_UPDATED`,
+`PROGRAMA_MUNDIAL_CREATED`, `PROGRAMA_MUNDIAL_UPDATED`, `PROGRAMA_MUNDIAL_DELETED`.
 
 Tres tablas de auditoría coexistentes. Roles (§10.8 ✅, documentado en `README.md`
 y con comentario en `schema.prisma`, sin tocar la BD):

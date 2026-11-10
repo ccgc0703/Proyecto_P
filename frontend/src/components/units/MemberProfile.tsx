@@ -3,10 +3,13 @@ import { Close, Phone, MedicalInformation } from '@mui/icons-material';
 import { usePermission } from '../../hooks/usePermission';
 import { useFichaMedica } from '../../hooks/useFichaMedica';
 import { useDatosScout } from '../../hooks/useDatosScout';
+import { useProgramasMundiales } from '../../hooks/useProgramasMundiales';
 import { FichaMedicaResumen } from '../../features/fichaMedica/FichaMedicaResumen';
 import { FichaMedicaForm } from '../../features/fichaMedica/FichaMedicaForm';
 import { DatosScoutResumen } from '../../features/datosScout/DatosScoutResumen';
 import { DatosScoutForm } from '../../features/datosScout/DatosScoutForm';
+import { ProgramasMundialesResumen } from '../../features/programasMundiales/ProgramasMundialesResumen';
+import { ProgramasMundialesForm } from '../../features/programasMundiales/ProgramasMundialesForm';
 import { ProgresionSeccion } from '../../features/progresion/ProgresionSeccion';
 import { Member } from '../../types/member';
 
@@ -20,12 +23,20 @@ export const MemberProfile = ({ member, onClose }: MemberProfileProps) => {
   const canUpdateMedico = usePermission('medico:update');
   const canViewDatosScout = usePermission('datosscout:view');
   const canManageDatosScout = usePermission('datosscout:manage');
+  const canViewProgramas = usePermission('programamundial:view');
+  const canManageProgramas = usePermission('programamundial:manage');
   const canEdit = canUpdateMedico;
   const { ficha, loading, reload } = useFichaMedica(member?.id);
   const { datos: datosScout, loading: loadingDatosScout, reload: reloadDatosScout } =
     useDatosScout(member?.id);
+  const {
+    enlaces: programas,
+    loading: loadingProgramas,
+    reload: reloadProgramas,
+  } = useProgramasMundiales(member?.id);
   const [fichaDialogOpen, setFichaDialogOpen] = useState(false);
   const [datosScoutDialogOpen, setDatosScoutDialogOpen] = useState(false);
+  const [programasDialogOpen, setProgramasDialogOpen] = useState(false);
   const calculateAge = (birthDate?: string) => {
     if (!birthDate) return 0;
     const today = new Date();
@@ -145,6 +156,16 @@ export const MemberProfile = ({ member, onClose }: MemberProfileProps) => {
                 onEdit={() => setDatosScoutDialogOpen(true)}
               />
             )}
+
+            {/* Programas Mundiales — Jamborees, desafíos e iniciativas */}
+            {canViewProgramas && (
+              <ProgramasMundialesResumen
+                enlaces={programas}
+                canEdit={canManageProgramas}
+                loading={loadingProgramas}
+                onManage={() => setProgramasDialogOpen(true)}
+              />
+            )}
           </div>
 
           {/* Columna derecha: progresión y contactos */}
@@ -215,6 +236,15 @@ export const MemberProfile = ({ member, onClose }: MemberProfileProps) => {
         datos={datosScout}
         onClose={() => setDatosScoutDialogOpen(false)}
         onSaved={reloadDatosScout}
+      />
+
+      <ProgramasMundialesForm
+        open={programasDialogOpen}
+        miembroId={member.id}
+        miembroNombre={`${member.nombres} ${member.apellidos}`}
+        enlaces={programas}
+        onClose={() => setProgramasDialogOpen(false)}
+        onSaved={reloadProgramas}
       />
     </div>
   );

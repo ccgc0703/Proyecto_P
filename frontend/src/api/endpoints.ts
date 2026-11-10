@@ -17,6 +17,12 @@ import {
 } from '../types/documento';
 import { AdultoFormacion, CambiosFormacion, Formacion, NuevaFormacion } from '../types/formacion';
 import { CambiosDatosScout, DatosScout, NuevoDatosScout } from '../types/datosScout';
+import {
+  CambiosInscripcionPrograma,
+  NuevaInscripcionPrograma,
+  ProgramaMiembro,
+  ProgramaMundial,
+} from '../types/programaMundial';
 
 export const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL || '/api/v1',
@@ -307,6 +313,31 @@ export const datosScoutApi = {
   /** Upsert: funciona aunque el miembro aún no tenga expediente. */
   actualizar: (miembroId: string, data: CambiosDatosScout): Promise<DatosScout> =>
     api.patch(`/datos-scout/miembro/${miembroId}`, data).then((r) => r.data.data as DatosScout),
+};
+
+export const programasMundialesApi = {
+  /** `GET /programas-mundiales/catalogo` responde con el array directo. */
+  catalogo: (): Promise<ProgramaMundial[]> =>
+    api.get('/programas-mundiales/catalogo').then((r) => r.data as ProgramaMundial[]),
+
+  /** Listado global de enlaces (filtrado por unidad en el backend). */
+  listar: (): Promise<ProgramaMiembro[]> =>
+    api.get('/programas-mundiales').then((r) => r.data as ProgramaMiembro[]),
+
+  /** `GET /programas-mundiales/miembro/:id` responde con el array directo. */
+  listarPorMiembro: (miembroId: string): Promise<ProgramaMiembro[]> =>
+    api
+      .get(`/programas-mundiales/miembro/${miembroId}`)
+      .then((r) => r.data as ProgramaMiembro[]),
+
+  crear: (data: NuevaInscripcionPrograma): Promise<ProgramaMiembro> =>
+    api.post('/programas-mundiales', data).then((r) => r.data.data as ProgramaMiembro),
+
+  actualizar: (id: string, data: CambiosInscripcionPrograma): Promise<ProgramaMiembro> =>
+    api.patch(`/programas-mundiales/${id}`, data).then((r) => r.data.data as ProgramaMiembro),
+
+  eliminar: (id: string): Promise<void> =>
+    api.delete(`/programas-mundiales/${id}`).then(() => undefined),
 };
 
 export const progresionApi = {

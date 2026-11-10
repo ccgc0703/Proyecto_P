@@ -17,5 +17,6 @@ export {
   normativaApi,
   formacionApi,
   datosScoutApi,
+  programasMundialesApi,
   descargarArchivo,
 } from './endpoints';

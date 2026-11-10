@@ -119,6 +119,10 @@ export const PERMISSIONS = {
     // Expediente scout (Fase 6)
     DATOS_SCOUT_VIEW: 'datosscout:view',
     DATOS_SCOUT_MANAGE: 'datosscout:manage',
+
+    // Programas mundiales del miembro (Fase 6)
+    PROGRAMA_MUNDIAL_VIEW: 'programamundial:view',
+    PROGRAMA_MUNDIAL_MANAGE: 'programamundial:manage',
 } as const;
 
 // ─── JWT ─────────────────────────────────────────────────────────────────
