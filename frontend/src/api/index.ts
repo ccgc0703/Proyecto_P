@@ -15,5 +15,6 @@ export {
   dashboardApi,
   notificacionesApi,
   normativaApi,
+  formacionApi,
   descargarArchivo,
 } from './endpoints';

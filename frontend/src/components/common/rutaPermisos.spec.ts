@@ -49,6 +49,10 @@ describe('permisosDeRuta', () => {
     expect(permisosDeRuta('/app/documentos')).toEqual(['normativa:view']);
   });
 
+  it('exige formacion:view en el expediente de formación', () => {
+    expect(permisosDeRuta('/app/formacion')).toEqual(['formacion:view']);
+  });
+
   it('todas las reglas declaran al menos un permiso (fallo cerrado)', () => {
     for (const regla of REGLAS_RUTA) {
       expect(regla.permisos.length).toBeGreaterThan(0);

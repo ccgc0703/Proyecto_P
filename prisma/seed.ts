@@ -136,6 +136,7 @@ const ROL_PERMISOS_SEED: Record<string, string[]> = {
         'rbac:view', 'rbac:assign-role',
         'organizacion:view',
         'evento:view', 'evento:create', 'asistencia:view', 'asistencia:manage',
+        'formacion:view', 'formacion:manage',
     ],
     'GROUP_SUBLEADER': [
         'user:view',
@@ -230,6 +231,7 @@ const ROL_PERMISOS_SEED: Record<string, string[]> = {
         'representante:create', 'representante:view', 'representante:update',
         'medico:update',
         'joven:view',
+        'formacion:view', 'formacion:manage',
     ],
     'ADULTO_COLABORADOR': [
         'joven:view',

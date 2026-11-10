@@ -30,6 +30,7 @@ const PAGE_TITLES: Record<string, string> = {
   '/app/mi-progresion': 'Mi progresión',
   '/app/eventos': 'Eventos',
   '/app/documentos': 'Documentos',
+  '/app/formacion': 'Formación',
 };
 
 export const MainLayout = () => {

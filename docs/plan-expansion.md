@@ -259,6 +259,17 @@ Hoy todos sólo exponen 2 `GET`:
 
 > ⚠️ **Pregunta de diseño para ti:** en `datos-scout`, ¿permisos nuevos (`datosscout:view/manage` — habría que añadirlos al seed) o reutilizar `joven:view/update` (más rápido, pero menos granular)? Mi recomendación: **permisos nuevos** para mantener el patrón `entidad:acción` que ya usas en todos lados.
 
+### ✅ Ejecución — `formacion` CERRADO
+
+- **Backend**: `src/modules/formacion/` con `dto/create-formacion.dto.ts` + `update-formacion.dto.ts` (`PartialType`, `nombre`/`director` 3-150, `fecha` ISO 8601, `adultoId` UUID). Endpoints `GET /`, `GET /adultos`, `GET /adulto/:adultoId`, `GET /:id`, `POST /`, `PATCH /:id`, `DELETE /:id` (soft-delete). **ABAC** por unidad del adulto responsable (`Adulto.Miembro.unidadId`): listados filtran por `UnitPolicy.unidadesAlcance`, lecturas puntuales *fail-closed* (404 fuera de alcance) y mutaciones exigen `assertCanManageUnit` (incluida la validación del adulto nuevo al reasignar). Auditoría `FORMACION_CREATED/UPDATED/DELETED`.
+- **Compatibilidad**: `GET /` y `GET /adulto/:id` siguen devolviendo el array directo; los nuevos `GET /:id`, `POST`, `PATCH`, `DELETE` usan el envelope `{success,message,data}`.
+- **Endpoint `GET /formacion/adultos`**: selector de adulto para el alta, con `formacion:view` en lugar de `user:view` (hay roles con `formacion:manage` que no tienen `user:view`). Devuelve `id`, nombres/apellidos, `unidadId` y `Unidad` aplanados.
+- **Permisos**: el plan hablaba de `SECRETARIO`, rol que ya no existe (renombrado a `REPRESENTANTE_UNIDAD`). Matriz final en `prisma/seed.ts`: `formacion:view` + `formacion:manage` para `GROUP_LEADER` y `REPRESENTANTE_UNIDAD` (además de `SYSTEM_ADMIN`); seed re-ejecutado.
+- **Frontend**: `types/formacion.ts` + `formacionApi` (`listar`, `listarAdultos`, `listarPorAdulto`, `obtener`, `crear`, `actualizar`, `eliminar`) + `FormacionPage` (buscador, filtro por adulto, grid de tarjetas con fecha en UTC, alta/edición en diálogo con zod, borrado con confirmación) + ruta lazy `/app/formacion` con guardia `formacion:view`, título en el topbar y entrada "Formación" (icono `School`) en el sidebar.
+- **Fix de concurrencia (detectado en el gate E2E)**: `DocumentosPage` y `FormacionPage` lanzaban `cargar()` en paralelo (el doble efecto de `StrictMode` y las acciones encadenadas). Sin guardia de secuencia, una respuesta lenta podía llegar última y repintar datos obsoletos (resucitando el registro recién borrado) o dejar el skeleton activo. Ahora cada carga lleva un número de petición y solo la última escribe estado.
+- **Tests**: backend **393/393** (34 suites; 17 nuevos) · integración **26/26** (6 suites; 7 nuevos, incluida la matriz ABAC y el soft-delete) · frontend **32/32** (1 nuevo de paridad de rutas) · E2E **20/20** (2 nuevos: alta → edición → borrado; joven sin permiso → Acceso Denegado).
+- **Nota de gate**: en este host el dev server de Vite (compartido con otro proceso) tarda >30 s en transformar módulos en frío y produce timeouts de `page.goto` ajenos al código. La suite se validó contra el build de producción (`npm run build` + `vite preview`, `E2E_BASE_URL=http://localhost:4173`): **20/20**.
+
 ---
 
 # FASE 7 — Madurez y Escala (incluye MULTI-GRUPO explicado)

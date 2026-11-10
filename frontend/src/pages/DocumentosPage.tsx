@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   CircularProgress,
   Dialog,
@@ -96,16 +96,25 @@ export const DocumentosPage = () => {
     defaultValues: { titulo: '', categoria: 'REGLAMENTO', descripcion: '' },
   });
 
+  // Guardia de secuencia: con StrictMode (o al encadenar acciones) se lanzan
+  // varias cargas en paralelo. Solo la última puede escribir estado, para que
+  // una respuesta lenta no repinte datos obsoletos ni deje el spinner activo.
+  const peticionRef = useRef(0);
+
   const cargar = useCallback(async () => {
+    const peticion = ++peticionRef.current;
     setCargando(true);
     setError(null);
     try {
-      setDocumentos(await normativaApi.listar());
+      const lista = await normativaApi.listar();
+      if (peticion !== peticionRef.current) return;
+      setDocumentos(lista);
     } catch (err: unknown) {
+      if (peticion !== peticionRef.current) return;
       setDocumentos([]);
       setError(getApiErrorMessage(err, 'No se pudieron cargar los documentos.'));
     } finally {
-      setCargando(false);
+      if (peticion === peticionRef.current) setCargando(false);
     }
   }, []);
 

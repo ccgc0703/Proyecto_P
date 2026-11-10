@@ -15,6 +15,7 @@ import {
   Documento,
   NuevoDocumento,
 } from '../types/documento';
+import { AdultoFormacion, CambiosFormacion, Formacion, NuevaFormacion } from '../types/formacion';
 
 export const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL || '/api/v1',
@@ -264,6 +265,31 @@ export const normativaApi = {
     descargarArchivo(nombre, respuesta.data as Blob);
     return nombre;
   },
+};
+
+export const formacionApi = {
+  /** `GET /formacion` responde con el array directo (compatibilidad). */
+  listar: (): Promise<Formacion[]> =>
+    api.get('/formacion').then((r) => r.data as Formacion[]),
+
+  listarPorAdulto: (adultoId: string): Promise<Formacion[]> =>
+    api.get(`/formacion/adulto/${adultoId}`).then((r) => r.data as Formacion[]),
+
+  /** Adultos del ámbito con formacion:view (no requiere `user:view`). */
+  listarAdultos: (): Promise<AdultoFormacion[]> =>
+    api.get('/formacion/adultos').then((r) => r.data.data as AdultoFormacion[]),
+
+  obtener: (id: string): Promise<Formacion> =>
+    api.get(`/formacion/${id}`).then((r) => r.data.data as Formacion),
+
+  crear: (data: NuevaFormacion): Promise<Formacion> =>
+    api.post('/formacion', data).then((r) => r.data.data as Formacion),
+
+  actualizar: (id: string, data: CambiosFormacion): Promise<Formacion> =>
+    api.patch(`/formacion/${id}`, data).then((r) => r.data.data as Formacion),
+
+  eliminar: (id: string): Promise<void> =>
+    api.delete(`/formacion/${id}`).then(() => undefined),
 };
 
 export const progresionApi = {
