@@ -9,7 +9,7 @@
 > | Fase 2 — Dashboard Ejecutivo con Métricas Reales | ✅ Cerrada — commit `3df726d` (backend 344/344 · frontend 23/23 · E2E 15/15) |
 > | Fase 3 — Notificaciones in-app (decisión: sin email) | ✅ Cerrada — commit `277f31d` (backend 360/360 · integración 14/14 · frontend 30/30 · E2E 16/16) |
 > | Fase 5 — Biblioteca (Documentos y Normativa) | ✅ Cerrada — commit `0427677` (backend 376/376 · integración 19/19 · frontend 31/31 · E2E 18/18) |
-> | Fase 6 — Completar formación / datos-scout / programas-mundiales (decisión: permisos nuevos `datosscout:*`) | ⬜ Pendiente |
+> | Fase 6 — Completar formación / datos-scout / programas-mundiales (decisión: permisos nuevos `datosscout:*`) | 🟡 En curso — `formacion` ✅ `a45263b` · `datos-scout` ✅ (esta entrega) · `programas-mundiales` ⬜ |
 > | Fase 7 — Madurez y escala (PWA, PDF, Finanzas…; multi-grupo SOLO si aplica) | ⬜ Pendiente |
 > | Fase 8 — Deuda técnica (8.2/8.3 continuo, en cada cierre) | 🔄 Continuo |
 >
@@ -269,6 +269,16 @@ Hoy todos sólo exponen 2 `GET`:
 - **Fix de concurrencia (detectado en el gate E2E)**: `DocumentosPage` y `FormacionPage` lanzaban `cargar()` en paralelo (el doble efecto de `StrictMode` y las acciones encadenadas). Sin guardia de secuencia, una respuesta lenta podía llegar última y repintar datos obsoletos (resucitando el registro recién borrado) o dejar el skeleton activo. Ahora cada carga lleva un número de petición y solo la última escribe estado.
 - **Tests**: backend **393/393** (34 suites; 17 nuevos) · integración **26/26** (6 suites; 7 nuevos, incluida la matriz ABAC y el soft-delete) · frontend **32/32** (1 nuevo de paridad de rutas) · E2E **20/20** (2 nuevos: alta → edición → borrado; joven sin permiso → Acceso Denegado).
 - **Nota de gate**: en este host el dev server de Vite (compartido con otro proceso) tarda >30 s en transformar módulos en frío y produce timeouts de `page.goto` ajenos al código. La suite se validó contra el build de producción (`npm run build` + `vite preview`, `E2E_BASE_URL=http://localhost:4173`): **20/20**.
+
+### ✅ Ejecución — `datos-scout` CERRADO
+
+- **Decisión aplicada**: permisos nuevos `datosscout:view/manage` (no se reutiliza `joven:*`), tal como recomendaba el plan. Añadidos a `PERMISOS_SEED` y repartidos con la misma matriz que `joven:view`/`joven:update`; `JOVEN` recibe `datosscout:view` para su propio expediente. Seed re-ejecutado (17 roles con los permisos).
+- **Backend**: `src/modules/datos-scout/` con `dto/create-datos-scout.dto.ts` y `dto/update-datos-scout.dto.ts` (`PartialType`; `cargoActual` ≤80, `observaciones` ≤1000, las tres fechas ISO 8601 y `patrullaId` UUID, todos opcionales y anulables). Endpoints `GET /` (array, filtrado), `GET /miembro/:miembroId` (objeto, compat con el contrato anterior), `POST /` (**409** si el miembro ya tiene expediente) y `PATCH /miembro/:miembroId` (**upsert**: crea si no existe).
+- **ABAC**: alcance por `Miembro.unidadId` con `UnitPolicy.unidadesAlcance`; lecturas puntuales *fail-closed* (404 fuera de alcance); `patrullaId` se valida contra la unidad del miembro (400 si es de otra unidad); `SelfScopePolicy` deja que un `JOVEN` lea su propio expediente. Auditoría `DATOS_SCOUT_CREATED`/`DATOS_SCOUT_UPDATED`.
+- **Envelope**: sólo `POST`/`PATCH` devuelven `{success,message,data}`; los dos `GET` históricos mantienen su forma original para no romper consumidores.
+- **Frontend**: `types/datosScout.ts` + `datosScoutApi` (`listar`, `obtenerPorMiembro`, `crear`, `actualizar`) + `hooks/useDatosScout.ts` (con guardia de secuencia y 404 → `null`) + `features/datosScout/DatosScoutResumen.tsx` y `DatosScoutForm.tsx` (diálogo zod con patrullas de la unidad; si el catálogo no carga se conserva la patrulla actual para no borrarla al guardar). La sección "Datos Scout" vive en `MemberProfile` bajo Ficha Médica, visible con `datosscout:view` y editable con `datosscout:manage`.
+- **Tests**: backend **409/409** (34 suites; 21 del módulo) · integración **36/36** (7 suites; `datos-scout.integration.spec.ts` nuevo con 10: alta, upsert, conflicto, ABAC, patrulla ajena y soft-delete) · frontend **32/32** · E2E **22/22** (2 nuevos: edición del expediente desde el perfil con restauración de los valores originales; `self-scope` del joven comprobando 403 en listado/ajeno y 200/404 en el propio).
+- **Nota de gate E2E**: el locator del formulario se ancla a su título (`[role="dialog"]` filtrado por el heading "Editar Datos Scout") porque `locator('[role="dialog"]').last()` pasa a resolver el panel del perfil en cuanto el diálogo se desmonta, y `toBeHidden()` fallaba con un falso negativo.
 
 ---
 

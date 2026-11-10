@@ -175,8 +175,8 @@ endpoint y fue borrado junto con `roles.decorator.ts`.
 | `progresion` | `GET /progresion/jovenes/:id/resumen|indicadores|export.xlsx`, `PATCH .../indicadores/:id`, `POST .../adelantos/:id/iniciar`, `POST /progresiones/:id/solicitar|aprobar|rechazar`, `GET /progresion/unidades/:id/jovenes` | `progresion:*` |
 | `organizacion` | `arbol`, `nodos` CRUD, `unidades/:id/grupo`, `cargos-permitidos`, `nodos/:id/cargos`, `cargos/:id` | `organizacion:*` + rol editor |
 | `adultos` | `GET /adultos/mi-perfil`, CRUD, `POST /adultos/:id/cuenta` | `user:*`/`self:*` |
-| `datos-scout` | `GET /datos-scout/miembro/:miembroId` | `joven:view` |
-| `formacion` | `GET /formacion/adulto/:adultoId` | `formacion:view` |
+| `datos-scout` | `GET /datos-scout`, `GET /datos-scout/miembro/:miembroId`, `POST /datos-scout`, `PATCH /datos-scout/miembro/:miembroId` (upsert) | `datosscout:view/manage` (+ `self:view` para el propio) |
+| `formacion` | `GET /formacion`, `GET /formacion/adultos`, `GET /formacion/adulto/:adultoId`, `GET /formacion/:id`, `POST /formacion`, `PATCH /formacion/:id`, `DELETE /formacion/:id` | `formacion:view/manage` |
 | `programas-mundiales` | `GET /programas-mundiales/catalogo`, `GET /.../miembro/:miembroId` | — |
 | `health` | `GET /health` (sin auth) | — |
 
@@ -191,7 +191,9 @@ endpoint y fue borrado junto con `roles.decorator.ts`.
 `FICHA_MEDICA_CREATED`, `FICHA_MEDICA_UPDATED`, `FICHA_MEDICA_DELETED`,
 `CATALOGO_CREATED`, `CATALOGO_UPDATED`, `CATALOGO_DELETED`,
 `INDICADOR_ESTADO_CHANGED`,
-`PROGRESION_SOLICITADA`, `PROGRESION_APROBADA`, `PROGRESION_RECHAZADA`.
+`PROGRESION_SOLICITADA`, `PROGRESION_APROBADA`, `PROGRESION_RECHAZADA`,
+`FORMACION_CREATED`, `FORMACION_UPDATED`, `FORMACION_DELETED`,
+`DATOS_SCOUT_CREATED`, `DATOS_SCOUT_UPDATED`.
 
 Tres tablas de auditoría coexistentes. Roles (§10.8 ✅, documentado en `README.md`
 y con comentario en `schema.prisma`, sin tocar la BD):

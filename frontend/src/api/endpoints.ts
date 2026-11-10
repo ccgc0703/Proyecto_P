@@ -16,6 +16,7 @@ import {
   NuevoDocumento,
 } from '../types/documento';
 import { AdultoFormacion, CambiosFormacion, Formacion, NuevaFormacion } from '../types/formacion';
+import { CambiosDatosScout, DatosScout, NuevoDatosScout } from '../types/datosScout';
 
 export const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL || '/api/v1',
@@ -290,6 +291,22 @@ export const formacionApi = {
 
   eliminar: (id: string): Promise<void> =>
     api.delete(`/formacion/${id}`).then(() => undefined),
+};
+
+export const datosScoutApi = {
+  /** `GET /datos-scout` responde con el array directo (compatibilidad). */
+  listar: (): Promise<DatosScout[]> => api.get('/datos-scout').then((r) => r.data as DatosScout[]),
+
+  /** `GET /datos-scout/miembro/:id` responde con el objeto directo (compatibilidad). */
+  getByMiembro: (miembroId: string): Promise<DatosScout> =>
+    api.get(`/datos-scout/miembro/${miembroId}`).then((r) => r.data as DatosScout),
+
+  crear: (data: NuevoDatosScout): Promise<DatosScout> =>
+    api.post('/datos-scout', data).then((r) => r.data.data as DatosScout),
+
+  /** Upsert: funciona aunque el miembro aún no tenga expediente. */
+  actualizar: (miembroId: string, data: CambiosDatosScout): Promise<DatosScout> =>
+    api.patch(`/datos-scout/miembro/${miembroId}`, data).then((r) => r.data.data as DatosScout),
 };
 
 export const progresionApi = {

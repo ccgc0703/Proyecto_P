@@ -115,6 +115,10 @@ export const PERMISSIONS = {
     ASISTENCIA_MANAGE: 'asistencia:manage',
     FORMACION_VIEW: 'formacion:view',
     FORMACION_MANAGE: 'formacion:manage',
+
+    // Expediente scout (Fase 6)
+    DATOS_SCOUT_VIEW: 'datosscout:view',
+    DATOS_SCOUT_MANAGE: 'datosscout:manage',
 } as const;
 
 // ─── JWT ─────────────────────────────────────────────────────────────────

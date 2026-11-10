@@ -114,6 +114,8 @@ export const PERMISSIONS = {
   ASISTENCIA_MANAGE: 'asistencia:manage',
   FORMACION_VIEW: 'formacion:view',
   FORMACION_MANAGE: 'formacion:manage',
+  DATOS_SCOUT_VIEW: 'datosscout:view',
+  DATOS_SCOUT_MANAGE: 'datosscout:manage',
 } as const;
 
 /** Jerarquía de roles: 1 = más privilegio. Un usuario solo asigna roles de nivel MAYOR. */

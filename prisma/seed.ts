@@ -74,6 +74,9 @@ const PERMISOS_SEED = [
     { accion: 'asistencia:manage', modulo: 'asistencia', descripcion: 'Cargar asistencias' },
     { accion: 'formacion:view', modulo: 'formacion', descripcion: 'Ver formación de adultos' },
     { accion: 'formacion:manage', modulo: 'formacion', descripcion: 'Gestionar formación de adultos' },
+    // Expediente scout (Fase 6)
+    { accion: 'datosscout:view', modulo: 'datos-scout', descripcion: 'Ver el expediente scout' },
+    { accion: 'datosscout:manage', modulo: 'datos-scout', descripcion: 'Gestionar el expediente scout' },
 ];
 
 // ─── Catálogo de roles ────────────────────────────────────────────────────
@@ -245,8 +248,24 @@ const ROL_PERMISOS_SEED: Record<string, string[]> = {
         'medico:view', 'medico:update',
         // Lecturas necesarias para ver y iniciar adelantos propios
         'unidad:view', 'catalogo:view',
+        // Expediente scout propio (el self-scope acota el alcance en la API)
+        'datosscout:view',
     ],
 };
+
+/**
+ * `datos-scout` deriva su matriz de `joven:*` para no repetir el permiso en
+ * quince roles: quien puede ver jóvenes puede ver su expediente, y quien
+ * puede editarlos puede gestionarlo. `JOVEN` lo recibe explícito arriba.
+ */
+for (const permisos of Object.values(ROL_PERMISOS_SEED)) {
+    if (permisos.includes('joven:view') && !permisos.includes('datosscout:view')) {
+        permisos.push('datosscout:view');
+    }
+    if (permisos.includes('joven:update') && !permisos.includes('datosscout:manage')) {
+        permisos.push('datosscout:manage');
+    }
+}
 
 async function main() {
     console.log('🌱 Iniciando seed...\n');

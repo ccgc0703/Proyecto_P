@@ -16,5 +16,6 @@ export {
   notificacionesApi,
   normativaApi,
   formacionApi,
+  datosScoutApi,
   descargarArchivo,
 } from './endpoints';

@@ -2,8 +2,11 @@ import { useState } from 'react';
 import { Close, Phone, MedicalInformation } from '@mui/icons-material';
 import { usePermission } from '../../hooks/usePermission';
 import { useFichaMedica } from '../../hooks/useFichaMedica';
+import { useDatosScout } from '../../hooks/useDatosScout';
 import { FichaMedicaResumen } from '../../features/fichaMedica/FichaMedicaResumen';
 import { FichaMedicaForm } from '../../features/fichaMedica/FichaMedicaForm';
+import { DatosScoutResumen } from '../../features/datosScout/DatosScoutResumen';
+import { DatosScoutForm } from '../../features/datosScout/DatosScoutForm';
 import { ProgresionSeccion } from '../../features/progresion/ProgresionSeccion';
 import { Member } from '../../types/member';
 
@@ -15,9 +18,14 @@ interface MemberProfileProps {
 export const MemberProfile = ({ member, onClose }: MemberProfileProps) => {
   const canViewMedico = usePermission('medico:view');
   const canUpdateMedico = usePermission('medico:update');
+  const canViewDatosScout = usePermission('datosscout:view');
+  const canManageDatosScout = usePermission('datosscout:manage');
   const canEdit = canUpdateMedico;
   const { ficha, loading, reload } = useFichaMedica(member?.id);
+  const { datos: datosScout, loading: loadingDatosScout, reload: reloadDatosScout } =
+    useDatosScout(member?.id);
   const [fichaDialogOpen, setFichaDialogOpen] = useState(false);
+  const [datosScoutDialogOpen, setDatosScoutDialogOpen] = useState(false);
   const calculateAge = (birthDate?: string) => {
     if (!birthDate) return 0;
     const today = new Date();
@@ -127,6 +135,16 @@ export const MemberProfile = ({ member, onClose }: MemberProfileProps) => {
                 onEdit={() => setFichaDialogOpen(true)}
               />
             )}
+
+            {/* Datos Scout — Expediente / libreta */}
+            {canViewDatosScout && (
+              <DatosScoutResumen
+                datos={datosScout}
+                canEdit={canManageDatosScout}
+                loading={loadingDatosScout}
+                onEdit={() => setDatosScoutDialogOpen(true)}
+              />
+            )}
           </div>
 
           {/* Columna derecha: progresión y contactos */}
@@ -187,6 +205,16 @@ export const MemberProfile = ({ member, onClose }: MemberProfileProps) => {
         ficha={ficha}
         onClose={() => setFichaDialogOpen(false)}
         onSaved={reload}
+      />
+
+      <DatosScoutForm
+        open={datosScoutDialogOpen}
+        miembroId={member.id}
+        miembroNombre={`${member.nombres} ${member.apellidos}`}
+        unidadId={member.unidadId}
+        datos={datosScout}
+        onClose={() => setDatosScoutDialogOpen(false)}
+        onSaved={reloadDatosScout}
       />
     </div>
   );
