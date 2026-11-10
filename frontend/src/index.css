@@ -995,6 +995,98 @@
   .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(215px, 1fr)); gap: 16px; }
   .form-actions { display: flex; justify-content: flex-end; gap: 11px; flex-wrap: wrap; padding-top: 6px; }
 
+  /* ── Campos: requerido y ayuda ──────────────────────────────────── */
+  .field .req { color: var(--color-error); margin-left: 3px; }
+  .field .hint { font-size: 11.5px; color: var(--color-outline); margin-top: 6px; line-height: 1.5; }
+
+  /* ── Asistente de 2 pasos (registro de miembros) ────────────────── */
+  .wiz-steps { display: flex; gap: 10px; margin-bottom: 24px; flex-wrap: wrap; }
+  .wiz-step {
+    display: flex;
+    align-items: center;
+    gap: 11px;
+    padding: 12px 20px;
+    border-radius: var(--radius-xl);
+    background: var(--color-surface-container-low);
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--color-outline);
+    transition: 0.18s;
+    flex: 1;
+    min-width: 210px;
+    text-align: left;
+    border: none;
+    cursor: pointer;
+  }
+  .wiz-step .n {
+    width: 28px;
+    height: 28px;
+    border-radius: 9px;
+    background: var(--color-surface-container-lowest);
+    display: grid;
+    place-items: center;
+    font-family: var(--font-mono);
+    font-size: 12px;
+    font-weight: 700;
+    flex-shrink: 0;
+    box-shadow: var(--sh-1);
+  }
+  .wiz-step svg { width: 16px; height: 16px; stroke: currentColor; fill: none; stroke-width: 2; flex-shrink: 0; }
+  .wiz-step.on {
+    background: linear-gradient(135deg, var(--color-primary), var(--color-primary-container));
+    color: #fff;
+    box-shadow: 0 6px 18px rgba(0, 54, 41, 0.24);
+  }
+  .wiz-step.on .n { background: rgba(255, 255, 255, 0.18); color: var(--color-accent); box-shadow: none; }
+  .wiz-step.done { background: var(--color-success-container); color: var(--color-on-success); }
+  .wiz-step.done .n { background: var(--color-success); color: #fff; box-shadow: none; }
+  .wiz-step .dsc { font-size: 11px; font-weight: 500; opacity: 0.75; display: block; margin-top: 1px; }
+
+  /* ── Alta rápida inline (subunidad junto al select) ─────────────── */
+  .inline-add { display: flex; gap: 8px; align-items: flex-end; }
+  .inline-add .field { flex: 1; margin-bottom: 0; }
+
+  /* ── Resumen del registro ───────────────────────────────────────── */
+  .resumen-box {
+    background: var(--color-surface-container-low);
+    border-radius: var(--radius-xl);
+    padding: 18px;
+    box-shadow: inset 0 0 0 1.5px var(--color-outline-variant);
+  }
+  .resumen-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 14px;
+    padding: 8px 0;
+    font-size: 13px;
+    box-shadow: inset 0 -1px 0 rgba(192, 201, 195, 0.4);
+  }
+  .resumen-row:last-child { box-shadow: none; }
+  .resumen-row span {
+    color: var(--color-outline);
+    font-weight: 600;
+    font-family: var(--font-mono);
+    font-size: 10.5px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+  .resumen-row b { color: var(--color-on-surface); font-weight: 700; text-align: right; }
+
+  /* ── Banners de estado ──────────────────────────────────────────── */
+  .banner { display: flex; align-items: flex-start; gap: 13px; padding: 16px 20px; border-radius: var(--radius-xl); margin-bottom: 18px; }
+  .banner svg { width: 20px; height: 20px; stroke-width: 2; fill: none; flex-shrink: 0; margin-top: 1px; }
+  .banner h4 { font-family: var(--font-display); font-weight: 800; font-size: 14px; margin-bottom: 4px; }
+  .banner p { font-size: 13px; line-height: 1.6; }
+  .banner-err { background: var(--color-error-container); color: var(--color-on-error); }
+  .banner-err svg { stroke: var(--color-error); }
+  .banner-ok { background: var(--color-success-container); color: var(--color-on-success); }
+  .banner-ok svg { stroke: var(--color-success); }
+  .banner-info { background: rgba(72, 95, 132, 0.1); color: var(--color-secondary); }
+  .banner-info svg { stroke: var(--color-secondary); }
+  .banner-warn { background: rgba(255, 184, 0, 0.16); color: var(--color-tertiary); }
+  .banner-warn svg { stroke: var(--color-warning); }
+
   /* ── Mi Perfil: columna lateral + ficha ──────────────────────────── */
   .perfil-grid { display: grid; grid-template-columns: 300px 1fr; gap: 20px; align-items: start; }
   .perfil-side { display: flex; flex-direction: column; gap: 16px; position: sticky; top: 121px; }

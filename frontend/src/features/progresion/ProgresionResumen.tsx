@@ -329,7 +329,11 @@ const GridResumen = ({ adelanto, bloqueo }: GridResumenProps) => (
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
         <Metrica
           label="Umbral"
-          valor={adelanto.esPruebaAislada ? 'Prueba' : `${adelanto.umbralPorcentaje}%`}
+          valor={adelanto.esPruebaAislada
+            ? 'Prueba'
+            : adelanto.umbralPorcentaje != null
+              ? `${adelanto.umbralPorcentaje}%`
+              : '—'}
         />
         <Metrica label="Faltantes" valor={String(adelanto.faltantes)} />
         <Metrica label="Estado" valor="En curso" />

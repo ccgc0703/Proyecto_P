@@ -5,6 +5,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import {
   ArrowBack,
+  ArrowForward,
   Person,
   ContactPhone,
   Home,
@@ -13,10 +14,12 @@ import {
   CalendarMonth,
   SaveAlt,
   Add,
+  ErrorOutline,
 } from '@mui/icons-material';
 import { miembrosApi, administrativoApi, unidadesApi } from '../api';
 import { UnidadEntity } from '../types/member';
 import { getApiErrorMessage } from '../utils/errors';
+import { PageHeader } from '../components/ui';
 
 const registerSchema = z.object({
   // Datos Personales
@@ -24,7 +27,9 @@ const registerSchema = z.object({
   apellidos: z.string().min(2, 'Mínimo 2 caracteres'),
   cedula: z.string().min(5, 'Cédula requerida'),
   fechaNacimiento: z.string().min(1, 'Fecha requerida'),
-  genero: z.enum(['MASCULINO', 'FEMENINO'], { required_error: 'Selecciona el género' }),
+  genero: z.enum(['MASCULINO', 'FEMENINO'], {
+    errorMap: () => ({ message: 'Selecciona el género' }),
+  }),
   historial: z.string().optional(),
   // Representante
   repNombre: z.string().min(2, 'Nombre del representante requerido'),
@@ -57,10 +62,10 @@ export const MemberRegisterPage = ({ unitType, unitLabel }: MemberRegisterPagePr
   const [creatingSub, setCreatingSub] = useState(false);
 
   // Determinar nomenclatura
-  const subUnitLabel = unitType.toLowerCase() === 'manada' 
-    ? 'Seisena' 
+  const subUnitLabel = unitType.toLowerCase() === 'manada'
+    ? 'Seisena'
     : unitType.toLowerCase() === 'clan' || unitType.toLowerCase() === 'comunidad'
-      ? 'Equipo de Trabajo' 
+      ? 'Equipo de Trabajo'
       : 'Patrulla';
 
   useEffect(() => {
@@ -68,7 +73,7 @@ export const MemberRegisterPage = ({ unitType, unitLabel }: MemberRegisterPagePr
       try {
         setIsLoadingSub(true);
         const unidades = await unidadesApi.getAll();
-        const unidad = (unidades as UnidadEntity[]).find((u) => 
+        const unidad = (unidades as UnidadEntity[]).find((u) =>
           u.nombre?.toLowerCase() === unitType.toLowerCase()
         );
         if (unidad) {
@@ -180,141 +185,198 @@ export const MemberRegisterPage = ({ unitType, unitLabel }: MemberRegisterPagePr
 
   const goBack = () => navigate({ to: `/app/${unitType.toLowerCase()}` });
 
-  const inputClasses =
-    'w-full p-4 bg-surface-container-high border-none rounded-xl text-sm font-bold focus:ring-2 focus:ring-primary transition-all h-[54px]';
-  const labelClasses =
-    'text-[10px] font-black uppercase tracking-widest px-1 text-outline';
-  const sectionClasses =
-    'bg-surface-container-lowest p-8 md:p-10 rounded-[2rem] shadow-sm border border-outline-variant/5';
-
   return (
-    <div className="space-y-8 animate-fade-in-up pb-10 max-w-5xl mx-auto">
-      {/* Header */}
-      <header className="flex items-center gap-6">
-        <button
-          onClick={goBack}
-          className="w-12 h-12 bg-surface-container-high rounded-2xl flex items-center justify-center text-primary hover:bg-surface-container-highest transition-colors"
-        >
-          <ArrowBack />
-        </button>
-        <div>
-          <h1 className="text-2xl font-black tracking-tighter text-primary">
-            Nuevo Registro — {unitLabel}
-          </h1>
-          <p className="text-[10px] font-bold text-outline uppercase tracking-[0.2em]">
-            Formulario de inscripción de miembro
-          </p>
-        </div>
-      </header>
+    <div className="space-y-5 animate-fade-in-up pb-10 max-w-5xl mx-auto">
+      <PageHeader
+        micro={
+          <span className="tb-crumb">
+            <button type="button" className="crumb" onClick={goBack}>
+              <ArrowBack />
+              Miembros
+            </button>
+            <span className="micro">/</span>
+            <span className="micro">Nuevo registro</span>
+          </span>
+        }
+        titulo={`Nuevo Registro — ${unitLabel}`}
+        subtitulo="Formulario de inscripción de miembro"
+      />
 
-      {/* Step Indicator */}
-      <div className="flex items-center gap-4">
+      {/* Indicador de pasos */}
+      <div className="wiz-steps" role="tablist" aria-label="Pasos del registro">
         <button
+          type="button"
+          role="tab"
+          aria-selected={step === 1}
+          aria-current={step === 1 ? 'step' : undefined}
+          className={`wiz-step${step === 1 ? ' on' : step === 2 ? ' done' : ''}`}
           onClick={() => setStep(1)}
-          className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${
-            step === 1
-              ? 'sentinel-gradient text-on-primary shadow-lg shadow-primary/20'
-              : 'bg-surface-container-high text-primary hover:bg-surface-container-highest'
-          }`}
         >
-          <Person sx={{ fontSize: 16 }} /> Datos Personales y Representante
+          <span className="n">1</span>
+          <span>
+            Datos Personales y Representante
+            <span className="dsc">Identidad y contacto</span>
+          </span>
         </button>
-        <div className="w-8 h-px bg-outline-variant" />
         <button
+          type="button"
+          role="tab"
+          aria-selected={step === 2}
+          aria-current={step === 2 ? 'step' : undefined}
+          className={`wiz-step${step === 2 ? ' on' : ''}`}
           onClick={handleNextStep}
-          className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${
-            step === 2
-              ? 'sentinel-gradient text-on-primary shadow-lg shadow-primary/20'
-              : 'bg-surface-container-high text-primary hover:bg-surface-container-highest'
-          }`}
         >
-          <Badge sx={{ fontSize: 16 }} /> Datos Scout
+          <span className="n">2</span>
+          <span>
+            Datos Scout
+            <span className="dsc">Unidad y progresión</span>
+          </span>
         </button>
       </div>
 
       {/* Error Message */}
       {error && (
-        <div className="p-4 bg-error/10 border border-error/20 text-error rounded-xl text-sm font-bold animate-fade-in">
-          {error}
+        <div className="banner banner-err" role="alert">
+          <ErrorOutline />
+          <p>{error}</p>
         </div>
       )}
 
-      <form onSubmit={handleSubmit(onSubmit)}>
+      <form onSubmit={handleSubmit(onSubmit)} noValidate>
         {step === 1 && (
-          <div className="space-y-8">
-            {/* Sección 1: Datos Personales del Miembro */}
-            <section className={sectionClasses}>
-              <div className="flex items-center gap-3 mb-8">
-                <Person className="text-primary" />
-                <h3 className="text-lg font-black text-primary uppercase tracking-tight">
-                  Datos del Miembro
-                </h3>
-              </div>
+          <>
+            {/* Sección 01: Datos Personales del Miembro */}
+            <div className="form-sect">
+              <header>
+                <div className="ic" aria-hidden="true">
+                  <Person />
+                </div>
+                <div>
+                  <span className="micro">Sección 01</span>
+                  <h3>Datos del Miembro</h3>
+                </div>
+              </header>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                <div className="space-y-2">
-                  <label className={labelClasses}>Nombres *</label>
-                  <input {...register('nombres')} className={inputClasses} placeholder="Ej: Juan Carlos" />
-                  {errors.nombres && <p className="text-[10px] text-error font-bold px-1">{errors.nombres.message}</p>}
-                </div>
-                <div className="space-y-2">
-                  <label className={labelClasses}>Apellidos *</label>
-                  <input {...register('apellidos')} className={inputClasses} placeholder="Ej: Rodríguez Pérez" />
-                  {errors.apellidos && <p className="text-[10px] text-error font-bold px-1">{errors.apellidos.message}</p>}
-                </div>
-                <div className="space-y-2">
-                  <label className={labelClasses}>Cédula de Identidad *</label>
-                  <input {...register('cedula')} className={inputClasses} placeholder="Ej: V-12345678" />
-                  {errors.cedula && <p className="text-[10px] text-error font-bold px-1">{errors.cedula.message}</p>}
-                </div>
-                <div className="space-y-2">
-                  <label className={labelClasses}>
-                    <CalendarMonth sx={{ fontSize: 12, mr: 0.5 }} />
-                    Fecha de Nacimiento *
+              <div className="form-grid">
+                <div className="field">
+                  <label className="micro" htmlFor="mr-nombres">
+                    Nombres<span className="req">*</span>
                   </label>
-                  <input {...register('fechaNacimiento')} type="date" className={inputClasses} />
+                  <input
+                    id="mr-nombres"
+                    {...register('nombres')}
+                    className="inp"
+                    placeholder="Ej: Juan Carlos"
+                    aria-invalid={!!errors.nombres}
+                  />
+                  {errors.nombres && <span className="field-err">{errors.nombres.message}</span>}
+                </div>
+                <div className="field">
+                  <label className="micro" htmlFor="mr-apellidos">
+                    Apellidos<span className="req">*</span>
+                  </label>
+                  <input
+                    id="mr-apellidos"
+                    {...register('apellidos')}
+                    className="inp"
+                    placeholder="Ej: Rodríguez Pérez"
+                    aria-invalid={!!errors.apellidos}
+                  />
+                  {errors.apellidos && <span className="field-err">{errors.apellidos.message}</span>}
+                </div>
+                <div className="field">
+                  <label className="micro" htmlFor="mr-cedula">
+                    Cédula de Identidad<span className="req">*</span>
+                  </label>
+                  <input
+                    id="mr-cedula"
+                    {...register('cedula')}
+                    className="inp"
+                    placeholder="V-12.345.678"
+                    aria-invalid={!!errors.cedula}
+                  />
+                  {errors.cedula && <span className="field-err">{errors.cedula.message}</span>}
+                </div>
+                <div className="field">
+                  <label className="micro" htmlFor="mr-nacimiento">
+                    <CalendarMonth sx={{ fontSize: 12, verticalAlign: 'middle', marginRight: 4 }} />
+                    Fecha de Nacimiento<span className="req">*</span>
+                  </label>
+                  <input
+                    id="mr-nacimiento"
+                    {...register('fechaNacimiento')}
+                    type="date"
+                    className="inp"
+                    aria-invalid={!!errors.fechaNacimiento}
+                  />
                   {errors.fechaNacimiento && (
-                    <p className="text-[10px] text-error font-bold px-1">{errors.fechaNacimiento.message}</p>
+                    <span className="field-err">{errors.fechaNacimiento.message}</span>
                   )}
                 </div>
-                <div className="space-y-2">
-                  <label className={labelClasses}>
-                    <Wc sx={{ fontSize: 12, mr: 0.5 }} />
-                    Género *
+                <div className="field">
+                  <label className="micro" htmlFor="mr-genero">
+                    <Wc sx={{ fontSize: 12, verticalAlign: 'middle', marginRight: 4 }} />
+                    Género<span className="req">*</span>
                   </label>
-                  <select {...register('genero')} className={inputClasses}>
+                  <select id="mr-genero" {...register('genero')} className="inp" aria-invalid={!!errors.genero}>
                     <option value="">Seleccionar...</option>
                     <option value="MASCULINO">Masculino</option>
                     <option value="FEMENINO">Femenino</option>
                   </select>
-                  {errors.genero && <p className="text-[10px] text-error font-bold px-1">{errors.genero.message}</p>}
+                  {errors.genero && <span className="field-err">{errors.genero.message}</span>}
                 </div>
               </div>
-            </section>
+            </div>
 
-            {/* Sección 2: Representante */}
-            <section className={sectionClasses}>
-              <div className="flex items-center gap-3 mb-8">
-                <ContactPhone className="text-secondary" />
-                <h3 className="text-lg font-black text-secondary uppercase tracking-tight">
-                  Datos del Representante
-                </h3>
-              </div>
+            {/* Sección 02: Representante */}
+            <div className="form-sect">
+              <header>
+                <div className="ic" aria-hidden="true">
+                  <ContactPhone />
+                </div>
+                <div>
+                  <span className="micro">Sección 02</span>
+                  <h3>Datos del Representante</h3>
+                </div>
+              </header>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                <div className="space-y-2">
-                  <label className={labelClasses}>Nombre Completo *</label>
-                  <input {...register('repNombre')} className={inputClasses} placeholder="Ej: María Rodríguez" />
-                  {errors.repNombre && <p className="text-[10px] text-error font-bold px-1">{errors.repNombre.message}</p>}
+              <div className="form-grid">
+                <div className="field">
+                  <label className="micro" htmlFor="mr-rep-nombre">
+                    Nombre Completo<span className="req">*</span>
+                  </label>
+                  <input
+                    id="mr-rep-nombre"
+                    {...register('repNombre')}
+                    className="inp"
+                    placeholder="Ej: María Rodríguez"
+                    aria-invalid={!!errors.repNombre}
+                  />
+                  {errors.repNombre && <span className="field-err">{errors.repNombre.message}</span>}
                 </div>
-                <div className="space-y-2">
-                  <label className={labelClasses}>Cédula *</label>
-                  <input {...register('repCedula')} className={inputClasses} placeholder="Ej: V-9876543" />
-                  {errors.repCedula && <p className="text-[10px] text-error font-bold px-1">{errors.repCedula.message}</p>}
+                <div className="field">
+                  <label className="micro" htmlFor="mr-rep-cedula">
+                    Cédula<span className="req">*</span>
+                  </label>
+                  <input
+                    id="mr-rep-cedula"
+                    {...register('repCedula')}
+                    className="inp"
+                    placeholder="V-9.876.543"
+                    aria-invalid={!!errors.repCedula}
+                  />
+                  {errors.repCedula && <span className="field-err">{errors.repCedula.message}</span>}
                 </div>
-                <div className="space-y-2">
-                  <label className={labelClasses}>Parentesco *</label>
-                  <select {...register('repParentesco')} className={inputClasses}>
+                <div className="field">
+                  <label className="micro" htmlFor="mr-rep-parentesco">
+                    Parentesco<span className="req">*</span>
+                  </label>
+                  <select
+                    id="mr-rep-parentesco"
+                    {...register('repParentesco')}
+                    className="inp"
+                    aria-invalid={!!errors.repParentesco}
+                  >
                     <option value="">Seleccionar...</option>
                     <option value="PADRE">Padre</option>
                     <option value="MADRE">Madre</option>
@@ -324,68 +386,80 @@ export const MemberRegisterPage = ({ unitType, unitLabel }: MemberRegisterPagePr
                     <option value="OTRO">Otro</option>
                   </select>
                   {errors.repParentesco && (
-                    <p className="text-[10px] text-error font-bold px-1">{errors.repParentesco.message}</p>
+                    <span className="field-err">{errors.repParentesco.message}</span>
                   )}
                 </div>
-                <div className="space-y-2">
-                  <label className={labelClasses}>Teléfono</label>
-                  <input {...register('repTelefono')} className={inputClasses} placeholder="Ej: 0412-1234567" />
+                <div className="field">
+                  <label className="micro" htmlFor="mr-rep-telefono">
+                    Teléfono
+                  </label>
+                  <input
+                    id="mr-rep-telefono"
+                    {...register('repTelefono')}
+                    className="inp"
+                    placeholder="+58 412 000 0000"
+                  />
                 </div>
-                <div className="space-y-2 md:col-span-2">
-                  <label className={labelClasses}>
-                    <Home sx={{ fontSize: 12, mr: 0.5 }} />
+                <div className="field" style={{ gridColumn: '1 / -1' }}>
+                  <label className="micro" htmlFor="mr-rep-direccion">
+                    <Home sx={{ fontSize: 12, verticalAlign: 'middle', marginRight: 4 }} />
                     Dirección
                   </label>
-                  <input {...register('repDireccion')} className={inputClasses} placeholder="Ej: Av. Principal, Casa 5..." />
+                  <input
+                    id="mr-rep-direccion"
+                    {...register('repDireccion')}
+                    className="inp"
+                    placeholder="Calle, ciudad, estado"
+                  />
                 </div>
               </div>
-            </section>
+            </div>
 
             {/* Control: Siguiente */}
-            <div className="flex justify-end gap-4">
-              <button
-                type="button"
-                onClick={goBack}
-                className="px-8 py-3 bg-surface-container-high text-primary rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-surface-container-highest transition-colors"
-              >
+            <div className="form-actions">
+              <button type="button" onClick={goBack} className="btn btn-ghost">
                 Cancelar
               </button>
-              <button
-                type="button"
-                onClick={handleNextStep}
-                className="sentinel-gradient px-8 py-3 rounded-xl text-on-primary font-black text-[10px] uppercase tracking-widest shadow-lg shadow-primary/20 hover:shadow-xl transition-all"
-              >
-                Siguiente: Datos Scout →
+              <button type="button" onClick={handleNextStep} className="btn btn-primary">
+                Siguiente: Datos Scout
+                <ArrowForward />
               </button>
             </div>
-          </div>
+          </>
         )}
 
         {step === 2 && (
-          <div className="space-y-8">
-            {/* Sección 3: Datos Scout */}
-            <section className={sectionClasses}>
-              <div className="flex items-center gap-3 mb-8">
-                <Badge className="text-primary" />
-                <h3 className="text-lg font-black text-primary uppercase tracking-tight">
-                  Datos Scout
-                </h3>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-2">
-                  <label className={labelClasses}>Unidad Asignada</label>
-                  <input
-                    type="text"
-                    value={unitLabel}
-                    disabled
-                    className={`${inputClasses} opacity-60 cursor-not-allowed`}
-                  />
+          <>
+            {/* Sección 03: Datos Scout */}
+            <div className="form-sect">
+              <header>
+                <div className="ic" aria-hidden="true">
+                  <Badge />
                 </div>
-                <div className="space-y-2">
-                  <label className={labelClasses}>{subUnitLabel} *</label>
-                  <div className="flex gap-2">
-                    <select {...register('patrullaId')} className={`${inputClasses} flex-1`}>
+                <div>
+                  <span className="micro">Sección 03</span>
+                  <h3>Datos Scout</h3>
+                </div>
+              </header>
+
+              <div className="form-grid">
+                <div className="field">
+                  <label className="micro" htmlFor="mr-unidad">
+                    Unidad Asignada
+                  </label>
+                  <input id="mr-unidad" type="text" value={unitLabel} disabled className="inp" />
+                </div>
+                <div className="field">
+                  <label className="micro" htmlFor="mr-patrulla">
+                    {subUnitLabel}
+                  </label>
+                  <div className="inline-add">
+                    <select
+                      id="mr-patrulla"
+                      {...register('patrullaId')}
+                      className="inp flex-1"
+                      aria-invalid={!!errors.patrullaId}
+                    >
                       <option value="">Seleccionar {subUnitLabel}...</option>
                       {subUnidades.map(su => (
                         <option key={su.id} value={su.id}>{su.nombre}</option>
@@ -397,102 +471,121 @@ export const MemberRegisterPage = ({ unitType, unitLabel }: MemberRegisterPagePr
                     <button
                       type="button"
                       onClick={() => setShowCreateSub(!showCreateSub)}
-                      className="h-[54px] px-3 bg-primary/10 text-primary rounded-xl hover:bg-primary/20 transition-colors flex items-center justify-center"
+                      className="btn btn-soft"
+                      aria-label={`Crear nueva ${subUnitLabel}`}
+                      aria-expanded={showCreateSub}
                       title={`Crear nueva ${subUnitLabel}`}
                     >
-                      <Add sx={{ fontSize: 20 }} />
+                      <Add />
                     </button>
                   </div>
+                  {errors.patrullaId && (
+                    <span className="field-err">{errors.patrullaId.message}</span>
+                  )}
                   {showCreateSub && (
-                    <div className="flex gap-2 mt-2">
+                    <div className="inline-add mt-2">
                       <input
                         type="text"
                         value={newSubNombre}
                         onChange={(e) => setNewSubNombre(e.target.value)}
                         placeholder={`Nombre de la ${subUnitLabel.toLowerCase()}`}
-                        className={`${inputClasses} flex-1`}
+                        className="inp flex-1"
+                        aria-label={`Nombre de la ${subUnitLabel.toLowerCase()}`}
                         onKeyDown={(e) => e.key === 'Enter' && handleCreateSubUnit()}
                       />
                       <button
                         type="button"
                         onClick={handleCreateSubUnit}
                         disabled={creatingSub || !newSubNombre.trim()}
-                        className="h-[54px] px-4 sentinel-gradient text-on-primary rounded-xl font-black text-[10px] uppercase tracking-widest disabled:opacity-50"
+                        className="btn btn-primary"
                       >
                         {creatingSub ? '...' : 'Crear'}
                       </button>
                     </div>
                   )}
                 </div>
-                <div className="space-y-2">
-                  <label className={labelClasses}>Fecha de Ingreso al Grupo</label>
-                  <input {...register('fechaIngreso')} type="date" className={inputClasses} />
+                <div className="field">
+                  <label className="micro" htmlFor="mr-ingreso">
+                    Fecha de Ingreso al Grupo
+                  </label>
+                  <input id="mr-ingreso" {...register('fechaIngreso')} type="date" className="inp" />
                 </div>
-                <div className="space-y-2">
-                  <label className={labelClasses}>Fecha de Promesa</label>
-                  <input {...register('fechaPromesa')} type="date" className={inputClasses} />
+                <div className="field">
+                  <label className="micro" htmlFor="mr-promesa">
+                    Fecha de Promesa
+                  </label>
+                  <input id="mr-promesa" {...register('fechaPromesa')} type="date" className="inp" />
                 </div>
-                <div className="space-y-2">
-                  <label className={labelClasses}>Cargo en la Unidad</label>
-                  <input {...register('cargoActual')} type="text" className={inputClasses} placeholder="Ej: Guía de Patrulla, Sub-guía, etc." />
+                <div className="field">
+                  <label className="micro" htmlFor="mr-cargo">
+                    Cargo en la Unidad
+                  </label>
+                  <input
+                    id="mr-cargo"
+                    {...register('cargoActual')}
+                    type="text"
+                    className="inp"
+                    placeholder="Ej: Guía de patrulla, Sub-guía, etc."
+                  />
+                </div>
+                <div className="field" style={{ gridColumn: '1 / -1' }}>
+                  <label className="micro" htmlFor="mr-historial">
+                    Observaciones / Historial
+                  </label>
+                  <textarea
+                    id="mr-historial"
+                    {...register('historial')}
+                    rows={3}
+                    className="inp"
+                    placeholder="Antecedentes, alergias, notas relevantes…"
+                  />
                 </div>
               </div>
-
-              <div className="mt-6 space-y-2">
-                <label className={labelClasses}>Observaciones / Historial</label>
-                <textarea
-                  {...register('historial')}
-                  rows={4}
-                  className="w-full p-4 bg-surface-container-high border-none rounded-xl text-sm font-bold focus:ring-2 focus:ring-primary transition-all resize-none"
-                  placeholder="Notas adicionales sobre el miembro..."
-                />
-              </div>
-            </section>
+            </div>
 
             {/* Resumen Rápido */}
-            <section className="bg-primary/5 p-8 rounded-[2rem] border border-primary/10">
-              <h4 className="text-[10px] font-black uppercase tracking-widest text-primary mb-4">
-                Resumen del Registro
-              </h4>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <div>
-                  <p className="text-[9px] font-bold text-outline uppercase">Miembro</p>
-                  <p className="text-sm font-black text-primary uppercase">{getValues('nombres')} {getValues('apellidos')}</p>
+            <div className="form-sect">
+              <header>
+                <div className="ic" aria-hidden="true">
+                  <SaveAlt />
                 </div>
                 <div>
-                  <p className="text-[9px] font-bold text-outline uppercase">C.I.</p>
-                  <p className="text-sm font-black text-primary uppercase">{getValues('cedula')}</p>
+                  <span className="micro">Resumen</span>
+                  <h3>Resumen del Registro</h3>
                 </div>
-                <div>
-                  <p className="text-[9px] font-bold text-outline uppercase">Representante</p>
-                  <p className="text-sm font-black text-primary uppercase">{getValues('repNombre')}</p>
+              </header>
+              <div className="resumen-box">
+                <div className="resumen-row">
+                  <span>Miembro</span>
+                  <b>{getValues('nombres')} {getValues('apellidos')}</b>
                 </div>
-                <div>
-                  <p className="text-[9px] font-bold text-outline uppercase">Unidad</p>
-                  <p className="text-sm font-black text-primary">{unitLabel}</p>
+                <div className="resumen-row">
+                  <span>C.I.</span>
+                  <b>{getValues('cedula')}</b>
+                </div>
+                <div className="resumen-row">
+                  <span>Representante</span>
+                  <b>{getValues('repNombre')}</b>
+                </div>
+                <div className="resumen-row">
+                  <span>Unidad</span>
+                  <b>{unitLabel}</b>
                 </div>
               </div>
-            </section>
+            </div>
 
             {/* Controls */}
-            <div className="flex justify-between gap-4">
-              <button
-                type="button"
-                onClick={() => setStep(1)}
-                className="px-8 py-3 bg-surface-container-high text-primary rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-surface-container-highest transition-colors"
-              >
-                ← Volver
+            <div className="form-actions">
+              <button type="button" onClick={() => setStep(1)} className="btn btn-ghost">
+                <ArrowBack />
+                Volver
               </button>
-              <button
-                type="submit"
-                disabled={isSubmitting}
-                className="sentinel-gradient px-10 py-3 rounded-xl text-on-primary font-black text-[10px] uppercase tracking-widest shadow-lg shadow-primary/20 hover:shadow-xl transition-all disabled:opacity-50 flex items-center gap-2"
-              >
-                <SaveAlt sx={{ fontSize: 16 }} />
+              <button type="submit" className="btn btn-primary" disabled={isSubmitting}>
+                <SaveAlt />
                 {isSubmitting ? 'Registrando...' : 'Confirmar Registro'}
               </button>
             </div>
-          </div>
+          </>
         )}
       </form>
     </div>

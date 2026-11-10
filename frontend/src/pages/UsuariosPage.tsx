@@ -317,7 +317,7 @@ export const UsuariosPage = () => {
             <button type="button" onClick={() => { setOpenDialog(false); reset(); }} className="px-6 py-3 font-black text-[10px] uppercase tracking-widest text-outline hover:text-primary transition-colors">
               Cancelar
             </button>
-            <button type="submit" className="sentinel-gradient px-8 py-3 rounded-xl text-on-primary font-black text-[10px] uppercase tracking-widest shadow-lg shadow-primary/20 hover:shadow-xl transition-all">
+            <button type="submit" className="btn btn-primary">
               {editingId ? 'Actualizar Agente' : 'Confirmar Enlace'}
             </button>
           </DialogActions>

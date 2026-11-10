@@ -412,7 +412,7 @@ export const MiembrosPage = () => {
             <button
               type={editingId ? 'submit' : 'button'}
               onClick={editingId ? undefined : continuarAlta}
-              className="sentinel-gradient px-8 py-3 rounded-xl text-on-primary font-black text-[10px] uppercase tracking-widest shadow-lg shadow-primary/20 hover:shadow-xl transition-all"
+              className="btn btn-primary"
             >
               {editingId ? 'Confirmar Cambios' : 'Continuar al alta'}
             </button>

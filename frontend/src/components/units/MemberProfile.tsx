@@ -1,24 +1,5 @@
 import { useState } from 'react';
-import {
-  Box,
-  Typography,
-  Grid,
-  Avatar,
-  IconButton,
-  Chip,
-  Divider
-} from '@mui/material';
-import {
-  Close,
-  Person,
-  MedicalInformation,
-  Cake,
-  Badge,
-  Phone,
-  ContactPage,
-  Wc,
-  Home
-} from '@mui/icons-material';
+import { Close, Phone, MedicalInformation } from '@mui/icons-material';
 import { usePermission } from '../../hooks/usePermission';
 import { useFichaMedica } from '../../hooks/useFichaMedica';
 import { FichaMedicaResumen } from '../../features/fichaMedica/FichaMedicaResumen';
@@ -50,126 +31,92 @@ export const MemberProfile = ({ member, onClose }: MemberProfileProps) => {
   };
 
   const representante = member.Representante;
+  const telRepresentante = representante?.telefono || '';
+  const telEmergencia = ficha?.contactoEmergenciaTelefono || telRepresentante;
 
   return (
-    <Box className="bg-surface-container-lowest min-h-screen md:min-h-0 md:h-[90vh] overflow-y-auto rounded-none md:rounded-[2.5rem] relative">
-      {/* Header / Avatar Section */}
-      <Box className="sentinel-gradient p-12 text-on-primary relative overflow-hidden">
-        <div className="absolute top-[-20%] right-[-10%] w-80 h-80 bg-white/10 rounded-full blur-[100px]" />
-
-        <IconButton
+    <div className="bg-surface-container-lowest min-h-screen md:min-h-0 md:h-[90vh] overflow-y-auto rounded-none md:rounded-[2.5rem] relative">
+      {/* Cabecera de perfil */}
+      <header className="np-head">
+        <button
+          type="button"
+          className="act-btn absolute top-4 right-4 z-20"
+          style={{ color: '#fff', background: 'rgba(255,255,255,0.14)' }}
           onClick={onClose}
-          className="absolute top-6 right-6 text-on-primary bg-white/10 hover:bg-white/20"
+          aria-label="Cerrar perfil del miembro"
         >
           <Close />
-        </IconButton>
+        </button>
 
-        <Box className="relative z-10 flex flex-col md:flex-row items-center gap-8">
-          <Avatar
-            sx={{ width: 160, height: 160, border: '8px solid rgba(255,255,255,0.2)', fontSize: '3rem', fontWeight: 900 }}
-            className="shadow-2xl"
+        <div className="relative z-10 flex items-center gap-5">
+          <div
+            className="w-20 h-20 rounded-3xl bg-white/15 grid place-items-center shrink-0 font-extrabold text-3xl"
+            aria-hidden="true"
           >
-            {member.nombres?.[0]}{member.apellidos?.[0]}
-          </Avatar>
-
-          <Box className="text-center md:text-left">
-            <Typography variant="caption" className="font-black uppercase tracking-[0.3em] opacity-70 mb-2 block">
-              Perfil del Miembro • {member.Unidad?.nombre || 'Unidad'}
-            </Typography>
-            <Typography variant="h3" className="font-black tracking-tighter mb-2">
+            {member.nombres?.[0]}
+            {member.apellidos?.[0]}
+          </div>
+          <div className="min-w-0">
+            <span className="micro">Perfil del Miembro · {member.Unidad?.nombre || 'Unidad'}</span>
+            <h4>
               {member.nombres} {member.apellidos}
-            </Typography>
-            <Box className="flex flex-wrap items-center justify-center md:justify-start gap-4 mt-4">
-              <Chip
-                label={member.estado || 'ACTIVO'}
-                sx={{
-                  color: 'white',
-                  borderColor: 'rgba(255,255,255,0.3)',
-                  fontWeight: 900,
-                  textTransform: 'uppercase',
-                  fontSize: '10px',
-                  backgroundColor: member.estado === 'ACTIVO' ? 'rgba(16,185,129,0.3)' : 'rgba(255,255,255,0.1)',
-                }}
-              />
-              <Chip
-                label={member.genero === 'MASCULINO' ? 'Masculino' : 'Femenino'}
-                variant="outlined"
-                sx={{ color: 'white', borderColor: 'rgba(255,255,255,0.3)', fontWeight: 900, textTransform: 'uppercase', fontSize: '10px' }}
-              />
-            </Box>
-          </Box>
-        </Box>
-      </Box>
+            </h4>
+            <div className="np-meta">
+              <span>{member.estado || 'ACTIVO'}</span>
+              <span>{member.genero === 'MASCULINO' ? 'Masculino' : 'Femenino'}</span>
+              <span>C.I. {member.cedula || '—'}</span>
+            </div>
+          </div>
+        </div>
+      </header>
 
-      {/* Main Content */}
-      <Box className="p-8 md:p-12">
-        <Grid container spacing={6}>
-          {/* Left Column: Personal Info */}
-          <Grid item xs={12} md={4} className="space-y-6">
-            <Box className="bg-surface-container-low p-8 rounded-[2rem] border border-outline-variant/10">
-              <Typography className="text-[10px] font-black uppercase tracking-widest text-primary mb-6 flex items-center gap-2">
-                <Person fontSize="small" /> Datos Personales
-              </Typography>
-
-              <div className="space-y-6">
-                <div className="flex items-start gap-4">
-                  <Badge className="text-outline/40" fontSize="small" />
-                  <div>
-                    <p className="text-[9px] font-black uppercase tracking-widest text-outline mb-1">C.I. del Joven</p>
-                    <p className="text-sm font-bold text-primary">{member.cedula || 'No registrada'}</p>
-                  </div>
-                </div>
-
-                <div className="flex items-start gap-4">
-                  <Cake className="text-outline/40" fontSize="small" />
-                  <div>
-                    <p className="text-[9px] font-black uppercase tracking-widest text-outline mb-1">Nacimiento</p>
-                    <p className="text-sm font-bold text-primary">
-                      {member.fechaNacimiento ? new Date(member.fechaNacimiento).toLocaleDateString('es') : '—'} ({calculateAge(member.fechaNacimiento)} años)
-                    </p>
-                  </div>
-                </div>
-
-                <div className="flex items-start gap-4">
-                  <Wc className="text-outline/40" fontSize="small" />
-                  <div>
-                    <p className="text-[9px] font-black uppercase tracking-widest text-outline mb-1">Género</p>
-                    <p className="text-sm font-bold text-primary">{member.genero === 'MASCULINO' ? 'Masculino' : 'Femenino'}</p>
-                  </div>
-                </div>
-
-                <Divider sx={{ my: 2, opacity: 0.1 }} />
-
-                {representante && (
-                  <>
-                    <div className="flex items-start gap-4">
-                      <ContactPage className="text-outline/40" fontSize="small" />
-                      <div>
-                        <p className="text-[9px] font-black uppercase tracking-widest text-outline mb-1">Representante</p>
-                        <p className="text-sm font-bold text-primary">{representante.nombre}</p>
-                        <p className="text-[10px] text-outline">{representante.parentesco || ''}</p>
-                      </div>
-                    </div>
-
-                    <div className="flex items-start gap-4">
-                      <Phone className="text-outline/40" fontSize="small" />
-                      <div>
-                        <p className="text-[9px] font-black uppercase tracking-widest text-outline mb-1">Teléfono</p>
-                        <p className="text-sm font-bold text-primary">{representante.telefono || 'N/A'}</p>
-                      </div>
-                    </div>
-
-                    <div className="flex items-start gap-4">
-                      <Home className="text-outline/40" fontSize="small" />
-                      <div>
-                        <p className="text-[9px] font-black uppercase tracking-widest text-outline mb-1">Dirección</p>
-                        <p className="text-sm font-bold text-primary leading-relaxed">{representante.direccion || 'Sin dirección'}</p>
-                      </div>
-                    </div>
-                  </>
-                )}
+      {/* Contenido */}
+      <div className="px-5 pb-6 md:px-6">
+        <div className="grid md:grid-cols-12 gap-5 items-start">
+          {/* Columna izquierda: datos personales */}
+          <div className="md:col-span-4 space-y-4">
+            <section className="np-sec">
+              <span className="micro">Datos Personales</span>
+              <div className="resumen-row">
+                <span>C.I. del Joven</span>
+                <b>{member.cedula || 'No registrada'}</b>
               </div>
-            </Box>
+              <div className="resumen-row">
+                <span>Nacimiento</span>
+                <b>
+                  {member.fechaNacimiento
+                    ? new Date(member.fechaNacimiento).toLocaleDateString('es')
+                    : '—'}{' '}
+                  ({calculateAge(member.fechaNacimiento)} años)
+                </b>
+              </div>
+              <div className="resumen-row">
+                <span>Género</span>
+                <b>{member.genero === 'MASCULINO' ? 'Masculino' : 'Femenino'}</b>
+              </div>
+            </section>
+
+            {representante && (
+              <section className="np-sec">
+                <span className="micro">Representante</span>
+                <div className="resumen-row">
+                  <span>Nombre</span>
+                  <b>{representante.nombre}</b>
+                </div>
+                <div className="resumen-row">
+                  <span>Parentesco</span>
+                  <b>{representante.parentesco || '—'}</b>
+                </div>
+                <div className="resumen-row">
+                  <span>Teléfono</span>
+                  <b>{representante.telefono || 'N/A'}</b>
+                </div>
+                <div className="resumen-row">
+                  <span>Dirección</span>
+                  <b>{representante.direccion || 'Sin dirección'}</b>
+                </div>
+              </section>
+            )}
 
             {/* Ficha Médica — Datos reales */}
             {canViewMedico && (
@@ -180,44 +127,58 @@ export const MemberProfile = ({ member, onClose }: MemberProfileProps) => {
                 onEdit={() => setFichaDialogOpen(true)}
               />
             )}
-          </Grid>
+          </div>
 
-          {/* Right Column: Progress & Others */}
-          <Grid item xs={12} md={8} className="space-y-6">
-            {/* Progress Section */}
+          {/* Columna derecha: progresión y contactos */}
+          <div className="md:col-span-8 space-y-4">
             <ProgresionSeccion miembroId={member.id} />
 
-            {/* Critical Contacts */}
-            <Box className="bg-surface-container-high p-8 rounded-[2.5rem] border border-outline-variant/10 text-primary">
-              <Typography className="text-[10px] font-black uppercase tracking-widest mb-6 px-2">Contactos de Emergencia</Typography>
-              <Grid container spacing={2}>
-                <Grid item xs={12} md={6}>
-                  <Box className="p-4 bg-white/20 hover:bg-white/40 cursor-pointer rounded-2xl flex items-center justify-between transition-all group">
-                    <div className="flex items-center gap-3">
-                      <Phone className="text-primary group-hover:scale-110 transition-transform" />
-                      <div>
-                        <p className="text-[9px] font-black opacity-60 uppercase">Llamar Representante</p>
-                        <p className="text-xs font-bold">{representante?.telefono || 'N/A'}</p>
-                      </div>
+            {/* Contactos de emergencia */}
+            <section className="card">
+              <div className="card-head">
+                <h3>Contactos de Emergencia</h3>
+              </div>
+              <div className="grid sm:grid-cols-2 gap-3">
+                {telRepresentante ? (
+                  <a href={`tel:${telRepresentante}`} className="np-cargo no-underline block hover:opacity-80 transition-opacity">
+                    <div className="r flex items-center gap-2">
+                      <Phone sx={{ fontSize: 12 }} />
+                      Llamar Representante
                     </div>
-                  </Box>
-                </Grid>
-                <Grid item xs={12} md={6}>
-                  <Box className="p-4 bg-error/5 hover:bg-error/10 cursor-pointer rounded-2xl flex items-center justify-between transition-all group text-error">
-                    <div className="flex items-center gap-3">
-                      <MedicalInformation className="group-hover:scale-110 transition-transform" />
-                      <div>
-                        <p className="text-[9px] font-black opacity-60 uppercase">Emergencia Médica</p>
-                        <p className="text-xs font-bold">{ficha?.contactoEmergenciaTelefono || representante?.telefono || 'N/A'}</p>
-                      </div>
+                    <div className="p">{telRepresentante}</div>
+                  </a>
+                ) : (
+                  <div className="np-cargo">
+                    <div className="r flex items-center gap-2">
+                      <Phone sx={{ fontSize: 12 }} />
+                      Llamar Representante
                     </div>
-                  </Box>
-                </Grid>
-              </Grid>
-            </Box>
-          </Grid>
-        </Grid>
-      </Box>
+                    <div className="p">N/A</div>
+                  </div>
+                )}
+
+                {telEmergencia ? (
+                  <a href={`tel:${telEmergencia}`} className="np-cargo no-underline block hover:opacity-80 transition-opacity">
+                    <div className="r flex items-center gap-2" style={{ color: 'var(--color-error)' }}>
+                      <MedicalInformation sx={{ fontSize: 12 }} />
+                      Emergencia Médica
+                    </div>
+                    <div className="p">{telEmergencia}</div>
+                  </a>
+                ) : (
+                  <div className="np-cargo">
+                    <div className="r flex items-center gap-2" style={{ color: 'var(--color-error)' }}>
+                      <MedicalInformation sx={{ fontSize: 12 }} />
+                      Emergencia Médica
+                    </div>
+                    <div className="p">N/A</div>
+                  </div>
+                )}
+              </div>
+            </section>
+          </div>
+        </div>
+      </div>
 
       <FichaMedicaForm
         open={fichaDialogOpen}
@@ -227,6 +188,6 @@ export const MemberProfile = ({ member, onClose }: MemberProfileProps) => {
         onClose={() => setFichaDialogOpen(false)}
         onSaved={reload}
       />
-    </Box>
+    </div>
   );
 };

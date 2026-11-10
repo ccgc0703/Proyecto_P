@@ -18,6 +18,8 @@ export const HeroChip = ({ tono = 'default', icono, children }: HeroChipProps) =
 interface HeroProps {
   /** `grad` = degradado verde con texto blanco; `flat` = panel claro. */
   variante?: 'grad' | 'flat';
+  /** Ruta de navegación sobre los chips (ej. "Volver al cuadro"). */
+  crumb?: ReactNode;
   chips?: ReactNode;
   titulo: ReactNode;
   subtitulo?: ReactNode;
@@ -36,6 +38,7 @@ interface HeroProps {
  */
 export const Hero = ({
   variante = 'grad',
+  crumb,
   chips,
   titulo,
   subtitulo,
@@ -46,6 +49,7 @@ export const Hero = ({
 }: HeroProps) => (
   <section className={['hero', variante, className].filter(Boolean).join(' ')}>
     <div className="hero-l">
+      {crumb && <div className="tb-crumb mb-2.5">{crumb}</div>}
       {chips && <div className="hero-chips">{chips}</div>}
       <h1>{titulo}</h1>
       {subtitulo && <p className="sub">{subtitulo}</p>}
