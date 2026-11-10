@@ -8,7 +8,7 @@
 > | Fase 1 — Asistencia + Eventos | ✅ Cerrada — commit `60e0c05` |
 > | Fase 2 — Dashboard Ejecutivo con Métricas Reales | ✅ Cerrada — commit `3df726d` (backend 344/344 · frontend 23/23 · E2E 15/15) |
 > | Fase 3 — Notificaciones in-app (decisión: sin email) | ✅ Cerrada — commit `277f31d` (backend 360/360 · integración 14/14 · frontend 30/30 · E2E 16/16) |
-> | Fase 5 — Biblioteca (Documentos y Normativa) | ✅ Cerrada — commit `086203d` (backend 376/376 · integración 19/19 · frontend 31/31 · E2E 18/18) |
+> | Fase 5 — Biblioteca (Documentos y Normativa) | ✅ Cerrada — commit `0427677` (backend 376/376 · integración 19/19 · frontend 31/31 · E2E 18/18) |
 > | Fase 6 — Completar formación / datos-scout / programas-mundiales (decisión: permisos nuevos `datosscout:*`) | ⬜ Pendiente |
 > | Fase 7 — Madurez y escala (PWA, PDF, Finanzas…; multi-grupo SOLO si aplica) | ⬜ Pendiente |
 > | Fase 8 — Deuda técnica (8.2/8.3 continuo, en cada cierre) | 🔄 Continuo |
