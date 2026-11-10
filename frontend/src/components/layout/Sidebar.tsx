@@ -16,6 +16,7 @@ import {
   MenuOpen,
   TrendingUp,
   AccountTree,
+  Hub,
   PeopleAlt,
   CalendarMonth,
   MenuBook,
@@ -140,6 +141,12 @@ export const Sidebar = ({ open, onToggle, mobileOpen = false, onCloseMobile }: S
       permission: canViewFormacion && !esJoven,
     },
     { text: 'Usuarios', icon: <PeopleAlt />, path: '/app/usuarios', permission: canViewUsuarios },
+    {
+      text: 'Organización',
+      icon: <Hub />,
+      path: '/app/organizacion',
+      permission: canViewOrganizacion && !esJoven,
+    },
     {
       text: 'Estructura',
       icon: <AccountTree />,

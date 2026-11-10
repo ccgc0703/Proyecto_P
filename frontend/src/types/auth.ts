@@ -33,6 +33,8 @@ export interface User {
   roles: Role[];
   permissions: string[];
   unidad?: Unidad;
+  /** Ámbito jerárquico (F4.3): nodo de organización del usuario. */
+  nodoId?: string | null;
   miembroId?: string;
   activo: boolean;
   createdAt?: string;

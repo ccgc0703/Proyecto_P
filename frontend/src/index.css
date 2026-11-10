@@ -1988,6 +1988,8 @@
   }
   .crumb:hover { background: var(--color-surface-container); color: var(--color-primary); }
   .crumb.on { background: var(--color-primary); color: #fff; }
+  .crumb.on .lvl { color: var(--color-accent); }
+  .crumb:disabled { opacity: 0.45; cursor: default; }
   .crumb svg { width: 13px; height: 13px; stroke: currentColor; fill: none; stroke-width: 2.4; }
   .crumb-sep { color: var(--color-outline-variant); font-size: 13px; }
   .hier-head {
@@ -1998,6 +2000,7 @@
     flex-wrap: wrap;
     margin-bottom: 18px;
   }
+  .hier-head .micro { display: block; margin-bottom: 5px; }
   .hier-head h2 {
     font-family: var(--font-display);
     font-weight: 800;
@@ -2463,7 +2466,7 @@
   .dlegend { grid-template-columns: 1fr; gap: 14px; }
   .donut { width: 150px; height: 150px; }
   .donut-c b { font-size: 32px; }
-  .hier-grid { grid-template-columns: 1fr; }
+  .hier-grid { grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); }
   .tbl-tools { flex-direction: column; align-items: stretch; }
   .tbl-search { max-width: none; }
   .tbl-foot { flex-direction: column; align-items: flex-start; }
@@ -2471,6 +2474,10 @@
 
 @media (max-width: 640px) {
   .kpis { grid-template-columns: 1fr; }
+  .hier-grid { grid-template-columns: 1fr; }
+  /* Las migas no caben: scroll horizontal en vez de envolver */
+  .crumb-bar { overflow-x: auto; flex-wrap: nowrap; }
+  .crumb { flex-shrink: 0; }
   .kpi .val { font-size: 26px; }
   .pg-head .pg-titles h1 { font-size: 21px; }
   .hero { padding: 18px; border-radius: 1.15rem; }

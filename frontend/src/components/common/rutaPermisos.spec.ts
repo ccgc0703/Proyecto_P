@@ -39,6 +39,7 @@ describe('permisosDeRuta', () => {
     expect(permisosDeRuta('/app/progresion')).toEqual(['progresion:view']);
     expect(permisosDeRuta('/app/progresion/3f21')).toEqual(['progresion:view']);
     expect(permisosDeRuta('/app/estructura')).toEqual(['organizacion:view']);
+    expect(permisosDeRuta('/app/organizacion')).toEqual(['organizacion:view']);
   });
 
   it('exige evento:view en la página de eventos y asistencias', () => {

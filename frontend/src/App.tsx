@@ -34,6 +34,7 @@ const MemberEditPage = lazyRouteComponent(() => import('./pages/MemberEditPage')
 const ProgresionPage = lazyRouteComponent(() => import('./pages/ProgresionPage'), 'ProgresionPage');
 const ProgresionFichaPage = lazyRouteComponent(() => import('./pages/ProgresionFichaPage'), 'ProgresionFichaPage');
 const MiProgresionPage = lazyRouteComponent(() => import('./pages/MiProgresionPage'), 'MiProgresionPage');
+const OrganizacionPage = lazyRouteComponent(() => import('./pages/OrganizacionPage'), 'OrganizacionPage');
 const EstructuraPage = lazyRouteComponent(() => import('./pages/EstructuraPage'), 'EstructuraPage');
 const UnidadesPage = lazyRouteComponent(() => import('./pages/UnidadesPage'), 'UnidadesPage');
 const UsuariosPage = lazyRouteComponent(() => import('./pages/UsuariosPage'), 'UsuariosPage');
@@ -254,6 +255,12 @@ const miProgresionRoute = createRoute({
   component: MiProgresionPage,
 });
 
+const organizacionRoute = createRoute({
+  getParentRoute: () => layoutRoute,
+  path: '/organizacion',
+  component: OrganizacionPage,
+});
+
 const estructuraRoute = createRoute({
   getParentRoute: () => layoutRoute,
   path: '/estructura',
@@ -326,6 +333,7 @@ const routeTree = rootRoute.addChildren([
     progresionRoute,
     progresionFichaRoute,
     miProgresionRoute,
+    organizacionRoute,
     estructuraRoute,
     unidadesRoute,
     usuariosRoute,

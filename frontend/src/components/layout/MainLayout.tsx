@@ -23,6 +23,7 @@ const PAGE_TITLES: Record<string, string> = {
   '/app/clan': 'Clan',
   '/app/unidades': 'Unidades',
   '/app/usuarios': 'Usuarios',
+  '/app/organizacion': 'Organización',
   '/app/estructura': 'Estructura',
   '/app/staff': 'Staff',
   '/app/perfil': 'Mi perfil',
