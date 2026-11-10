@@ -1087,6 +1087,22 @@
   .banner-warn { background: rgba(255, 184, 0, 0.16); color: var(--color-tertiary); }
   .banner-warn svg { stroke: var(--color-warning); }
 
+  /* ── Fila de detalle editable (ficha médica) ─────────────────────── */
+  .det-row {
+    background: var(--color-surface-container-low);
+    border-radius: var(--radius-xl);
+    padding: 14px;
+    margin-bottom: 10px;
+    box-shadow: inset 0 0 0 1.5px var(--color-outline-variant);
+  }
+  .det-row .det-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    margin-bottom: 10px;
+  }
+
   /* ── Mi Perfil: columna lateral + ficha ──────────────────────────── */
   .perfil-grid { display: grid; grid-template-columns: 300px 1fr; gap: 20px; align-items: start; }
   .perfil-side { display: flex; flex-direction: column; gap: 16px; position: sticky; top: 121px; }

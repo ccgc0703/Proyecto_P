@@ -1,10 +1,10 @@
 import { useEffect, useRef, useState } from 'react';
+import type { ReactNode } from 'react';
 import {
   Dialog,
   DialogTitle,
   DialogContent,
   DialogActions,
-  IconButton,
 } from '@mui/material';
 import {
   Close,
@@ -12,6 +12,15 @@ import {
   DeleteOutline,
   MedicalInformation,
   SaveAlt,
+  ErrorOutline,
+  Shield,
+  ContactEmergency,
+  WarningAmber,
+  Medication,
+  LocalHospital,
+  Vaccines,
+  VerifiedUser,
+  Notes,
 } from '@mui/icons-material';
 import { useForm, useFieldArray, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -99,9 +108,22 @@ interface FichaMedicaFormProps {
   onSaved: () => void;
 }
 
-const inputClasses =
-  'w-full p-3 bg-surface-container-high border-none rounded-lg text-sm font-bold focus:ring-2 focus:ring-primary transition-all h-[44px]';
-const labelClasses = 'text-[9px] font-black uppercase tracking-widest px-1 text-outline';
+/** Encabezado de sección numerada (patrón de los formularios de la app). */
+const Seccion = ({ n, titulo, icono, accion }: {
+  n: number;
+  titulo: string;
+  icono: ReactNode;
+  accion?: ReactNode;
+}) => (
+  <header>
+    <div className="ic" aria-hidden="true">{icono}</div>
+    <div className="flex-1 min-w-0">
+      <span className="micro">Sección {String(n).padStart(2, '0')}</span>
+      <h3>{titulo}</h3>
+    </div>
+    {accion}
+  </header>
+);
 
 export const FichaMedicaForm = ({
   open,
@@ -299,52 +321,58 @@ export const FichaMedicaForm = ({
     }
   };
 
+  const btnAñadir = (onClick: () => void, etiqueta: string) => (
+    <button type="button" onClick={onClick} className="btn btn-soft btn-sm flex-none">
+      <Add />
+      {etiqueta}
+    </button>
+  );
+
   return (
     <Dialog
       open={open}
       onClose={onClose}
       fullWidth
       maxWidth="lg"
-      PaperProps={{ className: 'rounded-[2rem] !bg-surface-container-lowest shadow-2xl max-h-[90vh]' }}
+      PaperProps={{ className: 'rounded-[2rem] !bg-surface-container-low shadow-2xl max-h-[90vh]' }}
     >
-      <form onSubmit={handleSubmit(onSubmit)}>
-        <DialogTitle className="flex items-center justify-between px-8 pt-8 pb-4 sticky top-0 bg-surface-container-lowest z-10">
-          <div className="flex items-center gap-3">
-            <div className="w-11 h-11 bg-emerald-500/10 rounded-2xl flex items-center justify-center text-emerald-600">
+      <form onSubmit={handleSubmit(onSubmit)} noValidate>
+        <DialogTitle className="flex items-center justify-between px-6 pt-6 pb-4">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="w-11 h-11 rounded-2xl bg-surface-container grid place-items-center text-primary flex-none">
               <MedicalInformation />
             </div>
-            <div>
-              <h2 className="text-xl font-black text-primary uppercase tracking-tight leading-none">
+            <div className="min-w-0">
+              <h2 className="text-xl font-black text-primary tracking-tight leading-none">
                 {ficha?.id ? 'Editar Ficha Médica' : 'Nueva Ficha Médica'}
               </h2>
-              <p className="text-[10px] font-bold text-outline uppercase tracking-widest mt-1">
-                {miembroNombre}
-              </p>
+              <p className="micro block mt-1.5 truncate">{miembroNombre}</p>
             </div>
           </div>
-          <IconButton onClick={onClose}>
+          <button type="button" className="act-btn flex-none" onClick={onClose} aria-label="Cerrar formulario">
             <Close />
-          </IconButton>
+          </button>
         </DialogTitle>
 
-        <DialogContent dividers className="px-8 py-6 space-y-8 overflow-y-auto">
+        <DialogContent dividers className="px-6 py-5">
           {error && (
-            <div className="p-4 bg-error/10 border border-error/20 text-error rounded-xl text-sm font-bold">
-              {error}
+            <div className="banner banner-err" role="alert">
+              <ErrorOutline />
+              <p>{error}</p>
             </div>
           )}
 
-          {/* Datos generales */}
-          <section className="bg-surface-container-low p-6 rounded-3xl border border-outline-variant/10">
-            <h3 className="text-[10px] font-black uppercase tracking-widest text-primary mb-5">Datos Generales</h3>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="space-y-2">
-                <label className={labelClasses}>Tipo de Sangre</label>
+          {/* 01 · Datos generales */}
+          <section className="form-sect">
+            <Seccion n={1} titulo="Datos Generales" icono={<MedicalInformation />} />
+            <div className="form-grid">
+              <div className="field">
+                <label className="micro" htmlFor="fm-tipo">Tipo de Sangre</label>
                 <Controller
                   name="tipoSangre"
                   control={control}
                   render={({ field }) => (
-                    <select {...field} className={`${inputClasses} appearance-none`}>
+                    <select id="fm-tipo" {...field} className="inp">
                       <option value="">Seleccionar...</option>
                       {TIPO_SANGRE_OPCIONES.map((o) => (
                         <option key={o.value} value={o.value}>{o.label}</option>
@@ -353,298 +381,332 @@ export const FichaMedicaForm = ({
                   )}
                 />
               </div>
-              <div className="space-y-2">
-                <label className={labelClasses}>Teléfono</label>
-                <input {...register('telefono')} className={inputClasses} placeholder="0412-0000000" />
+              <div className="field">
+                <label className="micro" htmlFor="fm-tel">Teléfono</label>
+                <input id="fm-tel" {...register('telefono')} className="inp" placeholder="0412-0000000" />
               </div>
-              <div className="space-y-2">
-                <label className={labelClasses}>Email</label>
-                <input {...register('email')} type="email" className={inputClasses} placeholder="correo@ejemplo.com" />
-                {errors.email && <p className="text-[10px] text-error font-bold px-1">{errors.email.message}</p>}
+              <div className="field">
+                <label className="micro" htmlFor="fm-email">Email</label>
+                <input
+                  id="fm-email"
+                  {...register('email')}
+                  type="email"
+                  className="inp"
+                  placeholder="correo@ejemplo.com"
+                  aria-invalid={!!errors.email}
+                />
+                {errors.email && <span className="field-err">{errors.email.message}</span>}
               </div>
-              <div className="space-y-2">
-                <label className={labelClasses}>Médico Tratante</label>
-                <input {...register('medicoTratante')} className={inputClasses} />
+              <div className="field">
+                <label className="micro" htmlFor="fm-medico">Médico Tratante</label>
+                <input id="fm-medico" {...register('medicoTratante')} className="inp" />
               </div>
-              <div className="space-y-2">
-                <label className={labelClasses}>Teléfono del Médico</label>
-                <input {...register('telefonoMedico')} className={inputClasses} />
-              </div>
-            </div>
-          </section>
-
-          {/* Seguro */}
-          <section className="bg-surface-container-low p-6 rounded-3xl border border-outline-variant/10">
-            <h3 className="text-[10px] font-black uppercase tracking-widest text-primary mb-5">Seguro Médico</h3>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="space-y-2">
-                <label className={labelClasses}>Compañía</label>
-                <input {...register('seguroCompania')} className={inputClasses} />
-              </div>
-              <div className="space-y-2">
-                <label className={labelClasses}>N° Póliza</label>
-                <input {...register('seguroPoliza')} className={inputClasses} />
-              </div>
-              <div className="space-y-2">
-                <label className={labelClasses}>Vigencia</label>
-                <input {...register('seguroVigencia')} type="date" className={inputClasses} />
+              <div className="field">
+                <label className="micro" htmlFor="fm-tel-medico">Teléfono del Médico</label>
+                <input id="fm-tel-medico" {...register('telefonoMedico')} className="inp" />
               </div>
             </div>
           </section>
 
-          {/* Contacto de emergencia */}
-          <section className="bg-surface-container-low p-6 rounded-3xl border border-outline-variant/10">
-            <h3 className="text-[10px] font-black uppercase tracking-widest text-primary mb-5">Contacto de Emergencia</h3>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="space-y-2">
-                <label className={labelClasses}>Nombre</label>
-                <input {...register('contactoEmergenciaNombre')} className={inputClasses} />
+          {/* 02 · Seguro */}
+          <section className="form-sect">
+            <Seccion n={2} titulo="Seguro Médico" icono={<Shield />} />
+            <div className="form-grid">
+              <div className="field">
+                <label className="micro" htmlFor="fm-seg-comp">Compañía</label>
+                <input id="fm-seg-comp" {...register('seguroCompania')} className="inp" />
               </div>
-              <div className="space-y-2">
-                <label className={labelClasses}>Teléfono</label>
-                <input {...register('contactoEmergenciaTelefono')} className={inputClasses} />
+              <div className="field">
+                <label className="micro" htmlFor="fm-seg-poliza">N° Póliza</label>
+                <input id="fm-seg-poliza" {...register('seguroPoliza')} className="inp" />
               </div>
-              <div className="space-y-2">
-                <label className={labelClasses}>Parentesco</label>
-                <input {...register('contactoEmergenciaParentesco')} className={inputClasses} />
+              <div className="field">
+                <label className="micro" htmlFor="fm-seg-vig">Vigencia</label>
+                <input id="fm-seg-vig" {...register('seguroVigencia')} type="date" className="inp" />
               </div>
             </div>
           </section>
 
-          {/* Alergias */}
-          <section className="bg-surface-container-low p-6 rounded-3xl border border-outline-variant/10">
-            <div className="flex items-center justify-between mb-5">
-              <h3 className="text-[10px] font-black uppercase tracking-widest text-primary">Alergias</h3>
-              <button
-                type="button"
-                onClick={() => alergiasArray.append({ nombre: '', severidad: 'LEVE', reaccion: '', observaciones: '' })}
-                className="flex items-center gap-1 px-3 py-1.5 bg-primary/10 text-primary rounded-lg font-black text-[10px] uppercase tracking-widest hover:bg-primary/20 transition-colors"
-              >
-                <Add fontSize="small" /> Añadir
-              </button>
+          {/* 03 · Contacto de emergencia */}
+          <section className="form-sect">
+            <Seccion n={3} titulo="Contacto de Emergencia" icono={<ContactEmergency />} />
+            <div className="form-grid">
+              <div className="field">
+                <label className="micro" htmlFor="fm-em-nom">Nombre</label>
+                <input id="fm-em-nom" {...register('contactoEmergenciaNombre')} className="inp" />
+              </div>
+              <div className="field">
+                <label className="micro" htmlFor="fm-em-tel">Teléfono</label>
+                <input id="fm-em-tel" {...register('contactoEmergenciaTelefono')} className="inp" />
+              </div>
+              <div className="field">
+                <label className="micro" htmlFor="fm-em-par">Parentesco</label>
+                <input id="fm-em-par" {...register('contactoEmergenciaParentesco')} className="inp" />
+              </div>
             </div>
-            <div className="space-y-3">
+          </section>
+
+          {/* 04 · Alergias */}
+          <section className="form-sect">
+            <Seccion
+              n={4}
+              titulo="Alergias"
+              icono={<WarningAmber />}
+              accion={btnAñadir(
+                () => alergiasArray.append({ nombre: '', severidad: 'LEVE', reaccion: '', observaciones: '' }),
+                'Añadir',
+              )}
+            />
+            <div>
               {alergiasArray.fields.map((field, index) => (
-                <div key={field.id} className="bg-white/30 p-4 rounded-2xl space-y-3 border border-outline-variant/10">
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                    <div className="space-y-1">
-                      <label className={labelClasses}>Nombre</label>
-                      <input {...register(`alergiasDetalle.${index}.nombre`)} className={inputClasses} />
+                <div key={field.id} className="det-row">
+                  <div className="det-head">
+                    <span className="micro">Alergia {index + 1}</span>
+                    <button
+                      type="button"
+                      className="act-btn danger"
+                      onClick={() => markDelete('alergias', alergiasArray, index)}
+                      title="Eliminar alergia"
+                      aria-label={`Eliminar alergia ${index + 1}`}
+                    >
+                      <DeleteOutline />
+                    </button>
+                  </div>
+                  <div className="form-grid">
+                    <div className="field">
+                      <label className="micro" htmlFor={`fm-al-${index}-nombre`}>Nombre</label>
+                      <input id={`fm-al-${index}-nombre`} {...register(`alergiasDetalle.${index}.nombre`)} className="inp" />
                     </div>
-                    <div className="space-y-1">
-                      <label className={labelClasses}>Severidad</label>
-                      <select {...register(`alergiasDetalle.${index}.severidad`)} className={`${inputClasses} appearance-none`}>
+                    <div className="field">
+                      <label className="micro" htmlFor={`fm-al-${index}-sev`}>Severidad</label>
+                      <select id={`fm-al-${index}-sev`} {...register(`alergiasDetalle.${index}.severidad`)} className="inp">
                         {SEVERIDAD_OPCIONES.map((o) => (
                           <option key={o.value} value={o.value}>{o.label}</option>
                         ))}
                       </select>
                     </div>
-                    <div className="space-y-1">
-                      <label className={labelClasses}>Reacción</label>
-                      <input {...register(`alergiasDetalle.${index}.reaccion`)} className={inputClasses} />
+                    <div className="field">
+                      <label className="micro" htmlFor={`fm-al-${index}-reac`}>Reacción</label>
+                      <input id={`fm-al-${index}-reac`} {...register(`alergiasDetalle.${index}.reaccion`)} className="inp" />
                     </div>
-                  </div>
-                  <div className="flex items-end justify-between gap-3">
-                    <div className="flex-1 space-y-1">
-                      <label className={labelClasses}>Observaciones</label>
-                      <input {...register(`alergiasDetalle.${index}.observaciones`)} className={inputClasses} />
+                    <div className="field">
+                      <label className="micro" htmlFor={`fm-al-${index}-obs`}>Observaciones</label>
+                      <input id={`fm-al-${index}-obs`} {...register(`alergiasDetalle.${index}.observaciones`)} className="inp" />
                     </div>
-                    <IconButton
-                      size="small"
-                      onClick={() => markDelete('alergias', alergiasArray, index)}
-                      className="!text-error"
-                      title="Eliminar alergia"
-                    >
-                      <DeleteOutline fontSize="small" />
-                    </IconButton>
                   </div>
                 </div>
               ))}
               {alergiasArray.fields.length === 0 && (
-                <p className="text-[10px] font-bold text-outline uppercase tracking-widest">Sin alergias registradas.</p>
+                <p className="micro">Sin alergias registradas.</p>
               )}
             </div>
           </section>
 
-          {/* Medicamentos recetados */}
-          <section className="bg-surface-container-low p-6 rounded-3xl border border-outline-variant/10">
-            <div className="flex items-center justify-between mb-5">
-              <h3 className="text-[10px] font-black uppercase tracking-widest text-primary">Medicamentos Recetados</h3>
-              <button
-                type="button"
-                onClick={() => medicamentosArray.append({ nombre: '', dosis: '', frecuencia: '', motivo: '', prescritoPor: '' })}
-                className="flex items-center gap-1 px-3 py-1.5 bg-primary/10 text-primary rounded-lg font-black text-[10px] uppercase tracking-widest hover:bg-primary/20 transition-colors"
-              >
-                <Add fontSize="small" /> Añadir
-              </button>
-            </div>
-            <div className="space-y-3">
+          {/* 05 · Medicamentos recetados */}
+          <section className="form-sect">
+            <Seccion
+              n={5}
+              titulo="Medicamentos Recetados"
+              icono={<Medication />}
+              accion={btnAñadir(
+                () => medicamentosArray.append({ nombre: '', dosis: '', frecuencia: '', motivo: '', prescritoPor: '' }),
+                'Añadir',
+              )}
+            />
+            <div>
               {medicamentosArray.fields.map((field, index) => (
-                <div key={field.id} className="bg-white/30 p-4 rounded-2xl space-y-3 border border-outline-variant/10">
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                    <div className="space-y-1">
-                      <label className={labelClasses}>Nombre</label>
-                      <input {...register(`medicamentosDetalle.${index}.nombre`)} className={inputClasses} />
-                    </div>
-                    <div className="space-y-1">
-                      <label className={labelClasses}>Dosis</label>
-                      <input {...register(`medicamentosDetalle.${index}.dosis`)} className={inputClasses} />
-                    </div>
-                    <div className="space-y-1">
-                      <label className={labelClasses}>Frecuencia</label>
-                      <input {...register(`medicamentosDetalle.${index}.frecuencia`)} className={inputClasses} />
-                    </div>
-                    <div className="space-y-1">
-                      <label className={labelClasses}>Motivo</label>
-                      <input {...register(`medicamentosDetalle.${index}.motivo`)} className={inputClasses} />
-                    </div>
-                    <div className="space-y-1">
-                      <label className={labelClasses}>Prescrito Por</label>
-                      <input {...register(`medicamentosDetalle.${index}.prescritoPor`)} className={inputClasses} />
-                    </div>
+                <div key={field.id} className="det-row">
+                  <div className="det-head">
+                    <span className="micro">Medicamento {index + 1}</span>
+                    <button
+                      type="button"
+                      className="act-btn danger"
+                      onClick={() => markDelete('medicamentos', medicamentosArray, index)}
+                      title="Eliminar medicamento"
+                      aria-label={`Eliminar medicamento ${index + 1}`}
+                    >
+                      <DeleteOutline />
+                    </button>
                   </div>
-                  <div className="flex justify-end">
-                    <IconButton size="small" onClick={() => markDelete('medicamentos', medicamentosArray, index)} className="!text-error" title="Eliminar">
-                      <DeleteOutline fontSize="small" />
-                    </IconButton>
+                  <div className="form-grid">
+                    <div className="field">
+                      <label className="micro" htmlFor={`fm-md-${index}-nombre`}>Nombre</label>
+                      <input id={`fm-md-${index}-nombre`} {...register(`medicamentosDetalle.${index}.nombre`)} className="inp" />
+                    </div>
+                    <div className="field">
+                      <label className="micro" htmlFor={`fm-md-${index}-dosis`}>Dosis</label>
+                      <input id={`fm-md-${index}-dosis`} {...register(`medicamentosDetalle.${index}.dosis`)} className="inp" />
+                    </div>
+                    <div className="field">
+                      <label className="micro" htmlFor={`fm-md-${index}-frec`}>Frecuencia</label>
+                      <input id={`fm-md-${index}-frec`} {...register(`medicamentosDetalle.${index}.frecuencia`)} className="inp" />
+                    </div>
+                    <div className="field">
+                      <label className="micro" htmlFor={`fm-md-${index}-motivo`}>Motivo</label>
+                      <input id={`fm-md-${index}-motivo`} {...register(`medicamentosDetalle.${index}.motivo`)} className="inp" />
+                    </div>
+                    <div className="field">
+                      <label className="micro" htmlFor={`fm-md-${index}-presc`}>Prescrito Por</label>
+                      <input id={`fm-md-${index}-presc`} {...register(`medicamentosDetalle.${index}.prescritoPor`)} className="inp" />
+                    </div>
                   </div>
                 </div>
               ))}
               {medicamentosArray.fields.length === 0 && (
-                <p className="text-[10px] font-bold text-outline uppercase tracking-widest">Sin medicamentos recetados.</p>
+                <p className="micro">Sin medicamentos recetados.</p>
               )}
             </div>
           </section>
 
-          {/* Condiciones */}
-          <section className="bg-surface-container-low p-6 rounded-3xl border border-outline-variant/10">
-            <div className="flex items-center justify-between mb-5">
-              <h3 className="text-[10px] font-black uppercase tracking-widest text-primary">Condiciones Médicas</h3>
-              <button
-                type="button"
-                onClick={() => condicionesArray.append({ nombre: '', descripcion: '', fechaDiagnostico: '', requiereControl: false })}
-                className="flex items-center gap-1 px-3 py-1.5 bg-primary/10 text-primary rounded-lg font-black text-[10px] uppercase tracking-widest hover:bg-primary/20 transition-colors"
-              >
-                <Add fontSize="small" /> Añadir
-              </button>
-            </div>
-            <div className="space-y-3">
+          {/* 06 · Condiciones */}
+          <section className="form-sect">
+            <Seccion
+              n={6}
+              titulo="Condiciones Médicas"
+              icono={<LocalHospital />}
+              accion={btnAñadir(
+                () => condicionesArray.append({ nombre: '', descripcion: '', fechaDiagnostico: '', requiereControl: false }),
+                'Añadir',
+              )}
+            />
+            <div>
               {condicionesArray.fields.map((field, index) => (
-                <div key={field.id} className="bg-white/30 p-4 rounded-2xl space-y-3 border border-outline-variant/10">
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                    <div className="space-y-1">
-                      <label className={labelClasses}>Nombre *</label>
-                      <input {...register(`condicionesDetalle.${index}.nombre`)} className={inputClasses} />
-                    </div>
-                    <div className="space-y-1">
-                      <label className={labelClasses}>Descripción</label>
-                      <input {...register(`condicionesDetalle.${index}.descripcion`)} className={inputClasses} />
-                    </div>
-                    <div className="space-y-1">
-                      <label className={labelClasses}>Fecha Diagnóstico</label>
-                      <input {...register(`condicionesDetalle.${index}.fechaDiagnostico`)} type="date" className={inputClasses} />
-                    </div>
+                <div key={field.id} className="det-row">
+                  <div className="det-head">
+                    <span className="micro">Condición {index + 1}</span>
+                    <button
+                      type="button"
+                      className="act-btn danger"
+                      onClick={() => markDelete('condiciones', condicionesArray, index)}
+                      title="Eliminar condición"
+                      aria-label={`Eliminar condición ${index + 1}`}
+                    >
+                      <DeleteOutline />
+                    </button>
                   </div>
-                  <div className="flex items-end justify-between gap-3">
-                    <label className="flex items-center gap-2 text-sm font-bold text-primary cursor-pointer">
-                      <input {...register(`condicionesDetalle.${index}.requiereControl`)} type="checkbox" className="w-4 h-4 accent-emerald-600" />
-                      Requiere control médico
-                    </label>
-                    <IconButton size="small" onClick={() => markDelete('condiciones', condicionesArray, index)} className="!text-error" title="Eliminar">
-                      <DeleteOutline fontSize="small" />
-                    </IconButton>
+                  <div className="form-grid">
+                    <div className="field">
+                      <label className="micro" htmlFor={`fm-cd-${index}-nombre`}>Nombre *</label>
+                      <input id={`fm-cd-${index}-nombre`} {...register(`condicionesDetalle.${index}.nombre`)} className="inp" />
+                    </div>
+                    <div className="field">
+                      <label className="micro" htmlFor={`fm-cd-${index}-desc`}>Descripción</label>
+                      <input id={`fm-cd-${index}-desc`} {...register(`condicionesDetalle.${index}.descripcion`)} className="inp" />
+                    </div>
+                    <div className="field">
+                      <label className="micro" htmlFor={`fm-cd-${index}-fecha`}>Fecha Diagnóstico</label>
+                      <input id={`fm-cd-${index}-fecha`} {...register(`condicionesDetalle.${index}.fechaDiagnostico`)} type="date" className="inp" />
+                    </div>
+                    <div className="field flex items-end">
+                      <label className="chk">
+                        <input {...register(`condicionesDetalle.${index}.requiereControl`)} type="checkbox" />
+                        Requiere control médico
+                      </label>
+                    </div>
                   </div>
                 </div>
               ))}
               {condicionesArray.fields.length === 0 && (
-                <p className="text-[10px] font-bold text-outline uppercase tracking-widest">Sin condiciones registradas.</p>
+                <p className="micro">Sin condiciones registradas.</p>
               )}
             </div>
           </section>
 
-          {/* Vacunas */}
-          <section className="bg-surface-container-low p-6 rounded-3xl border border-outline-variant/10">
-            <div className="flex items-center justify-between mb-5">
-              <h3 className="text-[10px] font-black uppercase tracking-widest text-primary">Vacunas</h3>
-              <button
-                type="button"
-                onClick={() => vacunasArray.append({ nombre: '', fechaAplicacion: '', lote: '', observaciones: '' })}
-                className="flex items-center gap-1 px-3 py-1.5 bg-primary/10 text-primary rounded-lg font-black text-[10px] uppercase tracking-widest hover:bg-primary/20 transition-colors"
-              >
-                <Add fontSize="small" /> Añadir
-              </button>
-            </div>
-            <div className="space-y-3">
+          {/* 07 · Vacunas */}
+          <section className="form-sect">
+            <Seccion
+              n={7}
+              titulo="Vacunas"
+              icono={<Vaccines />}
+              accion={btnAñadir(
+                () => vacunasArray.append({ nombre: '', fechaAplicacion: '', lote: '', observaciones: '' }),
+                'Añadir',
+              )}
+            />
+            <div>
               {vacunasArray.fields.map((field, index) => (
-                <div key={field.id} className="bg-white/30 p-4 rounded-2xl space-y-3 border border-outline-variant/10">
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                    <div className="space-y-1">
-                      <label className={labelClasses}>Nombre *</label>
-                      <input {...register(`vacunasDetalle.${index}.nombre`)} className={inputClasses} />
-                    </div>
-                    <div className="space-y-1">
-                      <label className={labelClasses}>Fecha Aplicación</label>
-                      <input {...register(`vacunasDetalle.${index}.fechaAplicacion`)} type="date" className={inputClasses} />
-                    </div>
-                    <div className="space-y-1">
-                      <label className={labelClasses}>Lote</label>
-                      <input {...register(`vacunasDetalle.${index}.lote`)} className={inputClasses} />
-                    </div>
+                <div key={field.id} className="det-row">
+                  <div className="det-head">
+                    <span className="micro">Vacuna {index + 1}</span>
+                    <button
+                      type="button"
+                      className="act-btn danger"
+                      onClick={() => markDelete('vacunas', vacunasArray, index)}
+                      title="Eliminar vacuna"
+                      aria-label={`Eliminar vacuna ${index + 1}`}
+                    >
+                      <DeleteOutline />
+                    </button>
                   </div>
-                  <div className="flex items-end justify-between gap-3">
-                    <div className="flex-1 space-y-1">
-                      <label className={labelClasses}>Observaciones</label>
-                      <input {...register(`vacunasDetalle.${index}.observaciones`)} className={inputClasses} />
+                  <div className="form-grid">
+                    <div className="field">
+                      <label className="micro" htmlFor={`fm-vc-${index}-nombre`}>Nombre *</label>
+                      <input id={`fm-vc-${index}-nombre`} {...register(`vacunasDetalle.${index}.nombre`)} className="inp" />
                     </div>
-                    <IconButton size="small" onClick={() => markDelete('vacunas', vacunasArray, index)} className="!text-error" title="Eliminar">
-                      <DeleteOutline fontSize="small" />
-                    </IconButton>
+                    <div className="field">
+                      <label className="micro" htmlFor={`fm-vc-${index}-fecha`}>Fecha Aplicación</label>
+                      <input id={`fm-vc-${index}-fecha`} {...register(`vacunasDetalle.${index}.fechaAplicacion`)} type="date" className="inp" />
+                    </div>
+                    <div className="field">
+                      <label className="micro" htmlFor={`fm-vc-${index}-lote`}>Lote</label>
+                      <input id={`fm-vc-${index}-lote`} {...register(`vacunasDetalle.${index}.lote`)} className="inp" />
+                    </div>
+                    <div className="field">
+                      <label className="micro" htmlFor={`fm-vc-${index}-obs`}>Observaciones</label>
+                      <input id={`fm-vc-${index}-obs`} {...register(`vacunasDetalle.${index}.observaciones`)} className="inp" />
+                    </div>
                   </div>
                 </div>
               ))}
               {vacunasArray.fields.length === 0 && (
-                <p className="text-[10px] font-bold text-outline uppercase tracking-widest">Sin vacunas registradas.</p>
+                <p className="micro">Sin vacunas registradas.</p>
               )}
             </div>
           </section>
 
-          {/* Consentimiento */}
-          <section className="bg-surface-container-low p-6 rounded-3xl border border-outline-variant/10">
-            <h3 className="text-[10px] font-black uppercase tracking-widest text-primary mb-5">Consentimiento / Autorización Médica</h3>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-start">
-              <label className="flex items-center gap-2 text-sm font-bold text-primary cursor-pointer pt-2">
-                <input {...register('consentimiento')} type="checkbox" className="w-5 h-5 accent-emerald-600" />
-                Autorización médica otorgada
-              </label>
-              <div className="space-y-1">
-                <label className={labelClasses}>Fecha de Autorización</label>
-                <input {...register('consentimientoFecha')} type="date" className={inputClasses} />
+          {/* 08 · Consentimiento */}
+          <section className="form-sect">
+            <Seccion n={8} titulo="Consentimiento / Autorización Médica" icono={<VerifiedUser />} />
+            <div className="form-grid">
+              <div className="field flex items-end">
+                <label className="chk">
+                  <input {...register('consentimiento')} type="checkbox" />
+                  Autorización médica otorgada
+                </label>
               </div>
-              <div className="space-y-1">
-                <label className={labelClasses}>Observaciones</label>
-                <input {...register('consentimientoObservaciones')} className={inputClasses} />
+              <div className="field">
+                <label className="micro" htmlFor="fm-consent-fecha">Fecha de Autorización</label>
+                <input id="fm-consent-fecha" {...register('consentimientoFecha')} type="date" className="inp" />
+              </div>
+              <div className="field">
+                <label className="micro" htmlFor="fm-consent-obs">Observaciones</label>
+                <input id="fm-consent-obs" {...register('consentimientoObservaciones')} className="inp" />
               </div>
             </div>
           </section>
 
-          {/* Notas generales */}
-          <section className="bg-surface-container-low p-6 rounded-3xl border border-outline-variant/10">
-            <h3 className="text-[10px] font-black uppercase tracking-widest text-primary mb-5">Notas y Resumen</h3>
-            <div className="grid grid-cols-1 md:grid-cols-1 gap-4">
-              <div className="space-y-1">
-                <label className={labelClasses}>Observaciones Generales</label>
-                <textarea {...register('observaciones')} rows={3} className="w-full p-3 bg-surface-container-high border-none rounded-lg text-sm font-bold focus:ring-2 focus:ring-primary resize-none" />
-              </div>
+          {/* 09 · Notas generales */}
+          <section className="form-sect">
+            <Seccion n={9} titulo="Notas y Resumen" icono={<Notes />} />
+            <div className="field">
+              <label className="micro" htmlFor="fm-obs">Observaciones Generales</label>
+              <textarea
+                id="fm-obs"
+                {...register('observaciones')}
+                rows={3}
+                className="inp resize-none"
+                placeholder="Antecedentes, alergias, notas relevantes…"
+              />
             </div>
           </section>
         </DialogContent>
 
-        <DialogActions className="px-8 py-5 !justify-between sticky bottom-0 bg-surface-container-lowest">
-          <button type="button" onClick={onClose} className="px-6 py-2.5 bg-surface-container-high text-primary rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-surface-container-highest transition-colors">
+        <DialogActions className="px-6 py-5 !justify-between">
+          <button type="button" onClick={onClose} className="btn btn-ghost">
             Cancelar
           </button>
-          <button type="submit" disabled={saving} className="sentinel-gradient px-8 py-3 rounded-xl text-on-primary font-black text-[10px] uppercase tracking-widest shadow-lg shadow-primary/20 hover:shadow-xl transition-all disabled:opacity-50 flex items-center gap-2">
-            <SaveAlt sx={{ fontSize: 16 }} />
+          <button type="submit" disabled={saving} className="btn btn-primary">
+            <SaveAlt />
             {saving ? 'Guardando...' : 'Guardar Ficha'}
           </button>
         </DialogActions>
