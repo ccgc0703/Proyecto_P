@@ -67,6 +67,7 @@ npm run start:dev
 | **programas-mundiales** | Programas mundiales y su estado por miembro |
 | **organizacion** | Árbol organizacional y cargos |
 | **eventos** | CRUD planificaciones y actividades, planilla de asistencia y asistencias por unidad |
+| **normativa** | Biblioteca de documentos: subida PDF/DOCX (10 MB), categorías, vigencia y descarga autenticada |
 | **rbac** | Gestión de roles y permisos |
 | **audit** | Logs de auditoría y retención |
 | **health** | Estado del servicio (uptime, checks) |
@@ -453,8 +454,10 @@ organizacion:view, organizacion:create, organizacion:update, organizacion:delete
 evento:view, evento:create
 asistencia:view, asistencia:manage
 
-// Módulos futuros (claves definidas, sin implementar aún)
+// Biblioteca de documentos (módulo `normativa`: PDF/DOCX con vigencia y alcance por unidad)
 normativa:view, normativa:manage
+
+// Módulos futuros (claves definidas, sin implementar aún)
 finanza:view, finanza:manage
 inventario:view, inventario:manage
 formacion:view, formacion:manage

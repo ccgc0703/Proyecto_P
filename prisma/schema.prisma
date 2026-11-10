@@ -117,6 +117,15 @@ enum TipoUnidad {
   CLAN
 }
 
+// Categoría documental de la biblioteca (Fase 5)
+enum CategoriaNormativa {
+  LEY_PROMESA
+  REGLAMENTO
+  ACTA
+  CIRCULAR
+  OTRO
+}
+
 // ─────────────────────────────────────────────
 // Modelos Base: Usuario, Unidad y Organización
 // ─────────────────────────────────────────────
@@ -230,6 +239,7 @@ model Unidad {
   Miembros        Miembro[]
   Patrullas       Patrulla[]
   Planificaciones Planificacion[]
+  Documentos      Documento[]
 
   @@unique([grupoId, tipo]) // Una instancia de unidad por grupo
   @@index([grupoId])
@@ -613,6 +623,35 @@ model Notificacion {
 
   @@index([usuarioId, leidaEn])
   @@index([usuarioId, createdAt])
+}
+
+// Biblioteca de documentos y normativa (Fase 5). Soft-delete + auditoría.
+// `unidadId` null = documento nacional (visible para todas las unidades).
+// En disco se guarda un nombre aleatorio; `nombreOriginal` solo se usa en la
+// cabecera Content-Disposition de la descarga.
+model Documento {
+  id             String             @id @default(uuid())
+  titulo         String
+  categoria      CategoriaNormativa
+  descripcion    String?
+  archivoUrl     String // ruta relativa bajo /uploads/normativa (nunca el nombre original)
+  mimeType       String?
+  tamano         Int?
+  nombreOriginal String?
+  version        Int                @default(1)
+  vigente        Boolean            @default(true)
+  unidadId       String? // null = nacional
+  createdAt      DateTime           @default(now())
+  updatedAt      DateTime           @updatedAt
+  deletedAt      DateTime?
+  createdBy      String?
+  updatedBy      String?
+
+  Unidad Unidad? @relation(fields: [unidadId], references: [id])
+
+  @@index([categoria, vigente, deletedAt])
+  @@index([unidadId])
+  @@index([deletedAt])
 }
 
 model EstadoLogroJoven {

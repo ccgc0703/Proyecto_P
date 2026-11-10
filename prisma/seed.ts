@@ -121,6 +121,7 @@ const ROL_PERMISOS_SEED: Record<string, string[]> = {
         'medico:view', 'medico:update',
         'rbac:view', 'rbac:manage', 'rbac:assign-role',
         'organizacion:view', 'organizacion:create', 'organizacion:update', 'organizacion:delete',
+        'normativa:view', 'normativa:manage',
         'formacion:view', 'formacion:manage',
         'evento:view', 'evento:create', 'asistencia:view', 'asistencia:manage',
     ],
@@ -149,13 +150,15 @@ const ROL_PERMISOS_SEED: Record<string, string[]> = {
     'NATIONAL_BOARD': [
         'organizacion:view', 'organizacion:create', 'organizacion:update', 'organizacion:delete',
         'user:view', 'rbac:view',
-        'normativa:view', 'finanza:view', 'evento:view', 'inventario:view', 'asistencia:view', 'formacion:view',
+        'normativa:view', 'normativa:manage',
+        'finanza:view', 'evento:view', 'inventario:view', 'asistencia:view', 'formacion:view',
     ],
     'NATIONAL_EXECUTIVE': [
         'organizacion:view', 'organizacion:create', 'organizacion:update', 'organizacion:delete',
         'user:view', 'rbac:view', 'rbac:assign-role',
         'unidad:view', 'joven:view',
-        'normativa:view', 'finanza:view', 'evento:view', 'asistencia:view', 'formacion:view',
+        'normativa:view', 'normativa:manage',
+        'finanza:view', 'evento:view', 'asistencia:view', 'formacion:view',
     ],
     'NATIONAL_DIR_JOVENES': [
         'organizacion:view', 'joven:view', 'progresion:view', 'catalogo:view', 'evento:view',

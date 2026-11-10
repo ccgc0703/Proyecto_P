@@ -16,6 +16,8 @@ frontend/test-results/
 # Salidas de exportación (exceljs) y logs locales
 /*.xlsx
 frontend/vite-dev.log
+# Archivos subidos (biblioteca Fase 5)
+/uploads/
 
 # Agente OpenCode
 .agents/

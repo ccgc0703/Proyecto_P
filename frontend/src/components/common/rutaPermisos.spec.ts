@@ -45,6 +45,10 @@ describe('permisosDeRuta', () => {
     expect(permisosDeRuta('/app/eventos')).toEqual(['evento:view']);
   });
 
+  it('exige normativa:view en la biblioteca de documentos', () => {
+    expect(permisosDeRuta('/app/documentos')).toEqual(['normativa:view']);
+  });
+
   it('todas las reglas declaran al menos un permiso (fallo cerrado)', () => {
     for (const regla of REGLAS_RUTA) {
       expect(regla.permisos.length).toBeGreaterThan(0);

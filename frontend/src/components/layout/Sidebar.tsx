@@ -18,6 +18,7 @@ import {
   AccountTree,
   PeopleAlt,
   CalendarMonth,
+  MenuBook,
 } from '@mui/icons-material';
 
 /** Anchos en px — solo para quien necesite el valor numérico.
@@ -55,6 +56,7 @@ export const Sidebar = ({ open, onToggle, mobileOpen = false, onCloseMobile }: S
   const canViewProgresion = usePermission('progresion:view');
   const canViewOrganizacion = usePermission('organizacion:view');
   const canViewEventos = usePermission('evento:view');
+  const canViewNormativa = usePermission('normativa:view');
   const esJoven = user?.roles?.includes('JOVEN') ?? false;
 
   const handleLogout = () => {
@@ -123,6 +125,12 @@ export const Sidebar = ({ open, onToggle, mobileOpen = false, onCloseMobile }: S
     },
     { text: 'Unidades', icon: <ChildCare />, path: '/app/unidades', permission: canViewUnidades },
     { text: 'Eventos', icon: <CalendarMonth />, path: '/app/eventos', permission: canViewEventos },
+    {
+      text: 'Documentos',
+      icon: <MenuBook />,
+      path: '/app/documentos',
+      permission: canViewNormativa && !esJoven,
+    },
     { text: 'Usuarios', icon: <PeopleAlt />, path: '/app/usuarios', permission: canViewUsuarios },
     {
       text: 'Estructura',

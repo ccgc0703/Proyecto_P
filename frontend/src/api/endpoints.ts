@@ -9,6 +9,12 @@ import {
   ResultadoSolicitud,
 } from '../types/progresion';
 import { ListadoNotificaciones } from '../types/notificacion';
+import {
+  CambiosDocumento,
+  CategoriaNormativa,
+  Documento,
+  NuevoDocumento,
+} from '../types/documento';
 
 export const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL || '/api/v1',
@@ -211,6 +217,53 @@ const descargarXlsx = async (url: string, fallback: string): Promise<string> => 
   const nombre = nombreDeDisposition(respuesta.headers['content-disposition'], fallback);
   descargarArchivo(nombre, respuesta.data as Blob);
   return nombre;
+};
+
+export const normativaApi = {
+  listar: (params?: {
+    categoria?: CategoriaNormativa;
+    vigente?: 'true' | 'false';
+    unidadId?: string;
+    q?: string;
+  }): Promise<Documento[]> =>
+    api.get('/normativa/documentos', { params }).then((r) => r.data.data as Documento[]),
+
+  obtener: (id: string): Promise<Documento> =>
+    api.get(`/normativa/documentos/${id}`).then((r) => r.data.data as Documento),
+
+  /**
+   * Multipart: el header JSON por defecto de la instancia convertiría el
+   * FormData en JSON (axios ≥1.13). Se fuerza multipart y axios deja que el
+   * navegador añada el boundary.
+   */
+  crear: ({ archivo, ...data }: NuevoDocumento): Promise<Documento> => {
+    const form = new FormData();
+    form.append('file', archivo);
+    form.append('titulo', data.titulo);
+    form.append('categoria', data.categoria);
+    if (data.descripcion) form.append('descripcion', data.descripcion);
+
+    return api
+      .post('/normativa/documentos', form, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      })
+      .then((r) => r.data.data as Documento);
+  },
+
+  actualizar: (id: string, data: CambiosDocumento): Promise<Documento> =>
+    api.patch(`/normativa/documentos/${id}`, data).then((r) => r.data.data as Documento),
+
+  eliminar: (id: string): Promise<void> =>
+    api.delete(`/normativa/documentos/${id}`).then(() => undefined),
+
+  descargar: async (id: string, fallback = 'documento'): Promise<string> => {
+    const respuesta = await api.get(`/normativa/documentos/${id}/archivo`, {
+      responseType: 'blob',
+    });
+    const nombre = nombreDeDisposition(respuesta.headers['content-disposition'], fallback);
+    descargarArchivo(nombre, respuesta.data as Blob);
+    return nombre;
+  },
 };
 
 export const progresionApi = {

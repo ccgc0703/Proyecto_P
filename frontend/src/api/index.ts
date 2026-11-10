@@ -14,5 +14,6 @@ export {
   eventosApi,
   dashboardApi,
   notificacionesApi,
+  normativaApi,
   descargarArchivo,
 } from './endpoints';

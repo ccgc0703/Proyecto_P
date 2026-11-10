@@ -7,8 +7,8 @@
 > | PRE (8.1 deuda bloqueante: circulares + README + AGENTS.md) | ✅ Cerrada |
 > | Fase 1 — Asistencia + Eventos | ✅ Cerrada — commit `60e0c05` |
 > | Fase 2 — Dashboard Ejecutivo con Métricas Reales | ✅ Cerrada — commit `3df726d` (backend 344/344 · frontend 23/23 · E2E 15/15) |
-> | Fase 3 — Notificaciones in-app (decisión: sin email) | ✅ Cerrada — backend 360/360 · integración 14/14 · frontend 30/30 · E2E 16/16 |
-> | Fase 5 — Biblioteca (Documentos y Normativa) | ⬜ Pendiente |
+> | Fase 3 — Notificaciones in-app (decisión: sin email) | ✅ Cerrada — commit `277f31d` (backend 360/360 · integración 14/14 · frontend 30/30 · E2E 16/16) |
+> | Fase 5 — Biblioteca (Documentos y Normativa) | ✅ Cerrada — commit `086203d` (backend 376/376 · integración 19/19 · frontend 31/31 · E2E 18/18) |
 > | Fase 6 — Completar formación / datos-scout / programas-mundiales (decisión: permisos nuevos `datosscout:*`) | ⬜ Pendiente |
 > | Fase 7 — Madurez y escala (PWA, PDF, Finanzas…; multi-grupo SOLO si aplica) | ⬜ Pendiente |
 > | Fase 8 — Deuda técnica (8.2/8.3 continuo, en cada cierre) | 🔄 Continuo |
@@ -232,6 +232,14 @@ model Documento {
 ### 5.4 Seguridad (importante)
 - Extensión de `.gitignore` con `/uploads/`.
 - Validar MIME real del archivo (magic bytes), no sólo la extensión.
+
+### ✅ Ejecución — CERRADA
+
+- **Esquema**: enum `CategoriaNormativa` (`LEY_PROMESA/REGLAMENTO/ACTA/CIRCULAR/OTRO`) + modelo `Documento` con `archivoUrl` relativo (`normativa/<uuid>.<ext>`), `mimeType`, `tamano`, `nombreOriginal`, `version`, `vigente`, `unidadId` (null = nacional), auditoría padrón (`createdBy/updatedBy`) y `deletedAt`; migración `20261110170528_crear_documentos`. `Documento` añadido a `MODELOS_SOFT_DELETE` (el spec que compara con el schema lo verifica).
+- **Backend**: `src/modules/normativa/` (`archivos.ts` + service + controller + dtos + module + specs). `POST /normativa/documentos` multipart (`file` + metadata) con multer en disco, nombre aleatorio (nunca el original), whitelist `.pdf/.docx` y límite 10 MB; se valida la **firma real** (`%PDF`, `PK\x03\x04`) y todo archivo inválido o que falle al crear se borra del disco. `GET /documentos` (filtros `categoria`, `vigente`, `unidadId`, `q`, `page`/`limit`), `GET /:id`, `GET /:id/archivo` (`StreamableFile` con `Content-Disposition` saneado y `nosniff`), `PATCH /:id`, `DELETE /:id` (soft). Ámbito por unidad con `UnitPolicy` (nacionales visibles para todos). `mimeType` se normaliza a partir de la extensión. Auditoría `DOCUMENTO_CREATED/UPDATED/DELETED`.
+- **Permisos**: `normativa:manage` añadido a `SYSTEM_ADMIN`, `NATIONAL_BOARD` y `NATIONAL_EXECUTIVE` en `prisma/seed.ts` (seed re-ejecutado).
+- **Frontend**: `types/documento.ts` + `normativaApi` (subida multipart forzando el header para que axios ≥1.13 no serialice el `FormData` a JSON, descarga autenticada por blob) + `DocumentosPage` (chips por categoría con conteo, buscador, "solo vigentes", grid de tarjetas, subida con zod y validación PDF/DOCX ≤ 10 MB, alternar vigencia, borrado con confirmación) + ruta `/app/documentos` (lazy) con guardia `normativa:view`, título en el topbar y entrada "Documentos" en el sidebar.
+- **Tests**: backend **376/376** (34 suites; 16 nuevos) · integración **19/19** (5 suites; 5 nuevos) · frontend **31/31** (1 nuevo de paridad de rutas) · E2E **18/18** (2 nuevos: alta real de PDF → vigencia → borrado; joven sin permiso → Acceso Denegado).
 
 ---
 
