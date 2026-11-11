@@ -1,5 +1,5 @@
 import { IsEnum, IsISO8601, IsOptional, IsString, IsUUID, MaxLength, MinLength } from 'class-validator';
-import { EstadoPlanificacion } from '@prisma/client';
+import { AlcancePlanificacion, EstadoPlanificacion } from '@prisma/client';
 
 export class CreatePlanificacionDto {
     @IsString({ message: 'El titulo es requerido' })
@@ -27,4 +27,19 @@ export class CreatePlanificacionDto {
         message: 'estado debe ser BORRADOR, APROBADO, EN_CURSO, COMPLETADO o CANCELADO',
     })
     estado?: EstadoPlanificacion;
+
+    /** Nodo desde el que se publica (Fase 3 · Calendario). Omitir = ámbito legado. */
+    @IsOptional()
+    @IsUUID(undefined, { message: 'nodoId debe ser un UUID valido' })
+    nodoId?: string;
+
+    /**
+     * Nivel de publicación. El backend lo deriva del tipo de nodo cuando hay
+     * nodoId; solo se acepta explícito para planes sin nodo (alcance legado).
+     */
+    @IsOptional()
+    @IsEnum(AlcancePlanificacion, {
+        message: 'alcance debe ser GRUPO, DISTRITO, REGION o NACIONAL',
+    })
+    alcance?: AlcancePlanificacion;
 }

@@ -1,7 +1,9 @@
-import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ConflictException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+import { AlcancePlanificacion, TipoNodoOrganizacion } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { AuditService } from '../audit/audit.service';
 import { UnitPolicy } from '../../common/policies/unit.policy';
+import { NodoPolicy } from '../../common/policies/nodo.policy';
 import { OpcionesLista, filtroBusqueda, rangoLista } from '../../common/paginacion';
 import { CreatePlanificacionDto } from './dto/create-planificacion.dto';
 import { UpdatePlanificacionDto } from './dto/update-planificacion.dto';
@@ -35,6 +37,7 @@ export class EventosService {
         private readonly prisma: PrismaService,
         private readonly audit: AuditService,
         private readonly unitPolicy: UnitPolicy,
+        private readonly nodoPolicy: NodoPolicy,
     ) { }
 
     private registrar(
@@ -94,6 +97,86 @@ export class EventosService {
         return { ...base, unidadId: { in: unidades } };
     }
 
+    // ── Alcance jerárquico (Fase 3 · Calendario) ───────────────────────
+
+    /** Nivel de publicación según el tipo de nodo. */
+    private alcanceDelNodo(tipo: TipoNodoOrganizacion): AlcancePlanificacion {
+        if (tipo === 'REGION') return 'REGION';
+        if (tipo === 'DISTRITO') return 'DISTRITO';
+        if (tipo === 'GRUPO') return 'GRUPO';
+        return 'NACIONAL'; // CONSEJO_NACIONAL / DIRECCION_EJECUTIVA
+    }
+
+    private esAdmin(user: Actor): boolean {
+        return (user.roles ?? []).includes('SYSTEM_ADMIN');
+    }
+
+    private async nodoVivo(nodoId: string): Promise<{ id: string; tipo: TipoNodoOrganizacion }> {
+        const nodo = await this.prisma.organizacionNodo.findFirst({
+            where: { id: nodoId, deletedAt: null },
+            select: { id: true, tipo: true },
+        });
+        if (!nodo) throw new NotFoundException(`El nodo ${nodoId} no existe`);
+        return nodo;
+    }
+
+    /**
+     * Resuelve el ámbito de una planificación al crearla:
+     * - `nodoId` explícito → debe existir y (salvo SYSTEM_ADMIN) coincidir con el propio.
+     * - sin `nodoId` y no-admin con ámbito → se publica en su propio nivel.
+     * - admin sin nodo → plan sin ámbito (compatibilidad con el flujo legado).
+     *
+     * El alcance se deriva SIEMPRE del tipo de nodo: no se confía en el cliente.
+     * Lectura: los planes de todos los ámbitos son visibles (regla del calendario);
+     * aquí solo se controla quién PUEDE PUBLICAR y dónde.
+     */
+    private async resolverAlcanceCreacion(
+        dto: { nodoId?: string; alcance?: AlcancePlanificacion },
+        user: Actor,
+    ): Promise<{ nodoId: string | null; alcance: AlcancePlanificacion }> {
+        const esAdmin = this.esAdmin(user);
+
+        if (dto.nodoId) {
+            const nodo = await this.nodoVivo(dto.nodoId);
+            if (!esAdmin && dto.nodoId !== user.nodoId) {
+                throw new ForbiddenException('Solo podés publicar en tu propio ámbito jerárquico');
+            }
+            const alcance = this.alcanceDelNodo(nodo.tipo);
+            if (dto.alcance && dto.alcance !== alcance) {
+                throw new BadRequestException(`El alcance debe ser ${alcance} para ese nodo`);
+            }
+            return { nodoId: nodo.id, alcance };
+        }
+
+        if (!esAdmin && user.nodoId) {
+            const nodo = await this.nodoVivo(user.nodoId);
+            const alcance = this.alcanceDelNodo(nodo.tipo);
+            if (dto.alcance && dto.alcance !== alcance) {
+                throw new BadRequestException(`El alcance debe ser ${alcance} para tu ámbito`);
+            }
+            return { nodoId: nodo.id, alcance };
+        }
+
+        return { nodoId: null, alcance: dto.alcance ?? 'GRUPO' };
+    }
+
+    /**
+     * Gestión (actualizar/eliminar): SYSTEM_ADMIN, tu ámbito propio o cualquier
+     * nodo de tu subárbol (un nivel superior gestiona los inferiores).
+     * Los planes sin nodo conservan el comportamiento previo (solo ABAC de unidad).
+     */
+    private async assertAlcanceGestion(user: Actor, nodoIdPlan?: string | null): Promise<void> {
+        if (!nodoIdPlan) return;
+        if (this.esAdmin(user)) return;
+        if (!user.nodoId) {
+            throw new ForbiddenException('No tenés ámbito jerárquico para gestionar esta planificación');
+        }
+        const subarbol = await this.nodoPolicy.subtreeIds(user.nodoId);
+        if (!subarbol.has(nodoIdPlan)) {
+            throw new ForbiddenException('No tenés permiso para gestionar planificaciones de ese ámbito');
+        }
+    }
+
     // ── Planificaciones ───────────────────────────────────────────────
 
     private async wherePlanificaciones(
@@ -114,6 +197,7 @@ export class EventosService {
         if (and.length) where.AND = and;
         if (query.unidadId) where.unidadId = query.unidadId;
         if (query.estado) where.estado = query.estado;
+        if (query.alcance) where.alcance = query.alcance;
         return where;
     }
 
@@ -155,6 +239,7 @@ export class EventosService {
         if (dto.unidadId) {
             await this.unitPolicy.assertCanManageUnit(user, dto.unidadId);
         }
+        const ambito = await this.resolverAlcanceCreacion(dto, user);
         const planificacion = await this.prisma.planificacion.create({
             data: {
                 titulo: dto.titulo,
@@ -162,6 +247,8 @@ export class EventosService {
                 fechaInicio: new Date(dto.fechaInicio),
                 fechaFin: new Date(dto.fechaFin),
                 unidadId: dto.unidadId,
+                nodoId: ambito.nodoId,
+                alcance: ambito.alcance,
                 estado: dto.estado,
                 createdBy: user.id,
             },
@@ -177,16 +264,40 @@ export class EventosService {
 
     async updatePlanificacion(id: string, dto: UpdatePlanificacionDto, user: Actor) {
         const actual = await this.getPlanificacion(id, user);
+        await this.assertAlcanceGestion(user, actual.nodoId);
         const unidadEfectiva = dto.unidadId ?? actual.unidadId;
         if (unidadEfectiva) {
             await this.unitPolicy.assertCanManageUnit(user, unidadEfectiva);
         }
+
+        const datos: Record<string, any> = { ...dto };
+        if (dto.fechaInicio) datos.fechaInicio = new Date(dto.fechaInicio);
+        if (dto.fechaFin) datos.fechaFin = new Date(dto.fechaFin);
+
+        // Recalcular el ámbito solo si el dto lo toca (nodo y/o alcance).
+        if (dto.nodoId !== undefined || dto.alcance !== undefined) {
+            const nodoIdObjetivo = dto.nodoId ?? actual.nodoId;
+            if (nodoIdObjetivo) {
+                const nodo = await this.nodoVivo(nodoIdObjetivo);
+                const derivado = this.alcanceDelNodo(nodo.tipo);
+                if (dto.nodoId !== undefined && !this.esAdmin(user) && dto.nodoId !== user.nodoId) {
+                    throw new ForbiddenException('Solo podés publicar en tu propio ámbito jerárquico');
+                }
+                if (dto.alcance !== undefined && dto.alcance !== derivado) {
+                    throw new BadRequestException(`El alcance debe ser ${derivado} para ese nodo`);
+                }
+                datos.nodoId = nodoIdObjetivo;
+                datos.alcance = derivado;
+            } else if (dto.alcance !== undefined && !this.esAdmin(user)) {
+                // Sin nodo: solo admin redefine el alcance; los demás deben elegir un nodo.
+                throw new ForbiddenException('Elegí un nodo para cambiar el alcance');
+            }
+        }
+
         const planificacion = await this.prisma.planificacion.update({
             where: { id },
             data: {
-                ...dto,
-                ...(dto.fechaInicio ? { fechaInicio: new Date(dto.fechaInicio) } : {}),
-                ...(dto.fechaFin ? { fechaFin: new Date(dto.fechaFin) } : {}),
+                ...datos,
                 updatedBy: user.id,
             },
         });
@@ -201,6 +312,7 @@ export class EventosService {
 
     async removePlanificacion(id: string, user: Actor) {
         const planificacion = await this.getPlanificacion(id, user);
+        await this.assertAlcanceGestion(user, planificacion.nodoId);
 
         const total = await this.prisma.actividad.count({
             where: { planificacionId: id, deletedAt: null },

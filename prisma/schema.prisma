@@ -46,6 +46,15 @@ enum EstadoPlanificacion {
   CANCELADO
 }
 
+// Ámbito jerárquico de publicación (Fase 3 · Calendario): el nivel del
+// nodo desde el que se publica. Se deriva del tipo de nodo en el backend.
+enum AlcancePlanificacion {
+  GRUPO
+  DISTRITO
+  REGION
+  NACIONAL
+}
+
 enum TipoActividad {
   REUNION
   CAMPAMENTO
@@ -159,6 +168,7 @@ model OrganizacionNodo {
   Unidades Unidad[]
   Usuarios Usuario[]
   Cargos   CargoAsignacion[]
+  Planificaciones Planificacion[]
 
   @@index([padreId])
   @@index([tipo])
@@ -862,23 +872,30 @@ model Patrulla {
 // ─────────────────────────────────────────────
 
 model Planificacion {
-  id          String              @id @default(uuid())
+  id          String               @id @default(uuid())
   titulo      String
   descripcion String?
   fechaInicio DateTime
   fechaFin    DateTime
   unidadId    String?
-  estado      EstadoPlanificacion @default(BORRADOR)
-  createdAt   DateTime            @default(now())
-  updatedAt   DateTime            @updatedAt
+  // Ámbito jerárquico (Fase 3): nodo desde el que se publica + su nivel.
+  // null + GRUPO = planificación legada (ámbito unidad/grupo).
+  nodoId      String?
+  alcance     AlcancePlanificacion @default(GRUPO)
+  estado      EstadoPlanificacion  @default(BORRADOR)
+  createdAt   DateTime             @default(now())
+  updatedAt   DateTime             @updatedAt
   deletedAt   DateTime?
   createdBy   String?
   updatedBy   String?
 
-  Unidad      Unidad?     @relation(fields: [unidadId], references: [id])
+  Unidad      Unidad?             @relation(fields: [unidadId], references: [id])
+  Nodo        OrganizacionNodo?   @relation(fields: [nodoId], references: [id])
   Actividades Actividad[]
 
   @@index([unidadId])
+  @@index([nodoId])
+  @@index([alcance])
 }
 
 model Actividad {

@@ -1,9 +1,10 @@
-import { ConflictException, ForbiddenException, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ConflictException, ForbiddenException, NotFoundException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { EventosService } from './eventos.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { AuditService } from '../audit/audit.service';
 import { UnitPolicy } from '../../common/policies/unit.policy';
+import { NodoPolicy } from '../../common/policies/nodo.policy';
 
 describe('EventosService', () => {
     let service: EventosService;
@@ -31,6 +32,7 @@ describe('EventosService', () => {
             update: jest.fn(),
         },
         miembro: { findMany: jest.fn() },
+        organizacionNodo: { findFirst: jest.fn() },
     };
 
     const mockAudit = { logAction: jest.fn() };
@@ -38,9 +40,13 @@ describe('EventosService', () => {
         unidadesAlcance: jest.fn(),
         assertCanManageUnit: jest.fn(),
     };
+    const mockNodoPolicy = { subtreeIds: jest.fn() };
 
     const admin = { id: 'user-1', roles: ['SYSTEM_ADMIN'], unidadId: null, nodoId: null };
     const adultoManada = { id: 'user-2', roles: ['ADULTO_MANADA'], unidadId: 'u-manada', nodoId: null };
+    const liderGrupo = { id: 'user-3', roles: ['GROUP_LEADER'], unidadId: null, nodoId: 'n-grupo' };
+    const comisionadoRegion = { id: 'user-4', roles: ['REGION_COMMISSIONER'], unidadId: null, nodoId: 'n-region' };
+    const outsider = { id: 'user-5', roles: ['GROUP_LEADER'], unidadId: null, nodoId: 'n-grupo-otro' };
 
     beforeEach(async () => {
         const module: TestingModule = await Test.createTestingModule({
@@ -49,6 +55,7 @@ describe('EventosService', () => {
                 { provide: PrismaService, useValue: mockPrisma },
                 { provide: AuditService, useValue: mockAudit },
                 { provide: UnitPolicy, useValue: mockUnitPolicy },
+                { provide: NodoPolicy, useValue: mockNodoPolicy },
             ],
         }).compile();
 
@@ -56,6 +63,7 @@ describe('EventosService', () => {
         jest.clearAllMocks();
         mockUnitPolicy.unidadesAlcance.mockResolvedValue(null);
         mockUnitPolicy.assertCanManageUnit.mockResolvedValue(undefined);
+        mockNodoPolicy.subtreeIds.mockResolvedValue(new Set<string>());
     });
 
     // ── Planificaciones ───────────────────────────────────────────────
@@ -89,6 +97,15 @@ describe('EventosService', () => {
             await service.findPlanificaciones({ unidadId: 'u-tropa' }, adultoManada, {});
 
             expect(mockUnitPolicy.assertCanManageUnit).toHaveBeenCalledWith(adultoManada, 'u-tropa');
+        });
+
+        it('filtra por alcance (pestanas del calendario)', async () => {
+            mockPrisma.planificacion.findMany.mockResolvedValue([]);
+
+            await service.findPlanificaciones({ alcance: 'REGION' }, admin, {});
+
+            const where = mockPrisma.planificacion.findMany.mock.calls[0][0].where;
+            expect(where.alcance).toBe('REGION');
         });
     });
 
@@ -130,6 +147,144 @@ describe('EventosService', () => {
             );
 
             expect(mockUnitPolicy.assertCanManageUnit).toHaveBeenCalledWith(adultoManada, 'u-x');
+        });
+
+        // ── Alcance jerárquico (Fase 3 · Calendario) ────────────────────
+
+        it('publica en el propio nivel cuando el actor tiene nodo', async () => {
+            mockPrisma.organizacionNodo.findFirst.mockResolvedValue({ id: 'n-grupo', tipo: 'GRUPO' });
+            mockPrisma.planificacion.create.mockResolvedValue({ id: 'p2' });
+
+            await service.createPlanificacion(
+                { titulo: 'Reunion semanal', fechaInicio: '2026-03-01', fechaFin: '2026-03-07' },
+                liderGrupo,
+            );
+
+            expect(mockPrisma.organizacionNodo.findFirst).toHaveBeenCalledWith(
+                expect.objectContaining({ where: expect.objectContaining({ id: 'n-grupo' }) }),
+            );
+            expect(mockPrisma.planificacion.create).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    data: expect.objectContaining({ nodoId: 'n-grupo', alcance: 'GRUPO' }),
+                }),
+            );
+        });
+
+        it('rechaza publicar en un ambito distinto del propio', async () => {
+            await expect(
+                service.createPlanificacion(
+                    { titulo: 'Reunion regional', fechaInicio: '2026-03-01', fechaFin: '2026-03-07', nodoId: 'n-otro' },
+                    comisionadoRegion,
+                ),
+            ).rejects.toThrow(ForbiddenException);
+            expect(mockPrisma.planificacion.create).not.toHaveBeenCalled();
+        });
+
+        it('SYSTEM_ADMIN puede publicar en cualquier nodo y deriva el alcance del tipo', async () => {
+            mockPrisma.organizacionNodo.findFirst.mockResolvedValue({ id: 'n-dis', tipo: 'DISTRITO' });
+            mockPrisma.planificacion.create.mockResolvedValue({ id: 'p3' });
+
+            await service.createPlanificacion(
+                { titulo: 'Consejo distrital', fechaInicio: '2026-03-01', fechaFin: '2026-03-07', nodoId: 'n-dis' },
+                admin,
+            );
+
+            expect(mockPrisma.planificacion.create).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    data: expect.objectContaining({ nodoId: 'n-dis', alcance: 'DISTRITO' }),
+                }),
+            );
+        });
+
+        it('rechaza un alcance que no coincide con el tipo de nodo', async () => {
+            mockPrisma.organizacionNodo.findFirst.mockResolvedValue({ id: 'n-dis', tipo: 'DISTRITO' });
+
+            await expect(
+                service.createPlanificacion(
+                    {
+                        titulo: 'Consejo distrital',
+                        fechaInicio: '2026-03-01',
+                        fechaFin: '2026-03-07',
+                        nodoId: 'n-dis',
+                        alcance: 'REGION',
+                    },
+                    admin,
+                ),
+            ).rejects.toThrow(BadRequestException);
+            expect(mockPrisma.planificacion.create).not.toHaveBeenCalled();
+        });
+
+        it('un nodo inexistente responde NotFound', async () => {
+            mockPrisma.organizacionNodo.findFirst.mockResolvedValue(null);
+
+            await expect(
+                service.createPlanificacion(
+                    { titulo: 'Plan fantasma', fechaInicio: '2026-03-01', fechaFin: '2026-03-07', nodoId: 'n-fantasma' },
+                    admin,
+                ),
+            ).rejects.toThrow(NotFoundException);
+        });
+    });
+
+    describe('gestion de ambito jerárquico (Fase 3)', () => {
+        const planRegion = { id: 'p-r', titulo: 'Campamento', unidadId: null, nodoId: 'n-region', alcance: 'REGION' };
+
+        it('update en ambito ajeno → Forbidden', async () => {
+            mockPrisma.planificacion.findFirst.mockResolvedValue(planRegion);
+            mockNodoPolicy.subtreeIds.mockResolvedValue(new Set(['n-grupo-otro']));
+
+            await expect(
+                service.updatePlanificacion('p-r', { titulo: 'Titulo nuevo' }, outsider),
+            ).rejects.toThrow(ForbiddenException);
+            expect(mockPrisma.planificacion.update).not.toHaveBeenCalled();
+        });
+
+        it('update en ambito propio → permitido', async () => {
+            mockPrisma.planificacion.findFirst.mockResolvedValue(planRegion);
+            mockNodoPolicy.subtreeIds.mockResolvedValue(new Set(['n-region']));
+            mockPrisma.planificacion.update.mockResolvedValue(planRegion);
+
+            await service.updatePlanificacion('p-r', { titulo: 'Titulo nuevo' }, comisionadoRegion);
+
+            expect(mockPrisma.planificacion.update).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    data: expect.objectContaining({ titulo: 'Titulo nuevo', updatedBy: 'user-4' }),
+                }),
+            );
+        });
+
+        it('update que mueve el nodo exige que coincida con el ambito propio', async () => {
+            mockPrisma.planificacion.findFirst.mockResolvedValue(planRegion);
+            mockNodoPolicy.subtreeIds.mockResolvedValue(new Set(['n-region']));
+            mockPrisma.organizacionNodo.findFirst.mockResolvedValue({ id: 'n-otro', tipo: 'GRUPO' });
+
+            await expect(
+                service.updatePlanificacion('p-r', { nodoId: 'n-otro' }, comisionadoRegion),
+            ).rejects.toThrow(ForbiddenException);
+            expect(mockPrisma.planificacion.update).not.toHaveBeenCalled();
+        });
+
+        it('remove en ambito ajeno → Forbidden', async () => {
+            mockPrisma.planificacion.findFirst.mockResolvedValue(planRegion);
+            mockNodoPolicy.subtreeIds.mockResolvedValue(new Set(['n-grupo-otro']));
+
+            await expect(service.removePlanificacion('p-r', outsider)).rejects.toThrow(ForbiddenException);
+            expect(mockPrisma.planificacion.update).not.toHaveBeenCalled();
+        });
+
+        it('remove en ambito propio → soft-delete', async () => {
+            mockPrisma.planificacion.findFirst.mockResolvedValue(planRegion);
+            mockNodoPolicy.subtreeIds.mockResolvedValue(new Set(['n-region']));
+            mockPrisma.actividad.count.mockResolvedValue(0);
+            mockPrisma.planificacion.update.mockResolvedValue({});
+
+            await service.removePlanificacion('p-r', comisionadoRegion);
+
+            expect(mockPrisma.planificacion.update).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    data: expect.objectContaining({ deletedAt: expect.any(Date) }),
+                }),
+            );
         });
     });
 

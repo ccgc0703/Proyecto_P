@@ -1,5 +1,5 @@
 import { IsEnum, IsISO8601, IsOptional, IsUUID } from 'class-validator';
-import { EstadoActividad, EstadoPlanificacion, TipoActividad } from '@prisma/client';
+import { AlcancePlanificacion, EstadoActividad, EstadoPlanificacion, TipoActividad } from '@prisma/client';
 
 export class QueryPlanificacionesDto {
     @IsOptional()
@@ -11,6 +11,13 @@ export class QueryPlanificacionesDto {
         message: 'estado debe ser BORRADOR, APROBADO, EN_CURSO, COMPLETADO o CANCELADO',
     })
     estado?: EstadoPlanificacion;
+
+    /** Filtro de las pestañas de alcance del calendario (Fase 3). */
+    @IsOptional()
+    @IsEnum(AlcancePlanificacion, {
+        message: 'alcance debe ser GRUPO, DISTRITO, REGION o NACIONAL',
+    })
+    alcance?: AlcancePlanificacion;
 }
 
 export class QueryActividadesDto {
