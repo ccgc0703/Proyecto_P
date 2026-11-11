@@ -1,7 +1,7 @@
 import {
     Controller, Get, Post, Delete,
     Param, Body, Req, UseGuards,
-    ParseUUIDPipe,
+    ParseUUIDPipe, ForbiddenException,
 } from '@nestjs/common';
 import { RbacService } from './rbac.service';
 import { RolesService } from './roles.service';
@@ -11,7 +11,8 @@ import { AssignPermissionsDto } from './dto/assign-permissions.dto';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { PermissionsGuard } from '../../common/guards/permissions.guard';
 import { RequirePermission } from '../../common/decorators/permissions.decorator';
-import { PERMISSIONS } from '../../common/constantes';
+import { PERMISSIONS, RBAC_ROLES } from '../../common/constantes';
+import { NodoPolicy } from '../../common/policies/nodo.policy';
 
 /**
  * Controlador RBAC — Gestión de Roles y Permisos.
@@ -29,7 +30,23 @@ export class RbacController {
     constructor(
         private readonly rbacService: RbacService,
         private readonly rolesService: RolesService,
+        private readonly nodoPolicy: NodoPolicy,
     ) { }
+
+    // ── Multi-grupo (Fase 7c): las rutas con `rbac:assign-role` (alcanzables
+    //    por GROUP_LEADER) solo actúan sobre cuentas de su propio subárbol.
+
+    /** Lanza 403 si la cuenta objetivo cae fuera del ámbito del actor. */
+    private async assertUsuarioEnAlcance(user: any, usuarioId: string): Promise<void> {
+        const enAmbito = !!user?.nodoId && !(user?.roles ?? []).includes(RBAC_ROLES.SYSTEM_ADMIN);
+        if (!enAmbito) return;
+        const enAlcance = await this.nodoPolicy.usuarioEnAlcance(user.nodoId, usuarioId);
+        if (!enAlcance) {
+            throw new ForbiddenException(
+                'Aislamiento por nodo: el usuario está fuera de tu ámbito jerárquico',
+            );
+        }
+    }
 
     @Get('roles')
     @RequirePermission(PERMISSIONS.RBAC_VIEW)
@@ -73,7 +90,8 @@ export class RbacController {
     }
 
     @Get('usuarios/:id/permisos')
-    async getUserPermissions(@Param('id') id: string) {
+    async getUserPermissions(@Param('id') id: string, @Req() req: any) {
+        await this.assertUsuarioEnAlcance(req.user, id);
         const data = await this.rbacService.getUserPermissions(id);
         return { success: true, message: `Permisos del usuario ${id}`, data };
     }
@@ -90,6 +108,7 @@ export class RbacController {
         @Body() dto: AssignRoleDto,
         @Req() req: any,
     ) {
+        await this.assertUsuarioEnAlcance(req.user, usuarioId);
         const result = await this.rbacService.assignRole(
             usuarioId,
             dto.rolId,
@@ -105,6 +124,7 @@ export class RbacController {
         @Param('rolId', ParseUUIDPipe) rolId: string,
         @Req() req: any,
     ) {
+        await this.assertUsuarioEnAlcance(req.user, usuarioId);
         const result = await this.rbacService.revokeRole(
             usuarioId,
             rolId,
@@ -126,6 +146,7 @@ export class RbacController {
         @Body() dto: AssignRoleByNameDto,
         @Req() req: any,
     ) {
+        await this.assertUsuarioEnAlcance(req.user, dto.usuarioId);
         const result = await this.rbacService.assignRoleByName(
             dto,
             req.user.id,  // actorId desde JWT

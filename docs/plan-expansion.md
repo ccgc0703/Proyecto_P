@@ -10,7 +10,7 @@
 > | Fase 3 — Notificaciones in-app (decisión: sin email) | ✅ Cerrada — commit `277f31d` (backend 360/360 · integración 14/14 · frontend 30/30 · E2E 16/16) |
 > | Fase 5 — Biblioteca (Documentos y Normativa) | ✅ Cerrada — commit `0427677` (backend 376/376 · integración 19/19 · frontend 31/31 · E2E 18/18) |
 > | Fase 6 — Completar formación / datos-scout / programas-mundiales (decisión: permisos nuevos `datosscout:*`) | ✅ Cerrada — `formacion` `a45263b` · `datos-scout` `720943c` · `programas-mundiales` (esta entrega; backend 424/424 · integración 48/48 · frontend 32/32 · E2E 24/24) |
-> | Fase 7 — Madurez y escala (PDF → QR → multi-grupo → PWA → Finanzas) | 🔄 En curso — 7a Export PDF ✅ `3cd4145` · 7b QR de presencia ✅ (esta entrega) |
+> | Fase 7 — Madurez y escala (PDF → QR → multi-grupo → PWA → Finanzas) | 🔄 En curso — 7a Export PDF ✅ `3cd4145` · 7b QR de presencia ✅ `5927728` · 7c multi-grupo ✅ (esta entrega) |
 > | Fase 8 — Deuda técnica (8.2/8.3 continuo, en cada cierre) | 🔄 Continuo |
 >
 > Recuperado del historial de sesiones de OpenCode (sesión `ses_eed5541f6ffe…`, mensaje del 2026-11-05 15:45) y documentado aquí para que no se pierda. Las decisiones ya tomadas: notificaciones solo in-app, permisos `datosscout:*` nuevos (Fase 6), y **multi-grupo: SÍ (decisión del usuario, 2026-11-11)** → se ejecuta como fase propia **7c, antes de PWA y Finanzas** (todo lo posterior nace group-aware); hasta entonces todo modelo nuevo lleva `grupoId` o se deriva de `Unidad.grupoId`/`Usuario`.
@@ -358,6 +358,17 @@ Si mañana se dan de alta **Grupo Scout A** y **Grupo Scout B**:
 - **Frontend**: deps `qrcode`+`@types/qrcode` (pintar) y `@zxing/browser`+`@zxing/library` (escanear). `DialogoQrPresencia` (anidado en `DialogoAsistencia` vía botón "QR de presencia", con "Regenerar"), `ScannerPresencia` (cámara + **fallback de código manual**, montado en `MiProgresionPage` — única ruta editable por JOVEN, `App.tsx` intocado) y botón **"Limpiar"** por fila de la planilla (DELETE → recarga).
 - **Tests**: backend **467/467** (36 suites; `presencia-qr.spec.ts` nuevo con 8: formato/base64url, alteraciones, vencido, formatos raros + bloques en `eventos.service.spec`: generar/cancelada/ABAC, idempotencia, sobrescritura, sin miembroId, unidad ajena) · integración **62/62** (10 suites; `presencia.integration.spec.ts` nuevo con 9: QR → auto-registro → idempotencia → alterado/vencido 400 → unidad ajena 403 → sin miembroId 403 → cancelada 409 → DELETE libera el borrado) · frontend lint/build/**43/43** · E2E **29/29** (2 nuevos: escaneo real desde mi-progresión con verificación de la fila PRESENTE + contrato completo: idempotencia, alterado/basura 400, joven sin `asistencia:manage` 403 y DELETE que deshace la marca).
 
+### ✅ Ejecución — `multi-grupo` CERRADO (Fase 7c)
+
+- **Alcance**: aislamiento por subárbol jerárquico sobre los 4 huecos reales detectados en el análisis (sin migración ni permisos nuevos; `Unidad.grupoId` + `@@unique([grupoId, tipo])` ya existían). Sin cambios de frontend: `EstructuraPage` ya tenía la UI de asignar unidad→grupo.
+- **Hueco 1 — adultos cross-group (`unit-access.policy.ts`)**: `assertCanAccessUnit` comparaba la unidad del ADULTO_* por **NOMBRE** → el adulto de la "Manada" del Grupo A pasaba en la "Manada" del Grupo B. Ahora `ActorScope` incluye `unidadId` y el aislamiento es por **ID exacto**; el fallback por nombre canónico solo aplica a adultos sin `unidadId` (legacy). El ámbito de nodo (F4.3) sigue precediendo al bypass.
+- **Hueco 2 — cuentas sin ámbito (`users.controller.ts`)**: `GET /users` listaba cuentas de todos los grupos y `GET/PATCH/DELETE /users/:id` actuaban sobre cualquiera; `PATCH` permitía reubicar/anclar fuera de ámbito o **limpiar `nodoId`** (escalaba a visión global). Ahora: listado filtrado con `filtroUsuarios` (fail-closed `{id:{in:[]}}`), check de fila en findOne/update/remove, reubicación validada (`assertCuentaEnAmbito`) y **prohibido vaciar `nodoId`** desde un ámbito. Creación exige ancla dentro del ámbito (unidad o nodo) → 400 si no viene.
+- **Hueco 3 — RBAC cross-group (`rbac.controller.ts`)**: `rbac:assign-role` (lo tiene GROUP_LEADER) apuntaba a cualquier usuario → `assertUsuarioEnAlcance` en `getUserPermissions`, `assignRole`, `revokeRole` y `assignRoleByName`.
+- **Hueco 4 — altas huérfanas (`unidades.controller.ts` + DTO)**: `POST /unidades` no recibía `grupoId` ni validaba ABAC → unidades invisibles al ámbito. DTO +`grupoId?` (UUID v4) y `validarGrupoAlta`: actor con ámbito → `grupoId` obligatorio dentro de su subárbol vía `NodoPolicy.assertGrupo` (404 inexistente / 400 si no es GRUPO / 403 fuera de ámbito); actor global → opcional pero validado.
+- **`NodoPolicy` +3 utilidades**: `filtroUsuarios(nodoId)` (unidad del subárbol **o** `nodoId` dentro del subárbol), `usuarioEnAlcance(nodoId, usuarioId)` (inexistente → `true` para que el handler responda 404) y `assertGrupo`. `PrismaModule` es `@Global()` → `NodoPolicy` se provee en `users.module`, `rbac.module` y `unidades.module`.
+- **No eran huecos** (verificados): `PATCH /organizacion/unidades/:unidadId/grupo` es solo editores nacionales (`assertEditor`); árbol org de lectura abierta por diseño; seed ya liga las unidades al grupo demo; `PATCH /users/:id/password` ya restringido a propia cuenta/admin.
+- **Tests**: backend **490/490** (37 suites; `unit-access.policy.spec.ts` nuevo con 10 — ID vs nombre idéntico entre grupos, subárbol, legacy, bypass, admin — y `nodo.policy.spec.ts` +13: `filtroUsuarios`/`usuarioEnAlcance`/`assertGrupo`) · integración **73/73** (11 suites; `multi-grupo.integration.spec.ts` nuevo con 11: 2 grupos con unidades homónimas — jefe de A solo ve su grupo, adulto de A rechazado en Manada de B, listado de usuarios acotado, 403 en cuenta ajena, `assertGrupo` 404/400/403, alta de unidad fuera de ámbito 403/sin grupoId 400/correcta 201) · frontend lint/build/**43/43** (sin cambios) · E2E **29/29**.
+
 ---
 
 # FASE 8 — Corrección de Deuda Técnica
@@ -403,7 +414,7 @@ Fase 5 (1-2 d)   →  Biblioteca/Documentos
   │
 Fase 6 (3-4 d)   →  Completar formación, datos-scout, programas-mundiales
   │
-Fase 7 (varia)   →  ✅ 7a PDF · ✅ 7b QR presencia · → 7c multi-grupo (DECIDIDA: SÍ) → PWA → Finanzas
+Fase 7 (varia)   →  ✅ 7a PDF · ✅ 7b QR presencia · ✅ 7c multi-grupo → PWA → Finanzas
   │
 Fase 8 (cont.)   →  tests/E2E/deuda en cada cierre de fase
 ```

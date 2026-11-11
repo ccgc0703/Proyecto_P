@@ -1,3 +1,4 @@
+import { BadRequestException, ForbiddenException, NotFoundException } from '@nestjs/common';
 import { NodoPolicy } from './nodo.policy';
 
 describe('NodoPolicy', () => {
@@ -5,8 +6,9 @@ describe('NodoPolicy', () => {
     let prisma: any;
 
     const mockPrisma = {
-        organizacionNodo: { findMany: jest.fn() },
+        organizacionNodo: { findMany: jest.fn(), findFirst: jest.fn() },
         unidad: { findMany: jest.fn(), findFirst: jest.fn() },
+        usuario: { findFirst: jest.fn(), count: jest.fn() },
     };
 
     // Jerarquía: CON → DIR → REG → DIS → (GRP-01, GRP-02)
@@ -123,6 +125,99 @@ describe('NodoPolicy', () => {
             mockPrisma.unidad.findFirst.mockResolvedValue({ grupoId: 'grp1' });
 
             expect(await policy.unidadEnAlcance(null, 'u1')).toBe(false);
+        });
+    });
+
+    // ── Multi-grupo (Fase 7c) ──────────────────────────────────────────
+
+    describe('filtroUsuarios', () => {
+        it('sin nodoId devuelve null (visión global)', async () => {
+            expect(await policy.filtroUsuarios(null)).toBeNull();
+            expect(await policy.filtroUsuarios(undefined)).toBeNull();
+            expect(mockPrisma.unidad.findMany).not.toHaveBeenCalled();
+        });
+
+        it('filtra por unidades del subárbol O por nodoId dentro del subárbol', async () => {
+            mockPrisma.unidad.findMany.mockResolvedValue([{ id: 'u1' }, { id: 'u2' }]);
+
+            const filtro = await policy.filtroUsuarios('reg');
+
+            expect(filtro).toEqual({
+                OR: [
+                    { unidadId: { in: ['u1', 'u2'] } },
+                    { nodoId: { in: expect.arrayContaining(['dis', 'grp1', 'grp2', 'reg']) } },
+                ],
+            });
+            const nodos = (filtro as any).OR[1].nodoId.in;
+            expect(nodos).toHaveLength(4);
+        });
+
+        it('fail-closed: subárbol vacío devuelve un filtro que no matchea a nadie', async () => {
+            const filtro = await policy.filtroUsuarios('no-existe');
+            expect(filtro).toEqual({ id: { in: [] } });
+            expect(mockPrisma.unidad.findMany).not.toHaveBeenCalled();
+        });
+    });
+
+    describe('usuarioEnAlcance', () => {
+        it('true si el usuario tiene una unidad del subárbol', async () => {
+            mockPrisma.unidad.findMany.mockResolvedValue([{ id: 'u-grupo-a' }]);
+            mockPrisma.usuario.findFirst.mockResolvedValue({ id: 'user-1' });
+            mockPrisma.usuario.count.mockResolvedValue(1);
+
+            expect(await policy.usuarioEnAlcance('grp1', 'user-1')).toBe(true);
+        });
+
+        it('false si el usuario pertenece a otro grupo (unidad ajena)', async () => {
+            mockPrisma.unidad.findMany.mockResolvedValue([{ id: 'u-grupo-a' }]);
+            mockPrisma.usuario.findFirst.mockResolvedValue({ id: 'user-2' });
+            mockPrisma.usuario.count.mockResolvedValue(0);
+
+            expect(await policy.usuarioEnAlcance('grp1', 'user-2')).toBe(false);
+        });
+
+        it('true si el usuario no existe (deja pasar y responde 404)', async () => {
+            mockPrisma.usuario.findFirst.mockResolvedValue(null);
+
+            expect(await policy.usuarioEnAlcance('grp1', 'user-x')).toBe(true);
+            expect(mockPrisma.usuario.count).not.toHaveBeenCalled();
+        });
+
+        it('true si el actor no tiene nodoId (visión global)', async () => {
+            expect(await policy.usuarioEnAlcance(null, 'user-1')).toBe(true);
+            expect(mockPrisma.usuario.findFirst).not.toHaveBeenCalled();
+        });
+    });
+
+    describe('assertGrupo', () => {
+        it('acepta un nodo GRUPO vivo sin ámbito', async () => {
+            mockPrisma.organizacionNodo.findFirst.mockResolvedValue({ tipo: 'GRUPO' });
+
+            await expect(policy.assertGrupo('grp1')).resolves.toBeUndefined();
+        });
+
+        it('acepta un nodo GRUPO dentro del subárbol del actor', async () => {
+            mockPrisma.organizacionNodo.findFirst.mockResolvedValue({ tipo: 'GRUPO' });
+
+            await expect(policy.assertGrupo('grp2', 'dis')).resolves.toBeUndefined();
+        });
+
+        it('lanza NotFoundException si el nodo no existe', async () => {
+            mockPrisma.organizacionNodo.findFirst.mockResolvedValue(null);
+
+            await expect(policy.assertGrupo('no-existe')).rejects.toThrow(NotFoundException);
+        });
+
+        it('lanza BadRequestException si el nodo no es tipo GRUPO', async () => {
+            mockPrisma.organizacionNodo.findFirst.mockResolvedValue({ tipo: 'REGION' });
+
+            await expect(policy.assertGrupo('reg')).rejects.toThrow(BadRequestException);
+        });
+
+        it('lanza ForbiddenException si el grupo está fuera del ámbito del actor', async () => {
+            mockPrisma.organizacionNodo.findFirst.mockResolvedValue({ tipo: 'GRUPO' });
+
+            await expect(policy.assertGrupo('grp2', 'grp1')).rejects.toThrow(ForbiddenException);
         });
     });
 });

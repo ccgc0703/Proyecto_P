@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Patch, Body, Param, Delete, UseGuards, Req, Query } from '@nestjs/common';
+import { Controller, Get, Post, Patch, Body, Param, Delete, UseGuards, Req, Query, BadRequestException } from '@nestjs/common';
 import { UnidadesService } from './unidades.service';
 import { CreateUnidadDto } from './dto/create-unidad.dto';
 import { UpdateUnidadDto } from './dto/update-unidad.dto';
@@ -6,9 +6,10 @@ import { CreatePatrullaDto } from './dto/create-patrulla.dto';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { PermissionsGuard } from '../../common/guards/permissions.guard';
 import { RequirePermission } from '../../common/decorators/permissions.decorator';
-import { PERMISSIONS } from '../../common/constantes';
+import { PERMISSIONS, RBAC_ROLES } from '../../common/constantes';
 
 import { UnitPolicy } from '../../common/policies/unit.policy';
+import { NodoPolicy } from '../../common/policies/nodo.policy';
 import { resolverOpcionesLista, hayPaginacion, metaPagina } from '../../common/paginacion';
 
 @Controller('unidades')
@@ -17,11 +18,33 @@ export class UnidadesController {
     constructor(
         private readonly unidadesService: UnidadesService,
         private readonly unitPolicy: UnitPolicy,
+        private readonly nodoPolicy: NodoPolicy,
     ) { }
+
+    /**
+     * Multi-grupo (7c): el alta debe anclar la unidad en un nodo GRUPO.
+     * - Actor con ámbito (nodoId, sin ser admin): `grupoId` obligatorio y
+     *   dentro de su subárbol.
+     * - Actor global: `grupoId` opcional (se valida si viene).
+     */
+    private async validarGrupoAlta(user: any, grupoId?: string): Promise<void> {
+        const enAmbito = !!user?.nodoId && !(user?.roles ?? []).includes(RBAC_ROLES.SYSTEM_ADMIN);
+
+        if (grupoId) {
+            await this.nodoPolicy.assertGrupo(grupoId, enAmbito ? user.nodoId : null);
+            return;
+        }
+        if (enAmbito) {
+            throw new BadRequestException(
+                'Asociá la unidad a un grupo de tu ámbito jerárquico (grupoId)',
+            );
+        }
+    }
 
     @Post()
     @RequirePermission(PERMISSIONS.UNIDAD_CREATE)
     async create(@Body() createUnidadDto: CreateUnidadDto, @Req() req: any) {
+        await this.validarGrupoAlta(req.user, createUnidadDto.grupoId);
         const unidad = await this.unidadesService.create(createUnidadDto, req.user.id);
         return {
             success: true,

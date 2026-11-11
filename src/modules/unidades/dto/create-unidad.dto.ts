@@ -1,4 +1,4 @@
-import { IsEnum, IsOptional, IsString } from 'class-validator';
+import { IsEnum, IsOptional, IsString, IsUUID } from 'class-validator';
 import { Transform } from 'class-transformer';
 import { TipoUnidad } from '@prisma/client';
 
@@ -16,4 +16,13 @@ export class CreateUnidadDto {
     @IsString()
     @Transform(({ value }) => value?.toUpperCase()?.trim())
     descripcion?: string;
+
+    /**
+     * Nodo GRUPO al que pertenece (Fase 7c · multi-grupo): una instancia de
+     * unidad por grupo (`@@unique([grupoId, tipo])`). Obligatorio para actores
+     * con ámbito jerárquico.
+     */
+    @IsOptional()
+    @IsUUID('4', { message: 'grupoId debe ser un UUID válido' })
+    grupoId?: string;
 }

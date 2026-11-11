@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../modules/prisma/prisma.service';
 
 /**
@@ -78,5 +78,81 @@ export class NodoPolicy {
         if (subtree.size === 0) return false;
         if (!unidad.grupoId) return false;
         return subtree.has(unidad.grupoId);
+    }
+
+    // ── Multi-grupo (Fase 7c) ──────────────────────────────────────────
+
+    /**
+     * Filtro Prisma para listar usuarios dentro del ámbito del nodo.
+     * Un usuario "pertenece" a un grupo si su unidad cayó en el subárbol o si
+     * su ámbito (nodoId) cae dentro del subárbol. Sin nodoId → null (global).
+     * Fail-closed: subárbol vacío → filtro que no matchea a nadie.
+     */
+    async filtroUsuarios(nodoId?: string | null): Promise<Record<string, any> | null> {
+        if (!nodoId) return null;
+        const subtree = await this.subtreeIds(nodoId);
+        if (subtree.size === 0) return { id: { in: [] } };
+
+        const unidades = await this.prisma.unidad.findMany({
+            where: { grupoId: { in: Array.from(subtree) }, deletedAt: null },
+            select: { id: true },
+        });
+        return {
+            OR: [
+                { unidadId: { in: unidades.map((u) => u.id) } },
+                { nodoId: { in: Array.from(subtree) } },
+            ],
+        };
+    }
+
+    /**
+     * ¿El usuario objetivo está en el ámbito del nodo del actor?
+     * - Usuario inexistente → true (deja pasar; el handler responderá 404).
+     * - Sin nodoId en el actor → true (visión global, retro-compatible).
+     */
+    async usuarioEnAlcance(
+        nodoId: string | null | undefined,
+        usuarioId: string,
+    ): Promise<boolean> {
+        if (!nodoId) return true;
+        const filtro = await this.filtroUsuarios(nodoId);
+        if (!filtro) return true;
+
+        const usuario = await this.prisma.usuario.findFirst({
+            where: { id: usuarioId, deletedAt: null },
+            select: { id: true },
+        });
+        if (!usuario) return true;
+
+        const enAlcance = await this.prisma.usuario.count({
+            where: { ...filtro, id: usuarioId, deletedAt: null },
+        });
+        return enAlcance > 0;
+    }
+
+    /**
+     * Valida que `grupoId` sea un nodo GRUPO vivo y (si hay ámbito) que caiga
+     * dentro del subárbol del actor. Excepciones: 404 inexistente, 400 si no
+     * es un nodo GRUPO, 403 si está fuera del ámbito.
+     */
+    async assertGrupo(grupoId: string, scopeNodoId?: string | null): Promise<void> {
+        const grupo = await this.prisma.organizacionNodo.findFirst({
+            where: { id: grupoId, deletedAt: null },
+            select: { tipo: true },
+        });
+        if (!grupo) {
+            throw new NotFoundException('Grupo no encontrado');
+        }
+        if (grupo.tipo !== 'GRUPO') {
+            throw new BadRequestException('El nodo indicado no es un grupo');
+        }
+        if (scopeNodoId) {
+            const subtree = await this.subtreeIds(scopeNodoId);
+            if (!subtree.has(grupoId)) {
+                throw new ForbiddenException(
+                    'Aislamiento por nodo: el grupo está fuera de tu ámbito jerárquico',
+                );
+            }
+        }
     }
 }

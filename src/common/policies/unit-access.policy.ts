@@ -14,6 +14,8 @@ export const UNIT_BYPASS_ROLES = ['SYSTEM_ADMIN', 'GROUP_LEADER', 'GROUP_SUBLEAD
 export interface ActorScope {
     roleNames: string[];
     nodoId: string | null;
+    /** Unidad asignada al actor (roles ADULTO_*). Multi-grupo: el aislamiento es por ID, no por nombre. */
+    unidadId: string | null;
 }
 
 /**
@@ -39,6 +41,7 @@ export class UnitAccessPolicy {
             where: { id: actorId },
             select: {
                 nodoId: true,
+                unidadId: true,
                 UsuarioRoles: {
                     where: { deletedAt: null },
                     select: { Rol: { select: { nombre: true } } },
@@ -46,11 +49,12 @@ export class UnitAccessPolicy {
             },
         });
 
-        if (!usuario) return { roleNames: [], nodoId: null };
+        if (!usuario) return { roleNames: [], nodoId: null, unidadId: null };
 
         return {
             roleNames: usuario.UsuarioRoles.map((ur) => ur.Rol.nombre),
             nodoId: usuario.nodoId,
+            unidadId: usuario.unidadId,
         };
     }
 
@@ -64,7 +68,7 @@ export class UnitAccessPolicy {
     }
 
     async assertCanAccessUnit(actorId: string, unidadId: string): Promise<void> {
-        const { roleNames, nodoId } = await this.getActorScope(actorId);
+        const { roleNames, nodoId, unidadId: unidadPropia } = await this.getActorScope(actorId);
 
         if (roleNames.some((r) => r === 'SYSTEM_ADMIN')) return;
 
@@ -85,6 +89,17 @@ export class UnitAccessPolicy {
             return;
         }
 
+        // Multi-grupo (7c): el nombre de la unidad se repite en cada grupo
+        // (Manada del Grupo A ≠ Manada del Grupo B), así que el aislamiento es
+        // por ID exacto de la unidad asignada al adulto.
+        if (unidadPropia) {
+            if (unidadPropia !== unidadId) {
+                throw new ForbiddenException('No tienes acceso a jóvenes de otra unidad');
+            }
+            return;
+        }
+
+        // Legacy: adulto sin unidadId asignada → comparación por nombre canónico.
         const unidad = await this.prisma.unidad.findFirst({
             where: { id: unidadId, deletedAt: null },
             select: { nombre: true },
