@@ -1,9 +1,10 @@
 import { BadRequestException, ConflictException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
-import { AlcancePlanificacion, TipoNodoOrganizacion } from '@prisma/client';
+import { AlcancePlanificacion, EstadoAsistencia, TipoNodoOrganizacion } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { AuditService } from '../audit/audit.service';
 import { UnitPolicy } from '../../common/policies/unit.policy';
 import { NodoPolicy } from '../../common/policies/nodo.policy';
+import { firmarPresencia, verificarPresencia } from './presencia-qr';
 import { OpcionesLista, filtroBusqueda, rangoLista } from '../../common/paginacion';
 import { CreatePlanificacionDto } from './dto/create-planificacion.dto';
 import { UpdatePlanificacionDto } from './dto/update-planificacion.dto';
@@ -23,6 +24,16 @@ export interface Actor {
     roles: string[];
     unidadId?: string | null;
     nodoId?: string | null;
+    /** Vínculo usuario → miembro (auto-registro de presencia por QR). */
+    miembroId?: string | null;
+}
+
+/** Resultado del auto-registro de presencia (Fase 7b · QR). */
+export interface ResultadoPresencia {
+    actividad: { id: string; titulo: string; fecha: Date; tipo: string; estado: string };
+    estado: EstadoAsistencia;
+    /** `true` si ya estaba marcado como PRESENTE (no se reescribió). */
+    yaRegistrado: boolean;
 }
 
 const ACTIVIDAD_INCLUDE = {
@@ -597,6 +608,138 @@ export class EventosService {
             `Asistencia ${id} actualizada a ${actualizada.estado}`,
         );
         return actualizada;
+    }
+
+    /** Deshacer una marca de asistencia (soft-delete). Necesario para corregir
+     *  escaneos erróneos y para poder eliminar actividades con filas hijas. */
+    async removeAsistencia(id: string, user: Actor) {
+        const asistencia = await this.prisma.asistencia.findFirst({
+            where: { id, deletedAt: null },
+        });
+        if (!asistencia) {
+            throw new NotFoundException(`La asistencia con ID ${id} no existe`);
+        }
+        await this.getActividad(asistencia.actividadId, user);
+
+        await this.prisma.asistencia.update({
+            where: { id },
+            data: { deletedAt: new Date() },
+        });
+        this.registrar(
+            user.id,
+            'ASISTENCIA_DELETED',
+            id,
+            `Asistencia ${id} (${asistencia.estado}) deshecha`,
+        );
+    }
+
+    // ── QR de presencia (Fase 7b) ────────────────────────────────────
+
+    /**
+     * Genera el QR de presencia de una actividad (24 h). ABAC vía
+     * `getActividad` + `asistencia:manage` en el controller.
+     */
+    async generarQrPresencia(actividadId: string, user: Actor) {
+        const actividad = await this.getActividad(actividadId, user);
+        if (actividad.estado === 'CANCELADA') {
+            throw new ConflictException(
+                'No se puede generar presencia para una actividad cancelada',
+            );
+        }
+        const { codigo, expira } = firmarPresencia(actividadId);
+        return {
+            actividadId,
+            titulo: actividad.titulo,
+            codigo,
+            expira,
+        };
+    }
+
+    /**
+     * Auto-registro de presencia por QR (self-scope): el joven envía el código
+     * escaneado; el backend lo verifica (stateless) y lo registra como
+     * PRESENTE en la actividad. Idempotente: si ya estaba PRESENTE no reescribe.
+     */
+    async registrarPresencia(codigo: string, user: Actor): Promise<ResultadoPresencia> {
+        const { actividadId } = verificarPresencia(codigo);
+
+        if (!user.miembroId) {
+            throw new ForbiddenException(
+                'Tu usuario no tiene un vínculo de miembro para registrar presencia',
+            );
+        }
+
+        const actividad = await this.getActividad(actividadId, user);
+        if (actividad.estado === 'CANCELADA') {
+            throw new ConflictException(
+                'No se puede registrar presencia en una actividad cancelada',
+            );
+        }
+
+        // El miembro debe pertenecer a la unidad de la actividad (ámbito/ABAC).
+        const alcance = await this.unitPolicy.unidadesAlcance(user);
+        const unidades = this.unidadesMarcables(actividad.Planificacion.unidadId, alcance);
+        const miembro = await this.prisma.miembro.findFirst({
+            where: { id: user.miembroId, ...this.whereMiembrosMarcables(unidades) },
+            select: { id: true },
+        });
+        if (!miembro) {
+            throw new ForbiddenException(
+                'No perteneces a la unidad de esta actividad',
+            );
+        }
+
+        const existente = await this.prisma.asistencia.findFirst({
+            // incluye filas soft-deleteadas: la unique (actividadId, miembroId)
+            // sigue ocupada, hay que reactivar en vez de crear.
+            where: { actividadId, miembroId: user.miembroId },
+        });
+        if (!existente?.deletedAt && existente?.estado === EstadoAsistencia.PRESENTE) {
+            return {
+                actividad: this.resumenActividad(actividad),
+                estado: EstadoAsistencia.PRESENTE,
+                yaRegistrado: true,
+            };
+        }
+
+        const estado = EstadoAsistencia.PRESENTE;
+        if (existente) {
+            await this.prisma.asistencia.update({
+                where: { id: existente.id },
+                data: { estado, deletedAt: null, updatedBy: user.id },
+            });
+        } else {
+            await this.prisma.asistencia.create({
+                data: {
+                    actividadId,
+                    miembroId: user.miembroId,
+                    estado,
+                    createdBy: user.id,
+                },
+            });
+        }
+        this.registrar(
+            user.id,
+            'ASISTENCIA_QR',
+            actividadId,
+            `Presencia auto-registrada por QR en "${actividad.titulo}"`,
+        );
+
+        return {
+            actividad: this.resumenActividad(actividad),
+            estado,
+            yaRegistrado: false,
+        };
+    }
+
+    private resumenActividad(actividad: {
+        id: string;
+        titulo: string;
+        fecha: Date;
+        tipo: string;
+        estado: string;
+    }) {
+        return { id: actividad.id, titulo: actividad.titulo, fecha: actividad.fecha, tipo: actividad.tipo, estado: actividad.estado };
     }
 
     /** Asistencias de una unidad en un rango de fechas (alimenta el Dashboard). */

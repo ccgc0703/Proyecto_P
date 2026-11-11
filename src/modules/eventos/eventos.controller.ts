@@ -6,6 +6,7 @@ import { CreateActividadDto } from './dto/create-actividad.dto';
 import { UpdateActividadDto } from './dto/update-actividad.dto';
 import { AsistenciaBulkDto } from './dto/asistencia-bulk.dto';
 import { UpdateAsistenciaDto } from './dto/update-asistencia.dto';
+import { PresenciaQrDto } from './dto/presencia-qr.dto';
 import {
     QueryActividadesDto,
     QueryAsistenciasUnidadDto,
@@ -149,6 +150,36 @@ export class EventosController {
     async updateAsistencia(@Param('id') id: string, @Body() dto: UpdateAsistenciaDto, @Req() req: any) {
         const data = await this.eventosService.updateAsistencia(id, dto, req.user as Actor);
         return { success: true, message: 'Asistencia actualizada exitosamente', data };
+    }
+
+    @Delete('asistencias/:id')
+    @RequirePermission(PERMISSIONS.ASISTENCIA_MANAGE)
+    async removeAsistencia(@Param('id') id: string, @Req() req: any) {
+        await this.eventosService.removeAsistencia(id, req.user as Actor);
+        return { success: true, message: 'Asistencia deshecha exitosamente', data: null };
+    }
+
+    // ── QR de presencia (Fase 7b) ────────────────────────────────────
+
+    @Get('actividades/:id/qr')
+    @RequirePermission(PERMISSIONS.ASISTENCIA_MANAGE)
+    async generarQrPresencia(@Param('id') id: string, @Req() req: any) {
+        const data = await this.eventosService.generarQrPresencia(id, req.user as Actor);
+        return { success: true, message: 'QR de presencia generado', data };
+    }
+
+    /** Auto-registro del joven: verifica el código escaneado (stateless). */
+    @Post('presencia')
+    @RequirePermission(PERMISSIONS.SELF_UPDATE)
+    async registrarPresencia(@Body() dto: PresenciaQrDto, @Req() req: any) {
+        const data = await this.eventosService.registrarPresencia(dto.codigo, req.user as Actor);
+        return {
+            success: true,
+            message: data.yaRegistrado
+                ? 'Ya estabas marcado como presente'
+                : 'Presencia registrada',
+            data,
+        };
     }
 
     @Get('unidades/:unidadId/asistencias')

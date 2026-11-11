@@ -23,6 +23,7 @@ import {
   ProgramaMiembro,
   ProgramaMundial,
 } from '../types/programaMundial';
+import { QrPresencia, ResultadoPresencia } from '../types/eventos';
 
 export const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL || '/api/v1',
@@ -180,6 +181,15 @@ export const eventosApi = {
       .then((r) => r.data.data),
   updateAsistencia: (asistenciaId: string, data: unknown) =>
     api.patch(`/eventos/asistencias/${asistenciaId}`, data).then((r) => r.data.data),
+  /** Deshacer una marca de asistencia (Fase 7b · QR). */
+  deleteAsistencia: (asistenciaId: string) =>
+    api.delete(`/eventos/asistencias/${asistenciaId}`).then((r) => r.data),
+  /** QR de presencia de la actividad (asistencia:manage, caduca en 24 h). */
+  qrPresencia: (actividadId: string): Promise<QrPresencia> =>
+    api.get(`/eventos/actividades/${actividadId}/qr`).then((r) => r.data.data),
+  /** Auto-registro: envía el código escaneado (self:update). */
+  registrarPresencia: (codigo: string): Promise<ResultadoPresencia> =>
+    api.post('/eventos/presencia', { codigo }).then((r) => r.data.data),
   getAsistenciasUnidad: (unidadId: string, params?: { desde?: string; hasta?: string }) =>
     api.get(`/eventos/unidades/${unidadId}/asistencias`, { params }).then((r) => r.data.data),
   /** Listado de asistencia de la actividad en PDF (Fase 7a). */

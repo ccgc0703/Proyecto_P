@@ -1,6 +1,6 @@
 # 📋 PLAN DE IMPLEMENTACIÓN — Expansión del Sistema de Gestión Scout
 
-> **Estado de ejecución** (actualizado 2026-11-06):
+> **Estado de ejecución** (actualizado 2026-11-11):
 >
 > | Fase | Estado |
 > |---|---|
@@ -10,10 +10,10 @@
 > | Fase 3 — Notificaciones in-app (decisión: sin email) | ✅ Cerrada — commit `277f31d` (backend 360/360 · integración 14/14 · frontend 30/30 · E2E 16/16) |
 > | Fase 5 — Biblioteca (Documentos y Normativa) | ✅ Cerrada — commit `0427677` (backend 376/376 · integración 19/19 · frontend 31/31 · E2E 18/18) |
 > | Fase 6 — Completar formación / datos-scout / programas-mundiales (decisión: permisos nuevos `datosscout:*`) | ✅ Cerrada — `formacion` `a45263b` · `datos-scout` `720943c` · `programas-mundiales` (esta entrega; backend 424/424 · integración 48/48 · frontend 32/32 · E2E 24/24) |
-> | Fase 7 — Madurez y escala (PWA, PDF, Finanzas…; multi-grupo SOLO si aplica) | ⬜ Pendiente |
+> | Fase 7 — Madurez y escala (PDF → QR → multi-grupo → PWA → Finanzas) | 🔄 En curso — 7a Export PDF ✅ `3cd4145` · 7b QR de presencia ✅ (esta entrega) |
 > | Fase 8 — Deuda técnica (8.2/8.3 continuo, en cada cierre) | 🔄 Continuo |
 >
-> Recuperado del historial de sesiones de OpenCode (sesión `ses_eed5541f6ffe…`, mensaje del 2026-11-05 15:45) y documentado aquí para que no se pierda. Las decisiones ya tomadas: notificaciones solo in-app, permisos `datosscout:*` nuevos (Fase 6), multi-grupo diferida a Fase 7 (solo se "prepara": todo modelo nuevo lleva `grupoId` o se deriva de `Unidad.grupoId`/`Usuario`).
+> Recuperado del historial de sesiones de OpenCode (sesión `ses_eed5541f6ffe…`, mensaje del 2026-11-05 15:45) y documentado aquí para que no se pierda. Las decisiones ya tomadas: notificaciones solo in-app, permisos `datosscout:*` nuevos (Fase 6), y **multi-grupo: SÍ (decisión del usuario, 2026-11-11)** → se ejecuta como fase propia **7c, antes de PWA y Finanzas** (todo lo posterior nace group-aware); hasta entonces todo modelo nuevo lleva `grupoId` o se deriva de `Unidad.grupoId`/`Usuario`.
 
 **Estado actual verificado** (lo confirmé leyendo el código antes de armar esto):
 
@@ -324,7 +324,7 @@ Si mañana se dan de alta **Grupo Scout A** y **Grupo Scout B**:
   2. **Nunca** consultar unidades sin `grupoId` en código nuevo.
 - **Si apuntan a federación/región** → hacerlo **después de las fases 1-6**, como fase propia, con su plan detallado.
 
-> **Decisión que necesito de ti:** ¿hay un solo grupo, o ya hay/va a haber varios grupos usando el sistema a la vez? Eso define si la 7a se ejecuta o queda anotada.
+> ✅ **Decisión resuelta (2026-11-11): SÍ, multi-grupo.** Se ejecuta como fase propia (**7c**), después de QR (7b) y **antes de PWA y Finanzas**, para que todo lo posterior nace group-aware. Ver "Otras propuestas" más abajo.
 
 ### Otras propuestas de madurez y escala
 
@@ -332,22 +332,31 @@ Si mañana se dan de alta **Grupo Scout A** y **Grupo Scout B**:
 |---|---|---|---|
 | **PWA offline** | `vite-plugin-pwa`: manifest + service worker cache. **En campo sin señal**, el adulto carga asistencia y sincroniza al volver (IndexedDB + cola). Es el mayor diferencial real para scouts. | 3-5 días | Tras Fase 1 |
 | ✅ **Export PDF** | `pdfmake`: constancia de progresión, carnet, listado de asistencia. Ya manejas `exceljs` → patrón conocido (`StreamableFile`). | 1-2 días | **Cerrado (Fase 7a)** |
-| **QR de presencia** | La `Actividad` genera QR; el joven escanea en la reunión → auto-asistencia. Requiere `@zxing/browser`. | 2-3 días | Tras Fase 1 |
-| **Finanzas (cuotas)** | Modelo `Cuota/Pago`, permisos `finanza:*` ya sembrados, cobro mensual por joven, estados, reporte. | 4-5 días | Tras Fase 1 |
+| ✅ **QR de presencia** | La `Actividad` genera QR; el joven escanea en la reunión → auto-asistencia. Requiere `@zxing/browser`. | 2-3 días | **Cerrado (Fase 7b)** |
+| **Finanzas (cuotas)** | Modelo `Cuota/Pago`, permisos `finanza:*` ya sembrados, cobro mensual por joven, estados, reporte. | 4-5 días | Tras multi-grupo |
 | **Inventario** | Préstamos de material con devolución. Permisos ya sembrados. | 2-3 días | posterior |
-| **Multi-grupo** | Ver arriba. | 3-5 días | Sólo si aplica |
+| **Multi-grupo** | Ver arriba. | 3-5 días | **Aprobada: SÍ → Fase 7c (antes de PWA y Finanzas)** |
 | **i18n** | `react-i18next` (ES/EN/PT) — WOSM es internacional. | 3 días | Baja prioridad |
 | **Observabilidad** | `@sentry/node` + métricas `/metrics` + alertas. | 1-2 días | Cuando haya producción real |
 
 ### ✅ Ejecución — `pdf` CERRADO (Fase 7a · Export PDF)
 
-- **Alcance**: 1 submódulo, 3 documentos con `pdfmake` — constancia de progresión (A4), carnet (tarjeta 85,6 × 54 mm) y listado de asistencia (A4). Siguientes entregas de la Fase 7 en el orden acordado: QR de presencia → PWA offline → Finanzas.
+- **Alcance**: 1 submódulo, 3 documentos con `pdfmake` — constancia de progresión (A4), carnet (tarjeta 85,6 × 54 mm) y listado de asistencia (A4). Siguientes entregas de la Fase 7 en el orden acordado: QR de presencia (7b) → multi-grupo (7c, decisión 2026-11-11) → PWA offline → Finanzas.
 - **Backend**: `src/modules/pdf/` (`pdf.module/service/controller` + spec), registrado en `app.module.ts`. 3 endpoints con `StreamableFile`, `application/pdf` y `slug` en el filename: `GET /pdf/constancia/:miembroId`, `GET /pdf/carnet/:miembroId`, `GET /pdf/asistencia/:actividadId`.
 - **Permisos/ABAC**: se reutilizan los de lectura correspondientes, de modo que **exportar un PDF no amplía el alcance de nadie** — constancia = `progresion:view` + `assertSelf` (idéntico a `export.xlsx`), carnet = `datosscout:view` + `assertSelf` (idéntico a `GET /datos-scout/miembro/:id`), planilla = `asistencia:view` (el ABAC ya vive en `EventosService.listarAsistenciasActividad`). **Sin permisos nuevos.**
 - **Fuentes de datos (sin duplicar lógica)**: constancia → `ProgresionService.getDatosExportJoven` · planilla → `EventosService.listarAsistenciasActividad` · carnet → query propia en `PdfService` con *fail-closed* (`asegurarVisibilidad`: fuera del alcance → 404, patrón de `datos-scout`).
 - **Seguridad de pdfmake (verificada empíricamente)**: `setUrlAccessPolicy(() => false)` bloquea toda URL remota; `setLocalAccessPolicy` **no puede ser deny-all** (rompe las fuentes Roboto), así que normaliza separadores y sólo permite `node_modules/pdfmake/fonts/`. Además `import * as pdfmake` en vez de destructurar: los métodos son de la instancia y usan `this` (una importación nombrada los desengancha y revienta con `Cannot read properties of undefined`).
 - **Frontend**: `descargarRemoto` (helper genérico antes llamado `descargarXlsx`: blob + `content-disposition`) + `progresionApi.constanciaPdf`, `datosScoutApi.carnetPdf`, `eventosApi.listadoAsistenciaPdf`; botones en `ProgresionAcciones` (junto al .xlsx, estado `exportando` compartido), `DatosScoutResumen` (sólo si hay expediente, con `datosscout:view`) y `DialogoAsistencia` (reutiliza el `setError` existente).
 - **Tests**: backend **447/447** (35 suites; 12 del módulo: `%PDF-` de los 3 documentos, whitelist/deny de las políticas y ABAC del carnet) · integración **53/53** (9 suites; `pdf.integration.spec.ts` nuevo con 5: carnet armado desde la base, 404 fuera de alcance, constancia con `getDatosExportJoven` real, planilla real renderizada y bloqueo ABAC del adulto ajeno) · frontend lint/build/**33/33** · E2E **27/27** (3 nuevos: descarga real del carnet verificando magic bytes y filename, contrato de los 3 endpoints con `content-type`/404, `self-scope` del joven con 403).
+
+### ✅ Ejecución — `presencia QR` CERRADO (Fase 7b)
+
+- **Alcance**: 1 submódulo dentro de `eventos` — el adulto genera el QR de la actividad, el joven lo escanea y **se auto-registra PRESENTE**. Sin permisos nuevos y sin migración.
+- **Flujo y permisos**: generación `GET /eventos/actividades/:id/qr` con `asistencia:manage` (+ABAC vía `getActividad`); auto-registro `POST /eventos/presencia` con **`self:update`** (lo tiene JOVEN; exige `user.miembroId` del `JwtStrategy`). Nuevos endpoint `DELETE /eventos/asistencias/:id` (`asistencia:manage`) para **deshacer** una marca: es lo que permite corregir escaneos erróneos y desbloquear el 409 de `removeActividad` (que exige 0 filas activas) — sin él, una actividad con asistencia no se podía eliminar jamás.
+- **Token (stateless)**: `presencia:v1:<uuidActividad>:<expMs>:<hmac base64url>` — HMAC-SHA256 con `JWT_SECRET` (validado al arrancar en `main.ts`), comparación con `timingSafeEqual`, TTL 24 h (`PRESENCIA_QR_TTL_MS`). Nada de estado en servidor: verificar es autónomo. Cualquier alteración (id, firma, formato) o vencimiento → **400**. Actividad CANCELADA → **409**.
+- **Reglas de negocio**: idempotente (ya PRESENTE → no reescribe ni audita, `yaRegistrado: true`); AUSENTE/JUSTIFICADO → sobrescribe a PRESENTE; reutiliza `unidadesMarcables`+`whereMiembrosMarcables` (JOVEN+ACTIVO+ámbito) para validar que el miembro pertenece a la unidad de la actividad. Auditorías nuevas **`ASISTENCIA_QR`** y **`ASISTENCIA_DELETED`** (acciones libres).
+- **Frontend**: deps `qrcode`+`@types/qrcode` (pintar) y `@zxing/browser`+`@zxing/library` (escanear). `DialogoQrPresencia` (anidado en `DialogoAsistencia` vía botón "QR de presencia", con "Regenerar"), `ScannerPresencia` (cámara + **fallback de código manual**, montado en `MiProgresionPage` — única ruta editable por JOVEN, `App.tsx` intocado) y botón **"Limpiar"** por fila de la planilla (DELETE → recarga).
+- **Tests**: backend **467/467** (36 suites; `presencia-qr.spec.ts` nuevo con 8: formato/base64url, alteraciones, vencido, formatos raros + bloques en `eventos.service.spec`: generar/cancelada/ABAC, idempotencia, sobrescritura, sin miembroId, unidad ajena) · integración **62/62** (10 suites; `presencia.integration.spec.ts` nuevo con 9: QR → auto-registro → idempotencia → alterado/vencido 400 → unidad ajena 403 → sin miembroId 403 → cancelada 409 → DELETE libera el borrado) · frontend lint/build/**43/43** · E2E **29/29** (2 nuevos: escaneo real desde mi-progresión con verificación de la fila PRESENTE + contrato completo: idempotencia, alterado/basura 400, joven sin `asistencia:manage` 403 y DELETE que deshace la marca).
 
 ---
 
@@ -394,7 +403,7 @@ Fase 5 (1-2 d)   →  Biblioteca/Documentos
   │
 Fase 6 (3-4 d)   →  Completar formación, datos-scout, programas-mundiales
   │
-Fase 7 (varia)   →  ✅ 7a PDF hecho · luego QR → PWA → Finanzas... + multi-grupo SOLO si aplica
+Fase 7 (varia)   →  ✅ 7a PDF · ✅ 7b QR presencia · → 7c multi-grupo (DECIDIDA: SÍ) → PWA → Finanzas
   │
 Fase 8 (cont.)   →  tests/E2E/deuda en cada cierre de fase
 ```
@@ -405,7 +414,7 @@ Fase 8 (cont.)   →  tests/E2E/deuda en cada cierre de fase
 
 ## ❓ Decisiones que necesito antes de empezar
 
-1. **¿Un solo grupo o varios?** → define si la multi-grupo se ejecuta o sólo se "prepara" (manteniendo `grupoId` en los modelos nuevos).
+1. **¿Un solo grupo o varios?** → ✅ **Resuelto (2026-11-11): SÍ, multi-grupo** → fase propia 7c antes de PWA y Finanzas.
 2. **Notificaciones: ¿sólo in-app (v1) o ya email?** → nodemailer añade ~1 día y requiere SMTP (¿tienes?).
 3. **Permisos de `datos-scout`: ¿nuevos (`datosscout:*`) o reutilizar `joven:*`?** → recomiendo nuevos.
 4. **¿Arranco por el PRE (deuda bloqueante) + Fase 1?** → es lo que yo haría.

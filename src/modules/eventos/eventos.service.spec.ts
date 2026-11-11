@@ -1,6 +1,7 @@
 import { BadRequestException, ConflictException, ForbiddenException, NotFoundException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { EventosService } from './eventos.service';
+import { firmarPresencia } from './presencia-qr';
 import { PrismaService } from '../prisma/prisma.service';
 import { AuditService } from '../audit/audit.service';
 import { UnitPolicy } from '../../common/policies/unit.policy';
@@ -28,10 +29,11 @@ describe('EventosService', () => {
             findMany: jest.fn(),
             findFirst: jest.fn(),
             count: jest.fn(),
+            create: jest.fn(),
             upsert: jest.fn(),
             update: jest.fn(),
         },
-        miembro: { findMany: jest.fn() },
+        miembro: { findMany: jest.fn(), findFirst: jest.fn() },
         organizacionNodo: { findFirst: jest.fn() },
     };
 
@@ -595,6 +597,217 @@ describe('EventosService', () => {
                 ForbiddenException,
             );
             expect(mockPrisma.asistencia.findMany).not.toHaveBeenCalled();
+        });
+    });
+
+    // ── QR de presencia (Fase 7b) ────────────────────────────────────
+
+    describe('removeAsistencia', () => {
+        it('soft-deletea y audita ASISTENCIA_DELETED', async () => {
+            mockPrisma.asistencia.findFirst.mockResolvedValue({
+                id: 'as1',
+                estado: 'PRESENTE',
+                actividadId: 'a1',
+            });
+            mockPrisma.actividad.findFirst.mockResolvedValue({
+                id: 'a1',
+                titulo: 'Reunion',
+                Planificacion: { unidadId: null },
+            });
+            mockPrisma.asistencia.update.mockResolvedValue({});
+
+            await service.removeAsistencia('as1', admin);
+
+            expect(mockPrisma.asistencia.update).toHaveBeenCalledWith({
+                where: { id: 'as1' },
+                data: { deletedAt: expect.any(Date) },
+            });
+            expect(mockAudit.logAction).toHaveBeenCalledWith(
+                expect.objectContaining({ action: 'ASISTENCIA_DELETED', targetId: 'as1' }),
+            );
+        });
+
+        it('lanza NotFoundException si la asistencia no existe', async () => {
+            mockPrisma.asistencia.findFirst.mockResolvedValue(null);
+
+            await expect(service.removeAsistencia('x', admin)).rejects.toThrow(NotFoundException);
+            expect(mockPrisma.asistencia.update).not.toHaveBeenCalled();
+        });
+    });
+
+    describe('generarQrPresencia', () => {
+        const actividadActiva = {
+            id: '11111111-2222-4333-8444-555555555555',
+            titulo: 'Reunion',
+            fecha: new Date(),
+            tipo: 'REUNION',
+            estado: 'PENDIENTE',
+            Planificacion: { unidadId: 'u-manada' },
+        };
+
+        it('devuelve un codigo firmado con expiracion', async () => {
+            mockPrisma.actividad.findFirst.mockResolvedValue(actividadActiva);
+
+            const result = await service.generarQrPresencia(actividadActiva.id, admin);
+
+            expect(result.actividadId).toBe(actividadActiva.id);
+            expect(result.codigo).toMatch(/^presencia:v1:/);
+            expect(result.expira.getTime()).toBeGreaterThan(Date.now());
+        });
+
+        it('rechaza una actividad cancelada con ConflictException', async () => {
+            mockPrisma.actividad.findFirst.mockResolvedValue({
+                ...actividadActiva,
+                estado: 'CANCELADA',
+            });
+
+            await expect(service.generarQrPresencia(actividadActiva.id, admin)).rejects.toThrow(
+                ConflictException,
+            );
+        });
+
+        it('aplica ABAC:propaga Forbidden para una unidad fuera de alcance', async () => {
+            mockUnitPolicy.assertCanManageUnit.mockRejectedValue(new ForbiddenException('sin acceso'));
+            mockPrisma.actividad.findFirst.mockResolvedValue(actividadActiva);
+
+            await expect(service.generarQrPresencia(actividadActiva.id, adultoManada)).rejects.toThrow(
+                ForbiddenException,
+            );
+        });
+    });
+
+    describe('registrarPresencia', () => {
+        const ACTIVIDAD_ID = '11111111-2222-4333-8444-555555555555';
+        const MIEMBRO_ID = '99999999-8888-4777-8666-555555555555';
+        const joven: any = {
+            id: 'user-joven',
+            roles: ['JOVEN'],
+            unidadId: 'u-manada',
+            nodoId: null,
+            miembroId: MIEMBRO_ID,
+        };
+        const actividadActiva = {
+            id: ACTIVIDAD_ID,
+            titulo: 'Reunion',
+            fecha: new Date(),
+            tipo: 'REUNION',
+            estado: 'PENDIENTE',
+            Planificacion: { unidadId: 'u-manada' },
+        };
+
+        beforeEach(() => {
+            // el joven NO esta restringido por unidad → alcance global, pero el
+            // where de miembros lo acota a la unidad de la planificacion.
+            mockUnitPolicy.unidadesAlcance.mockResolvedValue(null);
+        });
+
+        it('registra PRESENTE, audita ASISTENCIA_QR y devuelve yaRegistrado=false', async () => {
+            const { codigo } = firmarPresencia(ACTIVIDAD_ID);
+            mockPrisma.actividad.findFirst.mockResolvedValue(actividadActiva);
+            mockPrisma.miembro.findFirst.mockResolvedValue({ id: MIEMBRO_ID });
+            mockPrisma.asistencia.findFirst.mockResolvedValue(null);
+            mockPrisma.asistencia.create.mockResolvedValue({});
+
+            const result = await service.registrarPresencia(codigo, joven);
+
+            expect(result.estado).toBe('PRESENTE');
+            expect(result.yaRegistrado).toBe(false);
+            expect(result.actividad).toEqual(
+                expect.objectContaining({ id: ACTIVIDAD_ID, titulo: 'Reunion' }),
+            );
+            expect(mockPrisma.asistencia.create).toHaveBeenCalledWith({
+                data: expect.objectContaining({
+                    actividadId: ACTIVIDAD_ID,
+                    miembroId: MIEMBRO_ID,
+                    estado: 'PRESENTE',
+                    createdBy: 'user-joven',
+                }),
+            });
+            expect(mockAudit.logAction).toHaveBeenCalledWith(
+                expect.objectContaining({ action: 'ASISTENCIA_QR', targetId: ACTIVIDAD_ID }),
+            );
+        });
+
+        it('es idempotente: si ya esta PRESENTE no reescribe ni audita', async () => {
+            const { codigo } = firmarPresencia(ACTIVIDAD_ID);
+            mockPrisma.actividad.findFirst.mockResolvedValue(actividadActiva);
+            mockPrisma.miembro.findFirst.mockResolvedValue({ id: MIEMBRO_ID });
+            mockPrisma.asistencia.findFirst.mockResolvedValue({
+                id: 'as1',
+                estado: 'PRESENTE',
+                deletedAt: null,
+            });
+
+            const result = await service.registrarPresencia(codigo, joven);
+
+            expect(result.yaRegistrado).toBe(true);
+            expect(mockPrisma.asistencia.update).not.toHaveBeenCalled();
+            expect(mockPrisma.asistencia.create).not.toHaveBeenCalled();
+            expect(mockAudit.logAction).not.toHaveBeenCalled();
+        });
+
+        it('sobrescribe AUSENTE existente a PRESENTE', async () => {
+            const { codigo } = firmarPresencia(ACTIVIDAD_ID);
+            mockPrisma.actividad.findFirst.mockResolvedValue(actividadActiva);
+            mockPrisma.miembro.findFirst.mockResolvedValue({ id: MIEMBRO_ID });
+            mockPrisma.asistencia.findFirst.mockResolvedValue({
+                id: 'as1',
+                estado: 'AUSENTE',
+                deletedAt: null,
+            });
+            mockPrisma.asistencia.update.mockResolvedValue({});
+
+            const result = await service.registrarPresencia(codigo, joven);
+
+            expect(result.yaRegistrado).toBe(false);
+            expect(mockPrisma.asistencia.update).toHaveBeenCalledWith({
+                where: { id: 'as1' },
+                data: expect.objectContaining({ estado: 'PRESENTE', updatedBy: 'user-joven' }),
+            });
+            expect(mockPrisma.asistencia.create).not.toHaveBeenCalled();
+        });
+
+        it('rechaza un codigo alterado con BadRequestException (sin tocar la BD)', async () => {
+            const { codigo } = firmarPresencia(ACTIVIDAD_ID);
+            const alterado = codigo.replace(ACTIVIDAD_ID, '99999999-9999-4999-8999-999999999999');
+
+            await expect(service.registrarPresencia(alterado, joven)).rejects.toThrow(
+                BadRequestException,
+            );
+            expect(mockPrisma.actividad.findFirst).not.toHaveBeenCalled();
+        });
+
+        it('rechaza si el usuario no tiene miembroId vinculado', async () => {
+            const { codigo } = firmarPresencia(ACTIVIDAD_ID);
+
+            await expect(
+                service.registrarPresencia(codigo, { ...joven, miembroId: null }),
+            ).rejects.toThrow(ForbiddenException);
+            expect(mockPrisma.actividad.findFirst).not.toHaveBeenCalled();
+        });
+
+        it('rechaza si el miembro no pertenece a la unidad de la actividad', async () => {
+            const { codigo } = firmarPresencia(ACTIVIDAD_ID);
+            mockPrisma.actividad.findFirst.mockResolvedValue(actividadActiva);
+            mockPrisma.miembro.findFirst.mockResolvedValue(null); // fuera del ambito
+
+            await expect(service.registrarPresencia(codigo, joven)).rejects.toThrow(
+                ForbiddenException,
+            );
+            expect(mockPrisma.asistencia.create).not.toHaveBeenCalled();
+            expect(mockAudit.logAction).not.toHaveBeenCalled();
+        });
+
+        it('rechaza el QR de una actividad cancelada', async () => {
+            const { codigo } = firmarPresencia(ACTIVIDAD_ID);
+            mockPrisma.actividad.findFirst.mockResolvedValue({
+                ...actividadActiva,
+                estado: 'CANCELADA',
+            });
+
+            await expect(service.registrarPresencia(codigo, joven)).rejects.toThrow(
+                ConflictException,
+            );
         });
     });
 });

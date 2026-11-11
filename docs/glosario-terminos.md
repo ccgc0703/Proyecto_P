@@ -174,6 +174,7 @@ endpoint y fue borrado junto con `roles.decorator.ts`.
 | `rbac` | `GET/POST /rbac/roles`, `POST /rbac/roles/:id/permisos`, `GET /rbac/permisos` | `rbac:*` |
 | `audit` | `POST /audit/retencion?dias=N` (logs inmutables) | `rbac:manage` |
 | `catalogo` | `areas`, `etapas`, `indicadores`, `adelantos` (CRUD) | `catalogo:view/manage` |
+| `eventos` | planificaciones CRUD, actividades CRUD (`POST /eventos/planificaciones/:id/actividades`, `PATCH/DELETE /eventos/actividades/:id`), planilla `GET/POST /eventos/actividades/:id/asistencias`, `PATCH /eventos/asistencias/:id`, **`DELETE /eventos/asistencias/:id`** (deshacer marca, 7b), **`GET /eventos/actividades/:id/qr`** (QR, 7b), **`POST /eventos/presencia`** (auto-registro, 7b), `GET /eventos/unidades/:unidadId/asistencias` | `evento:view/create`, `asistencia:view/manage`; `self:update` sólo en `POST /eventos/presencia` |
 | `progresion` | `GET /progresion/jovenes/:id/resumen|indicadores|export.xlsx`, `PATCH .../indicadores/:id`, `POST .../adelantos/:id/iniciar`, `POST /progresiones/:id/solicitar|aprobar|rechazar`, `GET /progresion/unidades/:id/jovenes` | `progresion:*` |
 | `organizacion` | `arbol`, `nodos` CRUD, `unidades/:id/grupo`, `cargos-permitidos`, `nodos/:id/cargos`, `cargos/:id` | `organizacion:*` + rol editor |
 | `adultos` | `GET /adultos/mi-perfil`, CRUD, `POST /adultos/:id/cuenta` | `user:*`/`self:*` |
@@ -198,6 +199,12 @@ endpoint y fue borrado junto con `roles.decorator.ts`.
 `FORMACION_CREATED`, `FORMACION_UPDATED`, `FORMACION_DELETED`,
 `DATOS_SCOUT_CREATED`, `DATOS_SCOUT_UPDATED`,
 `PROGRAMA_MUNDIAL_CREATED`, `PROGRAMA_MUNDIAL_UPDATED`, `PROGRAMA_MUNDIAL_DELETED`.
+
+Eventos (Fase 1) y presencia QR (7b): `PLANIFICACION_CREATED`, `PLANIFICACION_UPDATED`,
+`PLANIFICACION_DELETED`, `ACTIVIDAD_CREATED`, `ACTIVIDAD_UPDATED`, `ACTIVIDAD_DELETED`,
+`ASISTENCIA_BULK`, `ASISTENCIA_UPDATED`, **`ASISTENCIA_DELETED`** (7b · deshacer una
+marca, `DELETE /eventos/asistencias/:id`), **`ASISTENCIA_QR`** (7b · auto-registro de
+presencia vía QR). Son acciones libres: no hay enum, se escriben como texto.
 
 Tres tablas de auditoría coexistentes. Roles (§10.8 ✅, documentado en `README.md`
 y con comentario en `schema.prisma`, sin tocar la BD):
@@ -248,6 +255,9 @@ Permisos del frontend: `frontend/src/types/auth.ts` (`PERMISSIONS`, `ROL_HIERARC
 | **Seed idempotente** | `npm run seed` no duplica datos; incluye renombres de compatibilidad (`Caminantes→Comunidad`, `ADULTO_CAMINANTES→ADULTO_COMUNIDAD`, `SECRETARIO→REPRESENTANTE_UNIDAD`). |
 | **Cargos vigentes** | `CargoAsignacion.hasta = null` significa vigente; `hasta` con fecha = cerrado (renombrado/desplazado). |
 | **Export PDF** | Módulo `pdf` (Fase 7a): `pdfmake` genera constancia, carnet y listado de asistencia con `StreamableFile`. Reutiliza los permisos/ABAC de sus endpoints de lectura. |
+| **QR de presencia** | Fase 7b: token `presencia:v1:<uuidActividad>:<expMs>:<firma>` firmado con HMAC-SHA256 sobre `JWT_SECRET` (TTL 24 h, stateless, `timingSafeEqual`; alterado/vencido → 400, actividad cancelada → 409). El adulto lo genera (`asistencia:manage` + ABAC) y el joven se auto-registra PRESENTE con `self:update` (exige vínculo `miembroId`; idempotente). Frontend: `qrcode` + `@zxing/browser`, fallback de código manual. |
+| **Deshacer asistencia** | `DELETE /eventos/asistencias/:id` (7b, `asistencia:manage`): soft-delete de la marca. Necesario para corregir escaneos erróneos y para desbloquear el 409 de `DELETE /eventos/actividades/:id` (exige 0 filas de asistencia activas). UI: botón "Limpiar" por fila de la planilla. |
+| **Multi-grupo** | Decisión 2026-11-11: **SÍ** → fase propia **7c**, antes de PWA y Finanzas (todo lo posterior nace group-aware). Hoy el sistema es mono-grupo salvo `Unidad.grupoId` (`@@unique([grupoId, tipo])`); hasta entonces todo modelo nuevo lleva `grupoId` o lo deriva de `Unidad.grupoId`. Ver `plan-expansion.md` §Fase 7. |
 | **Políticas de pdfmake** | `setUrlAccessPolicy(() => false)` bloquea toda URL remota dentro del PDF; `setLocalAccessPolicy` **no puede ser deny-all** (rompería las fuentes Roboto) → normaliza separadores y sólo permite `node_modules/pdfmake/fonts/`. Los métodos de `pdfmake` usan `this`: importar con `import * as pdfmake`, nunca destructurado. |
 
 ---

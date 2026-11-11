@@ -96,6 +96,29 @@ export interface MarcaAsistencia {
   observacion?: string;
 }
 
+/** QR de presencia generado por el adulto (Fase 7b). */
+export interface QrPresencia {
+  actividadId: string;
+  titulo: string;
+  /** Token firmado HMAC-SHA256 con caducidad de 24 h. */
+  codigo: string;
+  expira: string;
+}
+
+/** Resultado del auto-registro de presencia por QR (Fase 7b). */
+export interface ResultadoPresencia {
+  actividad: {
+    id: string;
+    titulo: string;
+    fecha: string;
+    tipo: TipoActividad;
+    estado: EstadoActividad;
+  };
+  estado: EstadoAsistencia;
+  /** `true` si ya estaba marcado como presente (no se reescribió). */
+  yaRegistrado: boolean;
+}
+
 export const ESTADOS_PLANIFICACION: { valor: EstadoPlanificacion; label: string; clase: string }[] = [
   { valor: 'BORRADOR', label: 'Borrador', clase: 'bg-surface-container-high text-outline border-outline/10' },
   { valor: 'APROBADO', label: 'Aprobado', clase: 'bg-blue-500/5 text-blue-600 border-blue-500/20' },
