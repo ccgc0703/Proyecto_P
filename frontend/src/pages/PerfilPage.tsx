@@ -253,8 +253,7 @@ export const PerfilPage = () => {
                 {user?.roles.map((role) => (
                   <span
                     key={role}
-                    className="chip chip-mono"
-                    style={{ background: 'var(--color-primary)', color: '#fff' }}
+                    className="chip chip-mono fill-brand"
                   >
                     {role.replace(/_/g, ' ')}
                   </span>

@@ -387,11 +387,7 @@ export const DashboardPage = () => {
           </Card>
 
           <section
-            className="card card-lg relative overflow-hidden flex flex-col justify-between min-h-[300px]"
-            style={{
-              background: 'linear-gradient(150deg, var(--color-primary) 0%, var(--color-primary-container) 100%)',
-              color: '#fff',
-            }}
+            className="card card-lg relative overflow-hidden flex flex-col justify-between min-h-[300px] fill-brand"
           >
             <div
               aria-hidden="true"

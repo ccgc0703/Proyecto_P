@@ -93,6 +93,156 @@
   --sh-gold: 0 4px 16px rgba(255, 184, 0, 0.28);
 }
 
+/* ═══ Modo oscuro — Fase 4.1 ═════════════════════════════════════════════
+   Variante nocturna del mismo verde profundo (maqueta: «los tokens ya están
+   listos»). Este bloque va SIN capa a propósito: Tailwind v4 emite los tokens
+   de @theme dentro de @layer theme y una regla sin capa siempre vence a una
+   regla en capa → redefinir aquí los --color-* voltea a la vez las utilidades
+   de color de Tailwind (bg y text) y todas las clases de componentes que
+   consumen var(--color-…). Aplicado por `stores/temaStore.ts` vía <html data-theme>. */
+[data-theme="dark"] {
+  color-scheme: dark;
+
+  /* Marca: el primario aclara para SER TEXTO legible sobre fondo oscuro.
+     Los rellenos con texto blanco conservan el bosque → ver .fill-brand. */
+  --color-primary: #7ec9ad;
+  --color-on-primary: #062019;
+  --color-primary-container: #2b7a63;
+  --color-on-primary-container: #b7ecd9;
+
+  --color-secondary: #9db4e0;
+  --color-on-secondary: #10182c;
+  --color-secondary-container: #31436a;
+  --color-tertiary: #e8cf9a;
+  --color-on-tertiary: #2a1e00;
+  --color-tertiary-container: #4a3708;
+
+  /* El dorado Scout no cambia: oro + tinta verde funciona en ambos modos. */
+  --color-accent: #ffb800;
+  --color-on-accent: #003629;
+
+  --color-background: #0a110e;
+  --color-on-background: #e7ede9;
+  --color-surface: #0a110e;
+  --color-on-surface: #e7ede9;
+  --color-surface-variant: #232d28;
+  --color-on-surface-variant: #b7c1bb;
+  --color-outline: #8d978f;
+  --color-outline-variant: #39433d;
+
+  --color-surface-container-lowest: #0f1714;
+  --color-surface-container-low: #131c18;
+  --color-surface-container: #182119;
+  --color-surface-container-high: #1f2a25;
+  --color-surface-container-highest: #27332c;
+
+  /* Estados: rellenos claros (tinta oscura encima) + contenedores oscuros.
+     Convención de la casa: on-X = tinta del contenedor X-container. */
+  --color-error: #ff7d74;
+  --color-error-container: #561511;
+  --color-on-error: #ffe7e4;
+  --color-on-error-container: #ffd9d5;
+
+  --color-success: #6fdba4;
+  --color-success-container: #10342a;
+  --color-on-success: #b7ecd4;
+  --color-on-success-container: #b7ecd4;
+
+  --color-warning: #f0c14b;
+  --color-warning-container: #4a3a10;
+  --color-on-warning: #ffe9bd;
+  --color-on-warning-container: #ffe9bd;
+
+  --color-info: #7ea3d6;
+  --color-on-info: #0b1a33;
+
+  /* Alcances del calendario: pasan a tonos claros para leerse como texto. */
+  --color-alc-grupo: #7ec9ad;
+  --color-alc-distrito: #9db4e0;
+  --color-alc-region: #e3c98d;
+  --color-alc-nacional: #ffcf57;
+
+  /* Sombras más densas: sobre fondo oscuro las tintas claras no se leen. */
+  --sh-1: 0 1px 2px rgba(0, 0, 0, 0.45), 0 2px 8px rgba(0, 0, 0, 0.35);
+  --sh-2: 0 2px 4px rgba(0, 0, 0, 0.45), 0 8px 24px rgba(0, 0, 0, 0.5);
+  --sh-3: 0 4px 8px rgba(0, 0, 0, 0.5), 0 16px 40px rgba(0, 0, 0, 0.55);
+}
+
+/* ── Rellenos de marca en oscuro ───────────────────────────────────────────
+   En oscuro --color-primary es menta (para texto), así que los rellenos que
+   llevan texto blanco deben seguir pintando verde bosque profundo. Firma
+   compartida para estilos inline de páginas (Dashboard, Perfil). */
+.fill-brand {
+  background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-container) 100%);
+  color: #fff;
+}
+[data-theme="dark"] .fill-brand {
+  background: linear-gradient(135deg, #10493a 0%, #0a3327 100%);
+}
+[data-theme="dark"] .btn-primary,
+[data-theme="dark"] .btn-secondary,
+[data-theme="dark"] .sb-item.on,
+[data-theme="dark"] .wiz-step.on,
+[data-theme="dark"] .avatar-xl,
+[data-theme="dark"] .np-head,
+[data-theme="dark"] .hero.grad,
+[data-theme="dark"] .login-brand,
+[data-theme="dark"] .sb-user .av,
+[data-theme="dark"] .user-btn .av,
+[data-theme="dark"] .chip-btn.on,
+[data-theme="dark"] .seg span.hi,
+[data-theme="dark"] .crumb.on,
+[data-theme="dark"] .pg-btn.on,
+[data-theme="dark"] .tab.on .cnt,
+[data-theme="dark"] .perm.ent {
+  background: linear-gradient(135deg, #10493a 0%, #0a3327 100%);
+}
+[data-theme="dark"] .btn-secondary,
+[data-theme="dark"] .seg span.hi,
+[data-theme="dark"] .crumb.on,
+[data-theme="dark"] .pg-btn.on,
+[data-theme="dark"] .tab.on .cnt,
+[data-theme="dark"] .perm.ent {
+  background: #0e4436;
+}
+/* Rellenos de estado: el token de estado es claro en oscuro → tinta oscura. */
+[data-theme="dark"] .badge,
+[data-theme="dark"] .wiz-step.done .n,
+[data-theme="dark"] .bg-error,
+[data-theme="dark"] .bg-success {
+  color: #062018;
+}
+/* Chips de eventos (alcance): los tintes verdes claros casi no se distinguen
+   sobre fondo oscuro → equivalentes luminosos. */
+[data-theme="dark"] .cal-ev.g-grupo { background: rgba(126, 201, 173, 0.14); }
+[data-theme="dark"] .cal-ev.g-distrito { background: rgba(157, 180, 224, 0.14); }
+[data-theme="dark"] .cal-ev.g-region { background: rgba(227, 201, 141, 0.13); }
+[data-theme="dark"] .cal-ev.g-nacional { background: rgba(255, 207, 87, 0.17); }
+
+/* ── Rellenos hardcodeados que no leen tokens ──────────────────────────────
+   `.sb` y `.topbar` usan translúcidos claros fijos (glass del claro) y las
+   tablas pintan zebras blancas al 55 %: en oscuro deben oscurecerse a mano. */
+[data-theme="dark"] .sb {
+  background: rgba(19, 28, 24, 0.82); /* surface-container-low oscuro */
+  box-shadow: 2px 0 24px rgba(0, 0, 0, 0.45);
+}
+[data-theme="dark"] .topbar {
+  background: rgba(10, 17, 14, 0.72); /* background oscuro */
+  box-shadow: 0 1px 0 rgba(57, 67, 61, 0.45), 0 4px 18px rgba(0, 0, 0, 0.3);
+}
+[data-theme="dark"] table.dt tbody tr:nth-child(odd) {
+  background: rgba(255, 255, 255, 0.035);
+}
+/* Utilidades bg-white con alfa escritas en TSX (incluidas las de archivos
+   que no se tocan): el blanco puro destella en oscuro → veladura sutil que
+   conserva la intención de capa clara encima de la tarjeta. */
+[data-theme="dark"] .bg-white\/15 { background-color: rgba(255, 255, 255, 0.1); }
+[data-theme="dark"] .bg-white\/40,
+[data-theme="dark"] .bg-white\/50,
+[data-theme="dark"] .bg-white\/60 { background-color: rgba(255, 255, 255, 0.06); }
+[data-theme="dark"] .hover\:bg-white\/40:hover { background-color: rgba(255, 255, 255, 0.08); }
+[data-theme="dark"] .hover\:bg-white:hover { background-color: rgba(255, 255, 255, 0.1); }
+
 @layer base {
   * {
     box-sizing: border-box;

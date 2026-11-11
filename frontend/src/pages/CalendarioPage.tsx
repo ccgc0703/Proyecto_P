@@ -794,7 +794,9 @@ export const CalendarioPage = () => {
       >
         <div
           className={`flex items-center gap-2 px-4 py-3 rounded-xl shadow-xl text-xs font-bold ${
-            snack?.tipo === 'success' ? 'bg-success text-on-primary' : 'bg-error text-on-error'
+            snack?.tipo === 'success'
+              ? 'bg-success-container text-on-success-container'
+              : 'bg-error-container text-on-error-container'
           }`}
         >
           {snack?.tipo === 'success' ? (

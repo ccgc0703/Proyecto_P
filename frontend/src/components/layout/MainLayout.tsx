@@ -2,6 +2,7 @@ import { Outlet, Navigate, useRouterState, useNavigate } from '@tanstack/react-r
 import { useEffect, useState } from 'react';
 import { useAuth } from '../../hooks/useAuth';
 import { useNotificaciones } from '../../hooks/useNotificaciones';
+import { useTemaStore } from '../../stores/temaStore';
 import { Sidebar } from './Sidebar';
 import { RequierePermiso } from '../common/RequierePermiso';
 import { permisosDeRuta } from '../common/rutaPermisos';
@@ -12,6 +13,8 @@ import {
   NotificationsNone,
   Search,
   Menu as MenuIcon,
+  DarkMode,
+  LightMode,
 } from '@mui/icons-material';
 
 const PAGE_TITLES: Record<string, string> = {
@@ -41,6 +44,9 @@ export const MainLayout = () => {
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [notifOpen, setNotifOpen] = useState(false);
   const { isAuthenticated, isLoading, user, logout } = useAuth();
+  // Fase 4.1 — modo oscuro (tokens + MUI comparten este estado)
+  const modoTema = useTemaStore((s) => s.modo);
+  const alternarTema = useTemaStore((s) => s.alternar);
   const {
     items: notificaciones,
     noLeidas,
@@ -144,6 +150,18 @@ export const MainLayout = () => {
           </div>
 
           <div className="tb-right">
+            <button
+              type="button"
+              className="icon-btn"
+              onClick={() => alternarTema()}
+              aria-label={modoTema === 'oscuro' ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro'}
+              aria-pressed={modoTema === 'oscuro'}
+              title={modoTema === 'oscuro' ? 'Modo claro' : 'Modo oscuro'}
+              data-testid="btn-tema"
+            >
+              {modoTema === 'oscuro' ? <LightMode /> : <DarkMode />}
+            </button>
+
             <div className="relative">
               <button
                 type="button"

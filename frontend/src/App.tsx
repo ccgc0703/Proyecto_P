@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import { ThemeProvider, CssBaseline, Box, CircularProgress } from '@mui/material';
 import {
   RouterProvider,
@@ -9,10 +10,11 @@ import {
   redirect,
   useParams,
 } from '@tanstack/react-router';
-import { theme } from './theme/theme';
+import { crearTema } from './theme/theme';
 import { MainLayout } from './components/layout/MainLayout';
 import { LoginPage } from './pages/LoginPage';
 import { useAuthStore } from './stores/authStore';
+import { useTemaStore } from './stores/temaStore';
 
 // ── F4.4 · Code-splitting ──────────────────────────────────────────────────
 // Cada página de /app se importa bajo demanda: genera un chunk por ruta y
@@ -400,8 +402,12 @@ const AppWithHydration = () => {
 };
 
 const App = () => {
+  // Fase 4.1: MUI sigue el mismo claro/oscuro que los tokens de index.css.
+  const modo = useTemaStore((s) => s.modo);
+  const temaMUI = useMemo(() => crearTema(modo === 'oscuro' ? 'dark' : 'light'), [modo]);
+
   return (
-    <ThemeProvider theme={theme}>
+    <ThemeProvider theme={temaMUI}>
       <CssBaseline />
       <AppWithHydration />
     </ThemeProvider>
