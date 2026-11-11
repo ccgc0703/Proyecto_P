@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Dialog, DialogTitle, DialogContent, DialogActions, CircularProgress } from '@mui/material';
-import { Checklist, Save } from '@mui/icons-material';
+import { Checklist, PictureAsPdf, Save } from '@mui/icons-material';
 import { eventosApi } from '../../api';
+import { usePermission } from '../../hooks/usePermission';
 import {
   EstadoAsistencia,
   ESTADOS_ASISTENCIA,
@@ -32,12 +33,14 @@ const fechaCorta = (iso: string) => new Date(iso).toLocaleDateString('es-VE', {
  * masivo: solo envía las filas que cambiaron respecto a lo cargado.
  */
 export const DialogoAsistencia = ({ open, actividadId, canManage, onClose, onSaved }: DialogoAsistenciaProps) => {
+  const puedeDescargar = usePermission('asistencia:view');
   const [planilla, setPlanilla] = useState<PlanillaAsistencia | null>(null);
   const [cargando, setCargando] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [marcas, setMarcas] = useState<Record<string, EstadoAsistencia>>({});
   const [guardando, setGuardando] = useState(false);
   const [guardado, setGuardado] = useState(false);
+  const [descargandoPdf, setDescargandoPdf] = useState(false);
 
   const cargar = async () => {
     if (!actividadId) return;
@@ -114,6 +117,19 @@ export const DialogoAsistencia = ({ open, actividadId, canManage, onClose, onSav
   const marcarFila = (miembroId: string, estado: EstadoAsistencia) => {
     setGuardado(false);
     setMarcas((prev) => ({ ...prev, [miembroId]: estado }));
+  };
+
+  const descargarPdf = async () => {
+    if (!actividadId) return;
+    setDescargandoPdf(true);
+    setError(null);
+    try {
+      await eventosApi.listadoAsistenciaPdf(actividadId);
+    } catch (err: unknown) {
+      setError(getApiErrorMessage(err, 'No se pudo generar el listado de asistencia.'));
+    } finally {
+      setDescargandoPdf(false);
+    }
   };
 
   return (
@@ -212,6 +228,21 @@ export const DialogoAsistencia = ({ open, actividadId, canManage, onClose, onSav
           {cambiadas.length > 0 ? `${cambiadas.length} cambio(s) pendiente(s)` : guardado ? '✓ Guardado' : 'Sin cambios'}
         </div>
         <div className="flex gap-4">
+          {puedeDescargar && planilla && (
+            <button
+              type="button"
+              onClick={descargarPdf}
+              disabled={descargandoPdf}
+              className="px-6 py-3 font-black text-[10px] uppercase tracking-widest text-outline hover:text-primary transition-colors disabled:opacity-50 inline-flex items-center gap-2"
+            >
+              {descargandoPdf ? (
+                <CircularProgress size={14} color="inherit" />
+              ) : (
+                <PictureAsPdf sx={{ fontSize: 14 }} />
+              )}
+              Planilla (.pdf)
+            </button>
+          )}
           <button
             type="button"
             onClick={onClose}

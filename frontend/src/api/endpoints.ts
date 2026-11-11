@@ -182,6 +182,9 @@ export const eventosApi = {
     api.patch(`/eventos/asistencias/${asistenciaId}`, data).then((r) => r.data.data),
   getAsistenciasUnidad: (unidadId: string, params?: { desde?: string; hasta?: string }) =>
     api.get(`/eventos/unidades/${unidadId}/asistencias`, { params }).then((r) => r.data.data),
+  /** Listado de asistencia de la actividad en PDF (Fase 7a). */
+  listadoAsistenciaPdf: (actividadId: string) =>
+    descargarRemoto(`/pdf/asistencia/${actividadId}`, 'listado-asistencia.pdf'),
 };
 
 export const dashboardApi = {
@@ -220,7 +223,12 @@ const nombreDeDisposition = (header: unknown, fallback: string): string => {
   return match?.[1] ?? fallback;
 };
 
-const descargarXlsx = async (url: string, fallback: string): Promise<string> => {
+/**
+ * Descarga un binario del API (xlsx/pdf) y lo dispara en el navegador.
+ * El nombre sale del `content-disposition`; si el proxy no lo expone se
+ * usa el `fallback`.
+ */
+const descargarRemoto = async (url: string, fallback: string): Promise<string> => {
   const respuesta = await api.get(url, { responseType: 'blob' });
   const nombre = nombreDeDisposition(respuesta.headers['content-disposition'], fallback);
   descargarArchivo(nombre, respuesta.data as Blob);
@@ -313,6 +321,10 @@ export const datosScoutApi = {
   /** Upsert: funciona aunque el miembro aún no tenga expediente. */
   actualizar: (miembroId: string, data: CambiosDatosScout): Promise<DatosScout> =>
     api.patch(`/datos-scout/miembro/${miembroId}`, data).then((r) => r.data.data as DatosScout),
+
+  /** Carnet del miembro en PDF (Fase 7a). */
+  carnetPdf: (miembroId: string) =>
+    descargarRemoto(`/pdf/carnet/${miembroId}`, 'carnet-scout.pdf'),
 };
 
 export const programasMundialesApi = {
@@ -368,13 +380,16 @@ export const progresionApi = {
   jovenesDeUnidad: (unidadId: string): Promise<FilaJovenUnidad[]> =>
     api.get(`/progresion/unidades/${unidadId}/jovenes`).then(r => r.data.data),
   exportJoven: (miembroId: string) =>
-    descargarXlsx(
+    descargarRemoto(
       `/progresion/jovenes/${miembroId}/export.xlsx`,
       'cuadro-adelanto-joven.xlsx',
     ),
   exportUnidad: (unidadId: string) =>
-    descargarXlsx(
+    descargarRemoto(
       `/progresion/unidades/${unidadId}/export.xlsx`,
       'cuadro-adelanto-unidad.xlsx',
     ),
+  /** Constancia de progresión del joven en PDF (Fase 7a). */
+  constanciaPdf: (miembroId: string) =>
+    descargarRemoto(`/pdf/constancia/${miembroId}`, 'constancia-progresion.pdf'),
 };

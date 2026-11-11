@@ -20,6 +20,7 @@ import {
   Block,
   Download,
   HowToReg,
+  PictureAsPdf,
   TrendingUp,
 } from '@mui/icons-material';
 import { catalogoApi, progresionApi, unidadesApi } from '../../api';
@@ -169,6 +170,21 @@ export const ProgresionAcciones = ({ miembroId, resumen, onChanged }: Progresion
     }
   };
 
+  const exportarConstancia = async () => {
+    setExportando(true);
+    try {
+      const nombre = await progresionApi.constanciaPdf(miembroId);
+      notificar('success', `Descargado: ${nombre}`);
+    } catch (err: unknown) {
+      notificar(
+        'error',
+        getApiErrorMessage(err, 'No se pudo generar la constancia de progresión.'),
+      );
+    } finally {
+      setExportando(false);
+    }
+  };
+
   return (
     <Box className="bg-surface-container-low p-8 rounded-[2rem] border border-outline-variant/10 space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
@@ -176,18 +192,32 @@ export const ProgresionAcciones = ({ miembroId, resumen, onChanged }: Progresion
           <TrendingUp fontSize="small" /> Acciones de Progresión
         </Typography>
         {puedeVer && (
-          <button
-            onClick={exportar}
-            disabled={exportando}
-            className="inline-flex items-center gap-2 px-4 py-2 bg-primary/10 text-primary rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-primary/20 transition-all disabled:opacity-50"
-          >
-            {exportando ? (
-              <CircularProgress size={14} color="inherit" />
-            ) : (
-              <Download sx={{ fontSize: 15 }} />
-            )}
-            Cuadro de Adelanto (.xlsx)
-          </button>
+          <div className="flex flex-wrap gap-3">
+            <button
+              onClick={exportar}
+              disabled={exportando}
+              className="inline-flex items-center gap-2 px-4 py-2 bg-primary/10 text-primary rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-primary/20 transition-all disabled:opacity-50"
+            >
+              {exportando ? (
+                <CircularProgress size={14} color="inherit" />
+              ) : (
+                <Download sx={{ fontSize: 15 }} />
+              )}
+              Cuadro de Adelanto (.xlsx)
+            </button>
+            <button
+              onClick={exportarConstancia}
+              disabled={exportando}
+              className="inline-flex items-center gap-2 px-4 py-2 bg-primary/10 text-primary rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-primary/20 transition-all disabled:opacity-50"
+            >
+              {exportando ? (
+                <CircularProgress size={14} color="inherit" />
+              ) : (
+                <PictureAsPdf sx={{ fontSize: 15 }} />
+              )}
+              Constancia (.pdf)
+            </button>
+          </div>
         )}
       </div>
 

@@ -331,13 +331,23 @@ Si mañana se dan de alta **Grupo Scout A** y **Grupo Scout B**:
 | Iniciativa | Descripción | Esfuerzo | Cuándo |
 |---|---|---|---|
 | **PWA offline** | `vite-plugin-pwa`: manifest + service worker cache. **En campo sin señal**, el adulto carga asistencia y sincroniza al volver (IndexedDB + cola). Es el mayor diferencial real para scouts. | 3-5 días | Tras Fase 1 |
-| **Export PDF** | `pdfmake`: constancia de progresión, carnet, listado de asistencia. Ya manejas `exceljs` → patrón conocido (`StreamableFile`). | 1-2 días | Tras Fase 1 |
+| ✅ **Export PDF** | `pdfmake`: constancia de progresión, carnet, listado de asistencia. Ya manejas `exceljs` → patrón conocido (`StreamableFile`). | 1-2 días | **Cerrado (Fase 7a)** |
 | **QR de presencia** | La `Actividad` genera QR; el joven escanea en la reunión → auto-asistencia. Requiere `@zxing/browser`. | 2-3 días | Tras Fase 1 |
 | **Finanzas (cuotas)** | Modelo `Cuota/Pago`, permisos `finanza:*` ya sembrados, cobro mensual por joven, estados, reporte. | 4-5 días | Tras Fase 1 |
 | **Inventario** | Préstamos de material con devolución. Permisos ya sembrados. | 2-3 días | posterior |
 | **Multi-grupo** | Ver arriba. | 3-5 días | Sólo si aplica |
 | **i18n** | `react-i18next` (ES/EN/PT) — WOSM es internacional. | 3 días | Baja prioridad |
 | **Observabilidad** | `@sentry/node` + métricas `/metrics` + alertas. | 1-2 días | Cuando haya producción real |
+
+### ✅ Ejecución — `pdf` CERRADO (Fase 7a · Export PDF)
+
+- **Alcance**: 1 submódulo, 3 documentos con `pdfmake` — constancia de progresión (A4), carnet (tarjeta 85,6 × 54 mm) y listado de asistencia (A4). Siguientes entregas de la Fase 7 en el orden acordado: QR de presencia → PWA offline → Finanzas.
+- **Backend**: `src/modules/pdf/` (`pdf.module/service/controller` + spec), registrado en `app.module.ts`. 3 endpoints con `StreamableFile`, `application/pdf` y `slug` en el filename: `GET /pdf/constancia/:miembroId`, `GET /pdf/carnet/:miembroId`, `GET /pdf/asistencia/:actividadId`.
+- **Permisos/ABAC**: se reutilizan los de lectura correspondientes, de modo que **exportar un PDF no amplía el alcance de nadie** — constancia = `progresion:view` + `assertSelf` (idéntico a `export.xlsx`), carnet = `datosscout:view` + `assertSelf` (idéntico a `GET /datos-scout/miembro/:id`), planilla = `asistencia:view` (el ABAC ya vive en `EventosService.listarAsistenciasActividad`). **Sin permisos nuevos.**
+- **Fuentes de datos (sin duplicar lógica)**: constancia → `ProgresionService.getDatosExportJoven` · planilla → `EventosService.listarAsistenciasActividad` · carnet → query propia en `PdfService` con *fail-closed* (`asegurarVisibilidad`: fuera del alcance → 404, patrón de `datos-scout`).
+- **Seguridad de pdfmake (verificada empíricamente)**: `setUrlAccessPolicy(() => false)` bloquea toda URL remota; `setLocalAccessPolicy` **no puede ser deny-all** (rompe las fuentes Roboto), así que normaliza separadores y sólo permite `node_modules/pdfmake/fonts/`. Además `import * as pdfmake` en vez de destructurar: los métodos son de la instancia y usan `this` (una importación nombrada los desengancha y revienta con `Cannot read properties of undefined`).
+- **Frontend**: `descargarRemoto` (helper genérico antes llamado `descargarXlsx`: blob + `content-disposition`) + `progresionApi.constanciaPdf`, `datosScoutApi.carnetPdf`, `eventosApi.listadoAsistenciaPdf`; botones en `ProgresionAcciones` (junto al .xlsx, estado `exportando` compartido), `DatosScoutResumen` (sólo si hay expediente, con `datosscout:view`) y `DialogoAsistencia` (reutiliza el `setError` existente).
+- **Tests**: backend **447/447** (35 suites; 12 del módulo: `%PDF-` de los 3 documentos, whitelist/deny de las políticas y ABAC del carnet) · integración **53/53** (9 suites; `pdf.integration.spec.ts` nuevo con 5: carnet armado desde la base, 404 fuera de alcance, constancia con `getDatosExportJoven` real, planilla real renderizada y bloqueo ABAC del adulto ajeno) · frontend lint/build/**33/33** · E2E **27/27** (3 nuevos: descarga real del carnet verificando magic bytes y filename, contrato de los 3 endpoints con `content-type`/404, `self-scope` del joven con 403).
 
 ---
 
@@ -384,7 +394,7 @@ Fase 5 (1-2 d)   →  Biblioteca/Documentos
   │
 Fase 6 (3-4 d)   →  Completar formación, datos-scout, programas-mundiales
   │
-Fase 7 (varia)   →  PWA, PDF, Finanzas... + multi-grupo SOLO si aplica
+Fase 7 (varia)   →  ✅ 7a PDF hecho · luego QR → PWA → Finanzas... + multi-grupo SOLO si aplica
   │
 Fase 8 (cont.)   →  tests/E2E/deuda en cada cierre de fase
 ```

@@ -180,6 +180,7 @@ endpoint y fue borrado junto con `roles.decorator.ts`.
 | `datos-scout` | `GET /datos-scout`, `GET /datos-scout/miembro/:miembroId`, `POST /datos-scout`, `PATCH /datos-scout/miembro/:miembroId` (upsert) | `datosscout:view/manage` (+ `self:view` para el propio) |
 | `formacion` | `GET /formacion`, `GET /formacion/adultos`, `GET /formacion/adulto/:adultoId`, `GET /formacion/:id`, `POST /formacion`, `PATCH /formacion/:id`, `DELETE /formacion/:id` | `formacion:view/manage` |
 | `programas-mundiales` | `GET /programas-mundiales` (global, scoped), `GET /programas-mundiales/catalogo`, `GET /programas-mundiales/miembro/:miembroId`, `POST /programas-mundiales`, `PATCH /programas-mundiales/:id`, `DELETE /programas-mundiales/:id` (soft-delete) | `programamundial:view/manage` (+ self-scope para el propio) |
+| `pdf` | `GET /pdf/constancia/:miembroId`, `GET /pdf/carnet/:miembroId`, `GET /pdf/asistencia/:actividadId` (descarga `application/pdf`) | `progresion:view`, `datosscout:view`, `asistencia:view` respectivamente (sin permisos nuevos) |
 | `health` | `GET /health` (sin auth) | — |
 
 ---
@@ -246,6 +247,8 @@ Permisos del frontend: `frontend/src/types/auth.ts` (`PERMISSIONS`, `ROL_HIERARC
 | **Guard de prueba aislada** | Si la prueba aislada de un adelanto tiene 0 ítems, la aprobación se bloquea: "prueba aislada no definida". |
 | **Seed idempotente** | `npm run seed` no duplica datos; incluye renombres de compatibilidad (`Caminantes→Comunidad`, `ADULTO_CAMINANTES→ADULTO_COMUNIDAD`, `SECRETARIO→REPRESENTANTE_UNIDAD`). |
 | **Cargos vigentes** | `CargoAsignacion.hasta = null` significa vigente; `hasta` con fecha = cerrado (renombrado/desplazado). |
+| **Export PDF** | Módulo `pdf` (Fase 7a): `pdfmake` genera constancia, carnet y listado de asistencia con `StreamableFile`. Reutiliza los permisos/ABAC de sus endpoints de lectura. |
+| **Políticas de pdfmake** | `setUrlAccessPolicy(() => false)` bloquea toda URL remota dentro del PDF; `setLocalAccessPolicy` **no puede ser deny-all** (rompería las fuentes Roboto) → normaliza separadores y sólo permite `node_modules/pdfmake/fonts/`. Los métodos de `pdfmake` usan `this`: importar con `import * as pdfmake`, nunca destructurado. |
 
 ---
 
