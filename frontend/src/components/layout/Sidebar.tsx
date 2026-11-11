@@ -19,6 +19,7 @@ import {
   Hub,
   PeopleAlt,
   CalendarMonth,
+  DateRange,
   MenuBook,
   School,
 } from '@mui/icons-material';
@@ -43,6 +44,8 @@ interface NavItem {
   icon: ReactNode;
   path: string;
   permission: boolean;
+  /** Etiqueta "NUEVO" dorada (módulos recién agregados). */
+  tag?: string;
 }
 
 export const Sidebar = ({ open, onToggle, mobileOpen = false, onCloseMobile }: SidebarProps) => {
@@ -126,6 +129,13 @@ export const Sidebar = ({ open, onToggle, mobileOpen = false, onCloseMobile }: S
       path: esJoven ? '/app/mi-progresion' : '/app/progresion',
       permission: canViewProgresion,
     },
+    {
+      text: 'Calendario',
+      icon: <DateRange />,
+      path: '/app/calendario',
+      permission: canViewEventos,
+      tag: 'NUEVO',
+    },
     { text: 'Unidades', icon: <ChildCare />, path: '/app/unidades', permission: canViewUnidades },
     { text: 'Eventos', icon: <CalendarMonth />, path: '/app/eventos', permission: canViewEventos },
     {
@@ -180,6 +190,7 @@ export const Sidebar = ({ open, onToggle, mobileOpen = false, onCloseMobile }: S
       >
         {item.icon}
         <span className="lbl">{item.text}</span>
+        {item.tag && <span className="tag-new">{item.tag}</span>}
       </button>
     );
   };

@@ -21,6 +21,9 @@ export type EstadoActividad = 'PENDIENTE' | 'EN_CURSO' | 'COMPLETADA' | 'CANCELA
 
 export type EstadoAsistencia = 'PRESENTE' | 'AUSENTE' | 'JUSTIFICADO';
 
+/** Ámbito jerárquico de publicación (Fase 3 · Calendario). */
+export type AlcancePlanificacion = 'GRUPO' | 'DISTRITO' | 'REGION' | 'NACIONAL';
+
 export interface Planificacion {
   id: string;
   titulo: string;
@@ -28,6 +31,10 @@ export interface Planificacion {
   fechaInicio: string;
   fechaFin: string;
   unidadId?: string | null;
+  /** Nodo desde el que se publicó (null = planificación legada). */
+  nodoId?: string | null;
+  /** Nivel derivado en el backend a partir del tipo de nodo. */
+  alcance?: AlcancePlanificacion;
   estado: EstadoPlanificacion;
   createdAt?: string;
   updatedAt?: string;

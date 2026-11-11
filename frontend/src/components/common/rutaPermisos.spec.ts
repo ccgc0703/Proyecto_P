@@ -46,6 +46,10 @@ describe('permisosDeRuta', () => {
     expect(permisosDeRuta('/app/eventos')).toEqual(['evento:view']);
   });
 
+  it('exige evento:view en el calendario de planificación', () => {
+    expect(permisosDeRuta('/app/calendario')).toEqual(['evento:view']);
+  });
+
   it('exige normativa:view en la biblioteca de documentos', () => {
     expect(permisosDeRuta('/app/documentos')).toEqual(['normativa:view']);
   });

@@ -39,6 +39,7 @@ const EstructuraPage = lazyRouteComponent(() => import('./pages/EstructuraPage')
 const UnidadesPage = lazyRouteComponent(() => import('./pages/UnidadesPage'), 'UnidadesPage');
 const UsuariosPage = lazyRouteComponent(() => import('./pages/UsuariosPage'), 'UsuariosPage');
 const EventosPage = lazyRouteComponent(() => import('./pages/EventosPage'), 'EventosPage');
+const CalendarioPage = lazyRouteComponent(() => import('./pages/CalendarioPage'), 'CalendarioPage');
 const DocumentosPage = lazyRouteComponent(() => import('./pages/DocumentosPage'), 'DocumentosPage');
 const FormacionPage = lazyRouteComponent(() => import('./pages/FormacionPage'), 'FormacionPage');
 
@@ -285,6 +286,12 @@ const eventosRoute = createRoute({
   component: EventosPage,
 });
 
+const calendarioRoute = createRoute({
+  getParentRoute: () => layoutRoute,
+  path: '/calendario',
+  component: CalendarioPage,
+});
+
 const documentosRoute = createRoute({
   getParentRoute: () => layoutRoute,
   path: '/documentos',
@@ -338,6 +345,7 @@ const routeTree = rootRoute.addChildren([
     unidadesRoute,
     usuariosRoute,
     eventosRoute,
+    calendarioRoute,
     documentosRoute,
     formacionRoute,
   ]),

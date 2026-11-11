@@ -30,6 +30,7 @@ const PAGE_TITLES: Record<string, string> = {
   '/app/progresion': 'Progresión',
   '/app/mi-progresion': 'Mi progresión',
   '/app/eventos': 'Eventos',
+  '/app/calendario': 'Calendario',
   '/app/documentos': 'Documentos',
   '/app/formacion': 'Formación',
 };
